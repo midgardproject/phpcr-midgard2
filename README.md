@@ -1,9 +1,9 @@
 Midgard2 PHP Content Repository provider
 ========================================
 
-This project attempts to implement a [Midgard2](http://midgard2.org/) -backed implementation of the PHP Content Repository (PHPCR) interfaces. The idea is to have a fully [Jackalope](http://jackalope.github.com/) -compatible PHPCR provider that can be used in PHP Content Management Systems without requiring Java.
+This project attempts to implement a [Midgard2](http://midgard2.org/) -backed implementation of the PHP Content Repository (PHPCR) interfaces. The plan is to have a fully [Jackalope](http://jackalope.github.com/) compatible PHPCR provider that can be used in PHP Content Management Systems without requiring Java.
 
-Using Midgard2 instead of Apache Jackrabbit also has the benefit of making interoperability with regular relational databases used by many CMSs easy.
+Using Midgard2 instead of [Apache Jackrabbit](http://jackrabbit.apache.org/) also has the benefit of making interoperability with regular relational databases used by many CMSs easy.
 
 ## About Midgard2
 
@@ -28,7 +28,20 @@ There have been [some studies](http://bergie.iki.fi/blog/what_is_a_content_repos
 * Property = Property or Parameter of Midgard object
 * Workspace = Midgard root node or workspace
 
-While both Midgard2 and JCR build on the tree concept, the tree in Midgard is multi-rooted.
+While both Midgard2 and JCR build on the tree concept, the tree in Midgard is multi-rooted. We work around this by utilizing the [JCR Workspace](http://www.day.com/maven/jsr170/javadocs/jcr-1.0/javax/jcr/Workspace.html) concept.
+
+When user connects to a Midgard2 PHPCR repository, they provide their credentials and a workspace name. A new PHPCR Session will be returned. The workspace names map the session to a particular Midgard2 rootlevel object. If no workspace name is provided, the first matching rootlevel object will be used.
+
+When Midgard2's own Workspaces implementation lands in 10.05.5, we will support using these workspaces as well. The workspace strings will be in format:
+
+* `rootlevel object`
+* `rootlevel object/workspace`
+* `rootlevel object/workspace/subworkspace`
+
+## Projects using PHPCR
+
+* [Symfony CMF](http://pooteeweet.org/blog/0/1912#m1912)
+* Flow3/TYPO3
 
 ## Development
 
