@@ -11,10 +11,24 @@ class Repository implements \PHPCR\RepositoryInterface
             // Anonymous session
             return new Session($this);
         }
+        $connection = $this->midgard2Connect();
         $user = $this->midgard2Login($credentials);
         $rootObject = $this->getRootObject($workspacename);
         
-        return new Session($this, $user, $rootObject);
+        return new Session($connection, $this, $user, $rootObject);
+    }
+    
+    private function midgard2Connect()
+    {
+        $filepath = ini_get('midgard.configuration_file');
+        $config = new \midgard_config();
+        $config->read_file_at_path($filepath);
+        $mgd = \midgard_connection::get_instance();
+        if (!$mgd->open_config($config))
+        {
+            throw new \PHPCR\RepositoryException();
+        }
+        return $mgd;
     }
     
     private function midgard2Login($credentials)

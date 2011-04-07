@@ -22,4 +22,7 @@ $credentials = new \PHPCR\SimpleCredentials('admin', 'password');
 $factory = new PHPCR\RepositoryFactory();
 $repo = $factory->getRepository();
 $session = $repo->login($credentials);
-var_dump($session->getRootNode());
+$root = $session->getRootNode();
+$title = $root->getProperty('mgd:title');
+var_dump($title->getString());
+var_dump($root->getIdentifier());

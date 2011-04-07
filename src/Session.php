@@ -3,12 +3,14 @@ namespace Midgard2CR;
 
 class Session implements \PHPCR\SessionInterface
 {
+    protected $connection = null;
     protected $repository = null;
     protected $user = null;
     protected $rootObject = null;
 
-    public function __construct(Repository $repository, \midgard_user $user = null, \midgard_object $rootObject)
+    public function __construct(\midgard_connection $connection, Repository $repository, \midgard_user $user = null, \midgard_object $rootObject)
     {
+        $this->connection = $connection;
         $this->repository = $repository;
         $this->user = $user;
         $this->rootObject = $rootObject;
@@ -46,7 +48,7 @@ class Session implements \PHPCR\SessionInterface
     
     public function getRootNode()
     {
-        return new Node($this->rootObject);
+        return new Node($this->rootObject, $this);
     }
     
     public function impersonate(\PHPCR\CredentialsInterface $credentials)
