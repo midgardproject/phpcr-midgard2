@@ -45,6 +45,11 @@ echo "\nsession->getNode\n";
 $another = $session->getNode('/development');
 var_dump($another->getPropertyValue('mgd:title'));
 
+// Parent access
+echo "\ngetParent\n";
+$parent = $another->getParent();
+var_dump($parent->getPropertyValue('mgd:title'));
+
 // Try node paths
 echo "\nsession->nodeExists\n";
 var_dump($session->nodeExists('/development'));

@@ -5,9 +5,11 @@ abstract class Item implements \PHPCR\ItemInterface
 {
     protected $session = null;
     protected $object = null;
+    protected $parent = null;
 
-    public function __construct(\midgard_object $object = null, Session $session)
+    public function __construct(\midgard_object $object = null, Node $parent = null, Session $session)
     {
+        $this->parent = $parent;
         $this->object = $object;
         $this->session = $session;
     }
@@ -31,6 +33,11 @@ abstract class Item implements \PHPCR\ItemInterface
 
     public function getParent()
     {
+        if (!$this->parent)
+        {
+            throw new \PHPCR\ItemNotFoundException();
+        }
+        return $this->parent;
     }
 
     public function getDepth()

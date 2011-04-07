@@ -40,7 +40,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $children = $q->list_objects();
         foreach ($children as $child)
         {
-            $this->children[$child->name] = new Node($child, $this->getSession());
+            $this->children[$child->name] = new Node($child, $this, $this->getSession());
         }
     }
 

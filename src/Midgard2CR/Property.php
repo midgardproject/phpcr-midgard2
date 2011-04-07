@@ -10,7 +10,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     {
         $this->propertyName = $propertyName;
         $this->node = $node;
-        parent::__construct($node->getMidgard2Object(), $node->getSession());
+        parent::__construct($node->getMidgard2Object(), $node, $node->getSession());
     }
     
     private function getMidgard2PropertyName()

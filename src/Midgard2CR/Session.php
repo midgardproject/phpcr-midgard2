@@ -48,7 +48,7 @@ class Session implements \PHPCR\SessionInterface
     
     public function getRootNode()
     {
-        return new Node($this->rootObject, $this);
+        return new Node($this->rootObject, null, $this);
     }
     
     public function impersonate(\PHPCR\CredentialsInterface $credentials)
