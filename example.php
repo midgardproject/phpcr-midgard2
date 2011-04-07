@@ -18,3 +18,6 @@ var_dump($title->getName(), $title->getString(), $root->getPropertyValue('mgd:ti
 
 $child = $root->getNode('planet');
 var_dump($child->getPropertyValue('mgd:title'));
+
+$another = $session->getNode('/development');
+var_dump($another);
