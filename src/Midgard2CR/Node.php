@@ -3,7 +3,9 @@ namespace Midgard2CR;
 
 class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 {
- 
+    protected $children = null;
+    protected $properties = null;
+
     public function addNode($relPath, $primaryNodeTypeName = NULL)
     {
         throw new \PHPCR\RepositoryException("Not supported");
@@ -23,10 +25,49 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         return $this->object->name;
     }
-    
+
+    private function populateChildren()
+    {
+        if (!is_null($this->children))
+        {
+            return;
+        }
+
+        $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
+        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('up'), '=', new \midgard_query_value($this->object->id)));
+        $q->execute();
+        
+        $children = $q->list_objects();
+        foreach ($children as $child)
+        {
+            $this->children[$child->name] = new Node($child, $this->getSession());
+        }
+    }
+
     public function getNode($relPath)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        $remainingPath = '';
+        if (strpos($relPath, '/') !== false)
+        {
+            $parts = explode('/', $relPath);
+            $relPath = array_shift($parts);
+            $remainingPath = implode('/', $parts);
+        }
+
+        if (!isset($this->children[$relPath]))
+        {
+            $this->populateChildren();
+            if (!isset($this->children[$relPath]))
+            {
+                throw new \PHPCR\PathNotFoundException();
+            }
+        }
+
+        if ($remainingPath)
+        {
+            return $this->children[$relPath]->getNode($remainingPath);
+        }
+        return $this->children[$relPath];        
     }
     
     public function getNodes($filter = NULL)
@@ -34,15 +75,36 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         throw new \PHPCR\RepositoryException("Not supported");
     }
 
+    private function populateProperties()
+    {
+        if (!is_null($this->properties))
+        {
+            return;
+        }
+
+        foreach ($this->object as $property => $value)
+        {
+            $this->properties["mgd:{$property}"] = new Property($this, "mgd:{$property}");
+        }
+    }
+
     public function getProperty($relPath)
     {
-        return new Property($this, $relPath);
+        if (!isset($this->properties[$relPath]))
+        {
+            $this->populateProperties();
+            if (!isset($this->properties[$relPath]))
+            {
+                throw new \PHPCR\PathNotFoundException();
+            }
+        }
+
+        return $this->properties[$relPath];
     }
     
     public function getPropertyValue($name, $type=null)
     {
-        $property = new Property($this, $name);
-        return $property->getNativeValue();
+        return $this->getProperty($name)->getNativeValue();
     }
     
     public function getProperties($filter = NULL)

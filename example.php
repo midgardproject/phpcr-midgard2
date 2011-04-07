@@ -15,3 +15,6 @@ $root = $session->getRootNode();
 $title = $root->getProperty('mgd:title');
 var_dump($root->getIdentifier(), $root->getName());
 var_dump($title->getName(), $title->getString(), $root->getPropertyValue('mgd:title'));
+
+$child = $root->getNode('planet');
+var_dump($child->getPropertyValue('mgd:title'));
