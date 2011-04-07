@@ -19,6 +19,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         throw new \PHPCR\RepositoryException("Not supported");
     }
     
+    public function getName()
+    {
+        return $this->object->name;
+    }
+    
     public function getNode($relPath)
     {
         throw new \PHPCR\RepositoryException("Not supported");
@@ -36,6 +41,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getPropertyValue($name, $type=null)
     {
+        $property = new Property($this, $name);
+        return $property->getNativeValue();
     }
     
     public function getProperties($filter = NULL)

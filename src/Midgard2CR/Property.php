@@ -65,7 +65,12 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function getBoolean()
     {
     }
-    
+
+    public function getName()
+    {
+        return $this->propertyName;
+    }
+
     public function getNode()
     {
         return $this->node;

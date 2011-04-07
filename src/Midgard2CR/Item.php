@@ -1,7 +1,7 @@
 <?php
 namespace Midgard2CR;
 
-class Item implements \PHPCR\ItemInterface
+abstract class Item implements \PHPCR\ItemInterface
 {
     protected $session = null;
     protected $object = null;
