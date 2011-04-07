@@ -59,7 +59,7 @@ Content Repositories are important piece of software infrastructure that must be
 
 ## Development
 
-The Midgard2 PHPCR provider is in early stages of development. Our initial goal is to implement JCR level 1 compatibility, verified by passing the relevant [Jackalope API tests](https://github.com/jackalope/jackalope-api-tests). Once we know the exact approach to take, adding JCR level 2 should be relatively straightforward.
+The Midgard2 PHPCR provider is in early stages of development. Our initial goal is to implement JCR level 1 compatibility, verified by passing the relevant [Jackalope API tests](https://github.com/jackalope/jackalope-api-tests). Once we know the exact approach to take, adding JCR level 2 should be relatively straightforward. The [David's Model notes](http://wiki.apache.org/jackrabbit/DavidsModel) should be useful for prioritizing features.
 
 Contributions to the Midgard2 PHPCR provider are very much appreciated. The development is coordinated on a GitHub repository:
 
