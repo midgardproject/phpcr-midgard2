@@ -43,6 +43,10 @@ When Midgard2's own Workspaces implementation lands in 10.05.5, we will support 
 * [Symfony CMF](http://pooteeweet.org/blog/0/1912#m1912)
 * Flow3/TYPO3
 
+## Licensing
+
+Content Repositories are important piece of software infrastructure that must be usable by any projects or companies regardless of their business model. Because of this, the Midgard2 PHPCR implementation will be available under permissive terms of the [GNU Lesser General Public License](http://www.gnu.org/licenses/lgpl-2.1.html).
+
 ## Development
 
 The Midgard2 PHPCR provider is in early stages of development. Our initial goal is to implement JCR level 1 compatibility, verified by passing the relevant [Jackalope API tests](https://github.com/jackalope/jackalope-api-tests). Once we know the exact approach to take, adding JCR level 2 should be relatively straightforward.
