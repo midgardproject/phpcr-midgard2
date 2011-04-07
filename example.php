@@ -1,5 +1,5 @@
 <?php
-use Midgard2CR as PHPCR;
+use Midgard2CR as CR;
 
 require 'SplClassLoader.php';
 $midgard2crAutoloader = new SplClassLoader('Midgard2CR', 'src');
@@ -8,7 +8,7 @@ $phpcrAutoloader = new SplClassLoader('PHPCR', 'lib/PHPCR/src');
 $phpcrAutoloader->register();
 
 $credentials = new \PHPCR\SimpleCredentials('admin', 'password');
-$factory = new PHPCR\RepositoryFactory();
+$factory = new CR\RepositoryFactory();
 $repo = $factory->getRepository();
 $session = $repo->login($credentials);
 $root = $session->getRootNode();
