@@ -38,6 +38,8 @@ There have been [some studies](http://bergie.iki.fi/blog/what_is_a_content_repos
 * Property = Property or Parameter of Midgard object
 * Workspace = Midgard root node or workspace
 
+### Making the Midgard tree single-rooted
+
 While both Midgard2 and JCR build on the tree concept, the tree in Midgard is multi-rooted. We work around this by utilizing the [JCR Workspace](http://www.day.com/maven/jsr170/javadocs/jcr-1.0/javax/jcr/Workspace.html) concept.
 
 When user connects to a Midgard2 PHPCR repository, they provide their credentials and a workspace name. A new PHPCR Session will be returned. The workspace names map the session to a particular Midgard2 rootlevel object. If no workspace name is provided, the first matching rootlevel object will be used.
@@ -47,6 +49,20 @@ When Midgard2's own Workspaces implementation lands in 10.05.5, we will support 
 * `rootlevel object`
 * `rootlevel object/workspace`
 * `rootlevel object/workspace/subworkspace`
+
+### Namespace mappings
+
+The PHPCR API uses namespaces for node types and property names. The regular [Midgard2 MgdSchema RDF mappings](https://github.com/midgardproject/proposals/blob/master/Semantic%20Data/MgdSchemaRDF.md) should be used for this.
+
+Midgard's MgdSchema types (PHPCR Node types) have a fixed set of properties. To implement the full PHPCR model, additional properties should be implemented using Midgard Parameters.
+
+Basically setting value of Node property `foo:bar`, can mean depending on MgdSchema, either:
+
+    $node->bar = $value;
+
+or:
+
+    $node->set_parameter('foo', 'bar', $value);
 
 ## Projects using PHPCR
 
