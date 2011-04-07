@@ -2,7 +2,8 @@
 namespace Midgard2CR;
 
 class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
-{    
+{
+ 
     public function addNode($relPath, $primaryNodeTypeName = NULL)
     {
         throw new \PHPCR\RepositoryException("Not supported");
@@ -30,7 +31,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function getProperty($relPath)
     {
-        return new Property($this->object, $this->session, $relPath);
+        return new Property($this, $relPath);
     }
     
     public function getPropertyValue($name, $type=null)

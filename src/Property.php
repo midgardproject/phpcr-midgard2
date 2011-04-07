@@ -4,11 +4,13 @@ namespace Midgard2CR;
 class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterface
 {
     protected $propertyName = null;
+    protected $node = null;
 
-    public function __construct(\midgard_object $object = null, Session $session, $propertyName)
+    public function __construct(Node $node, $propertyName)
     {
         $this->propertyName = $propertyName;
-        parent::__construct($object, $session);
+        $this->node = $node;
+        parent::__construct($node->getMidgard2Object(), $node->getSession());
     }
     
     private function getMidgard2PropertyName()
@@ -66,6 +68,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function getNode()
     {
+        return $this->node;
     }
     
     public function getProperty()

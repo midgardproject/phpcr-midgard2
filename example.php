@@ -25,4 +25,4 @@ $session = $repo->login($credentials);
 $root = $session->getRootNode();
 $title = $root->getProperty('mgd:title');
 var_dump($title->getString());
-var_dump($root->getIdentifier());
+//var_dump($root->getIdentifier());

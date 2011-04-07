@@ -11,6 +11,11 @@ class Item implements \PHPCR\ItemInterface
         $this->object = $object;
         $this->session = $session;
     }
+    
+    public function getMidgard2Object()
+    {
+        return $this->object;
+    }
 
     public function getPath()
     {
@@ -34,6 +39,7 @@ class Item implements \PHPCR\ItemInterface
 
     public function getSession()
     {
+        return $this->session;
     }
 
     public function isNode()
