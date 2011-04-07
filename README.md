@@ -40,15 +40,16 @@ There have been [some studies](http://bergie.iki.fi/blog/what_is_a_content_repos
 
 ### Making the Midgard tree single-rooted
 
-While both Midgard2 and JCR build on the tree concept, the tree in Midgard is multi-rooted. We work around this by utilizing the [JCR Workspace](http://www.day.com/maven/jsr170/javadocs/jcr-1.0/javax/jcr/Workspace.html) concept.
+While both Midgard2 and JCR build on the tree concept, the tree in Midgard is multi-rooted. We work around this by making each rootlevel object its own repository.
 
-When user connects to a Midgard2 PHPCR repository, they provide their credentials and a workspace name. A new PHPCR Session will be returned. The workspace names map the session to a particular Midgard2 rootlevel object. If no workspace name is provided, the first matching rootlevel object will be used.
+When user connects to a Midgard2 PHPCR repository, the connection will use configuration to map itself to a particular rootlevel object. A new PHPCR Session will be returned.
 
-When Midgard2's own Workspaces implementation lands in 10.05.5, we will support using these workspaces as well. The workspace strings will be in format:
+### Workspaces
 
-* `rootlevel object`
-* `rootlevel object/workspace`
-* `rootlevel object/workspace/subworkspace`
+When Midgard2's own [Workspaces implementation](http://www.midgard-project.org/development/mrfc/0042/) lands in 10.05.5, we will support using [JCR Workspaces](http://www.day.com/maven/jsr170/javadocs/jcr-1.0/javax/jcr/Workspace.html) as well. The workspace strings will be in format:
+
+* `workspace`
+* `workspace/subworkspace`
 
 ### Namespace mappings
 
