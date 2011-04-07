@@ -1,0 +1,3 @@
+[submodule "lib/PHPCR"]
+	path = lib/PHPCR
+	url = https://github.com/jackalope/phpcr.git
