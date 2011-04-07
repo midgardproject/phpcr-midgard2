@@ -20,7 +20,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         throw new \PHPCR\RepositoryException("Not supported");
     }
-    
+
     public function getName()
     {
         return $this->object->name;
@@ -72,7 +72,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getNodes($filter = NULL)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        // TODO: Filtering support
+        return new \ArrayIterator($this->children);
     }
 
     private function populateProperties()

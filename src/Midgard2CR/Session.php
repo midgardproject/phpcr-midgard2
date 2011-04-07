@@ -86,17 +86,37 @@ class Session implements \PHPCR\SessionInterface
     
     public function itemExists($absPath)
     {
-        return false;
+        if ($this->nodeExists($absPath))
+        {
+            return true;
+        }
+        return $this->propertyExists($absPath);
     }
     
     public function nodeExists($absPath)
     {
-        return false;
+        try
+        {
+            $this->getNode($absPath);
+            return true;
+        }
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+            return false;
+        }
     }
     
     public function propertyExists($absPath)
     {
-        return false;
+        try
+        {
+            $this->getProperty($absPath);
+            return true;
+        }
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+            return false;
+        }
     }
     
     public function move($srcAbsPath, $destAbsPath)
