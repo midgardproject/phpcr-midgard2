@@ -5,6 +5,16 @@ This project attempts to implement a [Midgard2](http://midgard2.org/) -backed im
 
 Using Midgard2 instead of [Apache Jackrabbit](http://jackrabbit.apache.org/) also has the benefit of making interoperability with regular relational databases used by many CMSs easy.
 
+## About PHPCR
+
+The PHP Content Repository API is a PHP version of the Java Content Repository specification. [From Wikipedia](http://en.wikipedia.org/wiki/Content_repository_API_for_Java):
+
+> Content Repository API for Java (JCR) is a specification for a Java platform application programming interface (API) to access content repositories in a uniform manner. The content repositories are used in content management systems to keep the content data and also the metadata used in content management systems (CMS) such as versioning metadata.
+
+This way a content management system, for example, would not be tied to a particular database or other storage scheme. Instead, the content repository providers could be chosen based on deployment requirements.
+
+There is currently [discussion about including](http://java.net/jira/browse/JSR_333-28) PHPCR APIs into the Java Content Repository specification.
+
 ## About Midgard2
 
 Midgard2 is an open source content repository library available for multiple programming languages. For PHP it is available as [an extension](https://github.com/midgardproject/midgard-php5). On many distributions setting this up is as simple as:
