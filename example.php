@@ -20,4 +20,6 @@ $child = $root->getNode('planet');
 var_dump($child->getPropertyValue('mgd:title'));
 
 $another = $session->getNode('/development');
-var_dump($another);
+var_dump($another->getPropertyValue('mgd:title'));
+
+var_dump($session->getProperty('/planet/mgd:component')->getNativeValue());

@@ -90,6 +90,15 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function getProperty($relPath)
     {
+        $remainingPath = '';
+        if (strpos($relPath, '/') !== false)
+        {
+            $parts = explode('/', $relPath);
+            $relPath = array_shift($parts);
+            $remainingPath = implode('/', $parts);
+            return $this->getNode($relPath)->getProperty($remainingPath);
+        }
+
         if (!isset($this->properties[$relPath]))
         {
             $this->populateProperties();

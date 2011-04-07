@@ -68,12 +68,20 @@ class Session implements \PHPCR\SessionInterface
     
     public function getNode($absPath)
     {
-        return null;
+        if (substr($absPath, 0, 1) == '/')
+        {
+            $absPath = substr($absPath, 1);
+        }
+        return $this->getRootNode()->getNode($absPath);
     }
     
     public function getProperty($absPath)
     {
-        return null;
+        if (substr($absPath, 0, 1) == '/')
+        {
+            $absPath = substr($absPath, 1);
+        }
+        return $this->getRootNode()->getProperty($absPath);
     }
     
     public function itemExists($absPath)
