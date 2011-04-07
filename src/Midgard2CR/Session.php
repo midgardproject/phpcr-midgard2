@@ -121,23 +121,27 @@ class Session implements \PHPCR\SessionInterface
     
     public function move($srcAbsPath, $destAbsPath)
     {
-        return false;
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function removeItem($absPath)
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function save()
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function refresh($keepChanges)
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function clear()
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function hasPendingChanges()
@@ -152,6 +156,7 @@ class Session implements \PHPCR\SessionInterface
     
     public function checkPermission($absPath, $actions)
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function hasCapability($methodName, $target, array $arguments)
@@ -166,14 +171,17 @@ class Session implements \PHPCR\SessionInterface
     
     public function importXML($parentAbsPath, $in, $uuidBehavior)
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function exportSystemView($absPath, $out, $skipBinary, $noRecurse)
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function exportDocumentView($absPath, $out, $skipBinary, $noRecurse)
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function setNamespacePrefix($prefix, $uri)
@@ -212,11 +220,11 @@ class Session implements \PHPCR\SessionInterface
     
     public function getAccessControlManager()
     {
-        return null;
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function getRetentionManager()
     {
-        return null;
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
 }
