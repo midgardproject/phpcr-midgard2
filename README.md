@@ -32,7 +32,7 @@ The Midgard2 content repository is able to access and manage content stored in v
 
 There have been [some studies](http://bergie.iki.fi/blog/what_is_a_content_repository/) into the conceptual differences and similarities between the Midgard2 Content Repository model and the [Java Content Repository](http://en.wikipedia.org/wiki/Content_repository_API_for_Java) model used in PHPCR. Because of these differences, some conceptual mappings will be needed.
 
-* Repository = Midgard config
+* Repository = Midgard config + root node
 * Session = Midgard connection
 * Node = Midgard object
 * Property = Property or Parameter of Midgard object
