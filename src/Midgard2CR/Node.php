@@ -21,11 +21,6 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         throw new \PHPCR\RepositoryException("Not supported");
     }
 
-    public function getName()
-    {
-        return $this->object->name;
-    }
-
     private function populateChildren()
     {
         if (!is_null($this->children))

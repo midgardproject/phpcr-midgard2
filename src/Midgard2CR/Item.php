@@ -21,10 +21,27 @@ abstract class Item implements \PHPCR\ItemInterface
 
     public function getPath()
     {
+        if (!$this->parent)
+        {
+            // Root node
+            return '/';
+        }
+        $parent_path = $this->parent->getPath();
+        if ($parent_path == '/')
+        {
+            return "/{$this->getName()}";
+        }
+        return "{$this->parent->getPath()}/{$this->getName()}";
     }
     
     public function getName()
     {
+        if (!$this->parent)
+        {
+            // Root node
+            return '';
+        }
+        return $this->object->name;
     }
 
     public function getAncestor($depth)
@@ -51,6 +68,7 @@ abstract class Item implements \PHPCR\ItemInterface
 
     public function isNode()
     {
+        return true;
     }
 
     public function isNew()

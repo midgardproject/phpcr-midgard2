@@ -62,4 +62,6 @@ var_dump($session->itemExists('/development/foo/bar'));
 
 // Get a property with absolute path
 echo "\nsession->getProperty\n";
-var_dump($session->getProperty('/planet/mgd:component')->getNativeValue());
+$prop = $session->getProperty('/planet/mgd:component');
+var_dump($prop->getNativeValue());
+var_dump($prop->getPath());

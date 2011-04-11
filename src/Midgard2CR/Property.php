@@ -99,6 +99,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function isMultiple()
     {
     }
+
+    public function isNode()
+    {
+        return false;
+    }
     
     public function getIterator()
     {
