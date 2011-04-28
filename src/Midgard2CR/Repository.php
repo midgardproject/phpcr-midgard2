@@ -26,7 +26,7 @@ class Repository implements \PHPCR\RepositoryInterface
         $mgd = \midgard_connection::get_instance();
         if (!$mgd->open_config($config))
         {
-            throw new \PHPCR\RepositoryException();
+            throw new \PHPCR\RepositoryException($mgd->get_error_string());
         }
         return $mgd;
     }
