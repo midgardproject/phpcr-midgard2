@@ -6,6 +6,8 @@ abstract class Item implements \PHPCR\ItemInterface
     protected $session = null;
     protected $object = null;
     protected $parent = null;
+    protected $is_new = false;
+    protected $is_modified = false;
 
     public function __construct(\midgard_object $object = null, Node $parent = null, Session $session)
     {
@@ -73,10 +75,12 @@ abstract class Item implements \PHPCR\ItemInterface
 
     public function isNew()
     {
+        return $this->is_new;
     }
 
     public function isModified()
     {
+        return $this->is_modified;
     }
 
     public function isSame(\PHPCR\ItemInterface $otherItem)
