@@ -8,6 +8,52 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function addNode($relPath, $primaryNodeTypeName = NULL)
     {
+        $parent_node = $this;
+        $object_name = $relPath;
+
+        // ItemExistsException
+        // Node at given path exists.
+        try 
+        {
+            $parent_node = $this->getNode ($relPath);
+            throw new \PHPCR\ItemExistsException("Node at given path {$relPath} exists");
+        } 
+        catch (\PHPCR\PathNotFoundException $e) 
+        {
+            // Do nothing 
+        }
+        
+        // PathNotFoundException
+        // At least one (not last) node at given path doesn't exist
+        if (strpos($relPath, '/') !== false)
+        {
+            $parts = explode ('/', $relPath);
+            $object_name = end($parts);
+            $parent_path = array_pop ($parts);
+            $parent_node = $this->getNode ($parent_path);
+        }
+
+        // ConstraintViolationException
+        // Underying Midgard2 object has no tree support and path contains at least two elements
+        // TODO, Determine Midgard2 type from given NodeTypeName
+        // FIXME, Get unique property once midgard_reflector_object::get_property_unique is added to PHP extension
+
+        // LockException
+        // TODO
+
+        // VersionException 
+        // TODO
+
+        $mobject = midgard_object_class::factory (get_class($this->getMidgard2Object()));
+        $mobject->name = $object_name;
+        $new_node = new Node($mobject, $this, $this->getSession());  
+        $this->children[$object_name] = $new_node;
+        
+        // FIXME, Catch exception before returning new node
+        return $new_node;
+
+        // RepositoryException
+        // Unspecified yet.
         throw new \PHPCR\RepositoryException("Not supported");
     }
     
