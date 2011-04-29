@@ -46,8 +46,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         $mobject = midgard_object_class::factory (get_class($this->getMidgard2Object()));
         $mobject->name = $object_name;
-        $new_node = new Node($mobject, $this, $this->getSession());  
-        $this->children[$object_name] = $new_node;
+        $new_node = new Node($mobject, $parent_node, $parent_node->getSession());  
+        $parent_node->children[$object_name] = $new_node;
         
         // FIXME, Catch exception before returning new node
         return $new_node;
