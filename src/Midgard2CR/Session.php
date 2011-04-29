@@ -7,6 +7,7 @@ class Session implements \PHPCR\SessionInterface
     protected $repository = null;
     protected $user = null;
     protected $rootObject = null;
+    protected $rootNode = null;
 
     public function __construct(\midgard_connection $connection, Repository $repository, \midgard_user $user = null, \midgard_object $rootObject)
     {
@@ -48,7 +49,12 @@ class Session implements \PHPCR\SessionInterface
     
     public function getRootNode()
     {
-        return new Node($this->rootObject, null, $this);
+        if ($this->rootNode === null)
+        {
+            $this->rootNode = new Node($this->rootObject, null, $this);
+        }
+
+        return $this->rootNode;
     }
     
     public function impersonate(\PHPCR\CredentialsInterface $credentials)
