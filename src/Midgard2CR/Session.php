@@ -229,9 +229,39 @@ class Session implements \PHPCR\SessionInterface
     {
         throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
-    
+
+    private function _check_pending_changes (Node $node)
+    {
+        if ($node->isNew() === true
+            || $node->isModified() === true) 
+        {
+            return true;
+        }
+
+        $children = $node->getNodes();
+        foreach ($children as $name => $child)
+        {
+            if ($this->_check_pending_changes ($child) === true)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function hasPendingChanges()
     {
+        $root_node = $this->getRootNode();
+        $children = $root_node->getNodes();
+        foreach ($children as $name => $child) 
+        {
+            if ($this->_check_pending_change ($child) === true)
+            {
+                return true;
+            }
+        }
+
         return false;
     }
     
