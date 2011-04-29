@@ -134,10 +134,90 @@ class Session implements \PHPCR\SessionInterface
     {
         throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
-    
+
+    private function _node_save (Node $node, Node $parent)
+    {
+        // Create 
+        if ($node->isNew() === true)
+        {
+            $mobject = $node->getMidgard2Object();
+            $mobject->up = $parent->getMidgard2Object()->id;
+            if ($mobject->create() === true)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        // Update
+        if ($node->isModified() === true)
+        {
+            $mobject = $node->getMidgard2Object();
+            if ($mobject->update() === true)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        $children = $node->getNodes();
+        foreach ($children as $name => $child) 
+        {
+            if ($this->_node_save ($child, $node) === false)
+            {
+                return false;
+            }
+        }
+
+        // Nothing to do, return success
+        return true;
+    }
+
     public function save()
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        // ConstraintViolationException
+        // TODO
+        
+        // AccessDeniedException
+        // TODO
+
+        // LockException
+        // TODO
+         
+        // VersionException
+        // TODO
+
+        $root_node = $this->getRootNode();
+        $children = $root_node->getNodes();
+        foreach ($children as $name => $child) 
+        {
+            if ($this->_node_save ($child, $root_node) === false)
+            {
+                $midgard_errcode = midgard_connection::get_instance()->get_error();
+                $midgard_errstr = midgard_connection::get_instance()->get_error_string();
+                switch ($midgard_errcode) 
+                {
+                case MGD_ERR_NAME_EXISTS:
+                    throw new \PHPCR\ItemExistsException($midgard_errstr);
+                    break;
+                case MGD_ERR_INVALID_NAME:
+                case MGD_ERR_INVALID_OBJECT:
+                case MGD_ERR_OBJECT_NO_PARENT:
+                case MGD_ERR_INVALID_PROPERTY_VALUE:
+                case MGD_ERR_INVALID_PROPERTY:
+                case MGD_ERR_TREE_IS_CIRCULAR:
+                    throw new \PHPCR\InvalidItemStateException($midgard_errstr);
+                    break;
+                case MGD_ERR_INTERNAL:
+                    throw new \PHPCR\RepositoryException($midgard_errstr);
+                }
+            }
+        }
+
+        //NoSuchNodeTypeException
+        //ReferentialIntegrityException
     }
     
     public function refresh($keepChanges)
