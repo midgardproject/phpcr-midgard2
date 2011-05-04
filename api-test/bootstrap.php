@@ -33,6 +33,9 @@ require_once(dirname(__FILE__) . '/../SplClassLoader.php');
 // Midgard2CR is in the src dir
 $midgard2crAutoloader = new SplClassLoader('Midgard2CR', dirname(__FILE__) . '/../src');
 $midgard2crAutoloader->register();
+// Midgard2CR\Query 
+$midgard2crQAutoloader = new SplClassLoader('Midgard2CR\Query', dirname(__FILE__) . '/../src/Midgard2CR/Query');
+$midgard2crQAutoloader->register();
 // PHPCR is in a submodule in lib/PHPCR
 $phpcrAutoloader = new SplClassLoader('PHPCR', dirname (__FILE__) . '/../lib/PHPCR/src');
 $phpcrAutoloader->register();
