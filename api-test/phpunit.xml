@@ -12,7 +12,7 @@
         <var name="jcr.url" value="http://localhost:8080/server" />
         <var name="jcr.user" value="admin" />
         <var name="jcr.pass" value="password" />
-        <var name="jcr.workspace" value="tests" />
+        <var name="jcr.workspace" value="" />
         <var name="jcr.transport" value="davex" />
     </php>
 
