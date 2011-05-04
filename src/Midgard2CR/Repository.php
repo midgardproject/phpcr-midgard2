@@ -13,7 +13,7 @@ class Repository implements \PHPCR\RepositoryInterface
         }
         $connection = $this->midgard2Connect();
         $user = $this->midgard2Login($credentials);
-        $rootObject = $this->getRootObject($workspacename);
+        $rootObject = $this->getRootObject($workspaceName);
         
         return new Session($connection, $this, $user, $rootObject);
     }
