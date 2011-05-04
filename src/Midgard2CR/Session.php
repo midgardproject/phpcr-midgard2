@@ -8,6 +8,7 @@ class Session implements \PHPCR\SessionInterface
     protected $user = null;
     protected $rootObject = null;
     protected $rootNode = null;
+    protected $workspace = null;
 
     public function __construct(\midgard_connection $connection, Repository $repository, \midgard_user $user = null, \midgard_object $rootObject)
     {
@@ -44,7 +45,12 @@ class Session implements \PHPCR\SessionInterface
     
     public function getWorkspace()
     {
-        return null;
+        if ($this->workspace == null)
+        {
+            $this->workspace = new \Midgard2CR\Workspace($this);
+        }
+
+        return $this->workspace;
     }
     
     public function getRootNode()
