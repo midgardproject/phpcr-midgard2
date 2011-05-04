@@ -23,9 +23,9 @@ if (method_exists('PHPUnit_Util_Filter', 'addDirectoryToFilter')) {
 // Make sure we have the necessary config
 $necessaryConfigValues = array('jcr.url', 'jcr.user', 'jcr.pass', 'jcr.workspace', 'jcr.transport');
 foreach ($necessaryConfigValues as $val) {
-    if (empty($GLOBALS[$val])) {
-        die('Please set '.$val.' in your phpunit.xml.' . "\n");
-    }
+    //if (empty($GLOBALS[$val])) {
+    //    die('Please set '.$val.' in your phpunit.xml.' . "\n");
+    //}
 }
 
 require_once(dirname(__FILE__) . '/../SplClassLoader.php');
