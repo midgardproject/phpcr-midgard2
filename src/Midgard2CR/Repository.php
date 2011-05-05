@@ -57,15 +57,12 @@ class Repository implements \PHPCR\RepositoryInterface
     
     private function getRootObject($workspacename)
     {
-        if (!$workspacename)
+        $rootnodes = $this->getRootNodes();
+        if (empty($rootnodes))
         {
-            $rootnodes = $this->getRootNodes();
-            if (empty($rootnodes))
-            {
-                throw new \PHPCR\NoSuchWorkspacexception('No workspaces defined');
-            }
-            return $rootnodes[0];
+            throw new \PHPCR\NoSuchWorkspacexception('No workspaces defined');
         }
+        return $rootnodes[0];
     }
     
     private function getRootNodes()
