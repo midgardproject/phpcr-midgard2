@@ -198,7 +198,14 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function hasNode($relPath)
     {
-        return false;
+        try {
+            $this->getNode($relPath);
+            return true;
+        }
+        catch (\PHPCR\PathNotFoundException $e) 
+        {
+            return false;
+        }
     }
     
     public function hasProperty($relPath)
@@ -208,7 +215,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function hasNodes()
     {
-        return false;
+        if (empty($this->children))
+        {
+            return false;
+        }
+
+        return true;
     }
     
     public function hasProperties()
