@@ -78,7 +78,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
         $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('up'), '=', new \midgard_query_value($this->object->id)));
         $q->execute();
-        
+
+        if ($q->get_results_count() == 0)
+        {
+            return;
+        }
+
         $children = $q->list_objects();
         foreach ($children as $child)
         {
@@ -115,6 +120,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function getNodes($filter = NULL)
     {
         // TODO: Filtering support
+        $this->populateChildren();
         return new \ArrayIterator($this->children);
     }
 
