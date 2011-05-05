@@ -1,11 +1,5 @@
 <?php
 
-// PHPUnit 3.4 compat
-if (method_exists('PHPUnit_Util_Filter', 'addDirectoryToFilter')) {
-    PHPUnit_Util_Filter::addDirectoryToFilter(__DIR__);
-    PHPUnit_Util_Filter::addFileToFilter(__DIR__.'/../src/Jackalope/Transport/curl.php');
-}
-
 /**
  * Bootstrap file for jackalope
  *
@@ -80,9 +74,9 @@ function getJCRSession($config, $credentials = null) {
 }
 
 function getFixtureLoader($config)
-{
-    require_once "suite/inc/importexport.php";
-    return new jackrabbit_importexport(__DIR__."/suite/fixtures/", (isset($config['jackalope_jar']) ? $config['jackalope_jar'] : null));
+{ 
+    require_once "midgard_importexport.php";
+    return new midgard_importexport(__DIR__."/suite/fixtures/");
 }
 
 /** some constants */
