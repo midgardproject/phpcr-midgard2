@@ -80,6 +80,13 @@ class Session implements \PHPCR\SessionInterface
     
     public function getNode($absPath)
     {
+        // Special case when node is expected to exists at '/' path.
+        // Which means we can treat root node with special meaning here.
+        if ($absPath == '/')
+        {
+            return $this->getRootNode();
+        }
+
         if (substr($absPath, 0, 1) == '/')
         {
             $absPath = substr($absPath, 1);
