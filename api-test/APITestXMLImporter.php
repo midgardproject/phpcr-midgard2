@@ -36,6 +36,18 @@ class APITestXMLImporter extends \DomDocument
         $mvc_node->up = $parent->id;
         $mvc_node->create();
 
+        /* If there's duplicate, get it and reuse */
+        if (midgard_connection::get_instance()->get_error() == MGD_ERR_DUPLICATE) 
+        {
+            $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
+            $group = new midgard_query_constraint_group('AND');
+            $group->add_constraint(new \midgard_query_constraint(new \midgard_query_property('up'), '=', new \midgard_query_value($parent->id)));
+            $group->add_constraint(new \midgard_query_constraint(new \midgard_query_property('name'), '=', new \midgard_query_value($name)));
+            $q->set_constraint($group);
+            $q->execute();
+            $mvc_node = current($q->list_objects());
+        }
+
         foreach ($node->childNodes as $snode) 
         {
             $this->append_nodes($snode, $mvc_node);
