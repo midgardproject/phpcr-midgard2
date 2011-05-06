@@ -44,7 +44,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         // VersionException 
         // TODO
 
-        $mobject = midgard_object_class::factory (get_class($this->getMidgard2Object()));
+        $mobject = \midgard_object_class::factory (get_class($this->getMidgard2Object()));
         $mobject->name = $object_name;
         $new_node = new Node($mobject, $parent_node, $parent_node->getSession());
         $new_new->is_new = true; 
@@ -78,7 +78,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
         $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('up'), '=', new \midgard_query_value($this->object->id)));
         $q->execute();
-        
+
+        if ($q->get_results_count() == 0)
+        {
+            return;
+        }
+
         $children = $q->list_objects();
         foreach ($children as $child)
         {
@@ -115,6 +120,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function getNodes($filter = NULL)
     {
         // TODO: Filtering support
+        $this->populateChildren();
         return new \ArrayIterator($this->children);
     }
 
@@ -192,7 +198,14 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function hasNode($relPath)
     {
-        return false;
+        try {
+            $this->getNode($relPath);
+            return true;
+        }
+        catch (\PHPCR\PathNotFoundException $e) 
+        {
+            return false;
+        }
     }
     
     public function hasProperty($relPath)
@@ -202,7 +215,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function hasNodes()
     {
-        return false;
+        if (empty($this->children))
+        {
+            return false;
+        }
+
+        return true;
     }
     
     public function hasProperties()
