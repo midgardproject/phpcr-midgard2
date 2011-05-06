@@ -1,4 +1,7 @@
 <?php
+
+require_once 'APITestXMLImporter.php';
+
 /**
  * Basic interface that is to be implemented by Implementations willing to test
  * against the API testsuite.
@@ -91,11 +94,14 @@ class midgard_importexport implements phpcrApiTestSuiteImportExportFixtureInterf
     public function import($fixture)
     {
         $fixture = $this->fixturePath . $fixture . ".xml";
-        echo $fixture . "\n";
-
+        
         if (!is_readable($fixture)) {
             throw new Exception('Fixture not readable at: ' . $fixture);
         }
+
+        $importer = new APITestXMLImporter ($fixture);
+        $importer->execute ();
+
         return true;
     }
 
