@@ -70,7 +70,16 @@ class APITestXMLImporter extends \DomDocument
         $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
         $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('up'), '=', new \midgard_query_value(0)));
         $q->execute();
-        $root_object = current($q->list_objects());
+        if ($q->get_results_count() == 0)
+        {
+            $root_object = new \midgardmvc_core_node();
+            $root_object->name = "Root Node";
+            $root_object->create();
+        }
+        else 
+        {
+            $root_object = current($q->list_objects());
+        }
 
         $this->get_nodes($root_object);
     }
