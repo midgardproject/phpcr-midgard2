@@ -1,16 +1,18 @@
 <?php
 
-class APITestXMLImporter extends \DomDocument
+
+/**
+ * @node: DomNode object 
+ * @parent: Midgard object
+ */ 
+interface JCRXMLImporter 
 {
-    private $ns_sv = 'http://www.jcp.org/jcr/sv/1.0';
+    public function XMLNode2MidgardObject ($node, $parent);
+}
 
-    public function __construct ($filepath)
-    {
-        parent::__construct ();
-        $this->load($filepath); 
-    }
-
-    private function append_nodes(\DomNode $node, $parent)
+class SystemViewImporter implements JCRXMLImporter
+{
+    public function XMLNode2MidgardObject ($node, $parent)
     {
         if ($node->localName != 'node')
         {
@@ -50,19 +52,41 @@ class APITestXMLImporter extends \DomDocument
 
         foreach ($node->childNodes as $snode) 
         {
-            $this->append_nodes($snode, $mvc_node);
+            $this->XMLNode2MidgardObject($snode, $mvc_node);
         }
+
+    }   
+}
+
+class DocumentViewImporter implements JCRXMLImporter
+{
+    public function XMLNode2MidgardObject ($node, $parent)
+    {
+    }
+}
+
+class APITestXMLImporter extends \DomDocument
+{
+    private $ns_sv = 'http://www.jcp.org/jcr/sv/1.0';
+
+    public function __construct ($filepath)
+    {
+        parent::__construct ();
+        $this->load($filepath); 
     }
 
     private function get_nodes($root)
     {
         /* Each JCR node becomes an XML element <sv:node>. */
         $node = $this->getElementsByTagNameNS($this->ns_sv, 'node')->item(0);
+        $importer = new SystemViewImporter();
         if ($node == null)
         {
+            /* TODO, this might be Document View */
             return;
         }
-        $this->append_nodes($node, $root);
+
+        $importer->XMLNode2MidgardObject($node, $root);
     }
 
     public function execute()
