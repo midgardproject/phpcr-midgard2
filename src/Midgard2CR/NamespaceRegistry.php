@@ -5,6 +5,15 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
 {
     protected $session = null;
     protected $registry = null;
+    protected $builtins = array('jcr' => 'http://www.jcp.org/jcr/1.0',
+                                 'nt'  => 'http://www.jcp.org/jcr/nt/1.0',
+                                 'mix' => 'http://www.jcp.org/jcr/mix/1.0',
+                                 'xml' => 'http://www.w3.org/XML/1998/namespace',
+                                 ''    => '');
+    public function __construct()
+    {
+        $this->registry = $this->builtins;
+    }
 
     public function NamespaceRegistry (\Midgard2CR\Session $session)
     {
@@ -14,32 +23,41 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
 
     public function registerNamespace($prefix, $uri)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        if (isset($this->builtins[$prefix]))
+        {
+            throw new \PHPCR\NamespaceException("Cannot register builtin namespaces");
+        }
+        $this->registry[$prefix] = $uri;
     }
 
     public function unregisterNamespace($prefix)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        if (isset($this->builtins[$prefix]))
+        {
+            throw new \PHPCR\NamespaceException("Cannot unregister builtin namespaces");
+        }
+        unset($this->registry[$prefix]);
     }
 
     public function getPrefixes()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return array_keys($this->registry);
     }
 
     public function getURIs()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return array_values($this->registry);
     }
 
     public function getURI($prefix)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return $this->registry[$prefix];
     }
 
     public function getPrefix($uri)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        $reversed = array_flip($this->registry);
+        return $reversed[$uri];
     }
     
     public function getIterator()
