@@ -96,30 +96,51 @@ class Midgard2XMLImporter extends \DomDocument
         return $object->set_parameter($parts[0], $parts[1], $this->getPropertyValue($property));
     }
 
+    private function mapNodeType(\midgard_object $parent, $type)
+    {
+        if ($type == 'nt:folder')
+        {
+            return 'midgardmvc_core_node';
+        }
+        if ($type == 'nt:file')
+        {
+            return 'midgard_attachment';
+        }
+        if ($type == 'nt:unstructured')
+        {
+            if (get_class($parent) == 'midgardmvc_core_node')
+            {
+                return 'midgardmvc_core_node';
+            }
+            if (get_class($parent) == 'midgard_attachment')
+            {
+                return 'midgard_attachment';
+            }
+        }
+        return null;
+    }
+
     private function writeNode(\midgard_object $parent, \DOMElement $node)
     {
         $name = $node->getAttributeNS($this->ns_sv, 'name');
         $propertyElements = $node->getElementsByTagNameNS($this->ns_sv, 'property');
 
         $type = $this->getNodeType($node);
-        $class = null;
-        if ($type == 'nt:folder' ||
-            $type == 'nt:unstructured')
-        {
-            $class = 'midgardmvc_core_node';
-        }
-        if ($type == 'nt:file')
-        {
-            $class = 'midgard_attachment';
-        }
-
+        $class = $this->mapNodeType($parent, $type);
         if (!$class)
         {
             return;
         }
         
         $object = null;
-        $siblings = $parent->list_children($class);
+        if ($class == get_class($parent))
+        {
+            $siblings = $parent->list();
+        }
+        else
+        {
+            $siblings = $parent->list_children($class);
+        }
         foreach ($siblings as $sibling)
         {
             if ($sibling->name == $name)
@@ -131,7 +152,14 @@ class Midgard2XMLImporter extends \DomDocument
         {
             $object = new $class();
             $object->name = $name;
-            $object->up = $parent->id;
+            if ($class == 'midgard_attachment')
+            {
+                $object->parentguid = $parent->guid;
+            }
+            else
+            {
+                $object->up = $parent->id;
+            }
         }
 
         if (!$object->guid)
