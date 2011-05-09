@@ -78,6 +78,17 @@ function prepareMidgardStorage()
             throw new Exception('Could not create ' . $type . ' tables in test database');
         }
     }
+
+    /* Create required root node */
+    $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
+    $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('up'), '=', new \midgard_query_value(0)));
+    $q->execute();
+    if ($q->get_results_count() == 0)
+    {
+        $root_object = new \midgardmvc_core_node();
+        $root_object->name = "jackalope";
+        $root_object->create();
+    }
 }
 
 function prepareMidgardTestDir($dir)
@@ -151,8 +162,8 @@ function getJCRSession($config, $credentials = null) {
 
 function getFixtureLoader($config)
 { 
-    require_once "midgard_importexport.php";
-    return new midgard_importexport(__DIR__."/suite/fixtures/");
+    require_once "Midgard2ImportExport.php";
+    return new Midgard2ImportExport(__DIR__."/suite/fixtures/");
 }
 
 /** some constants */
