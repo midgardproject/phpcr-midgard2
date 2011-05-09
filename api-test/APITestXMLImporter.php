@@ -62,6 +62,37 @@ class DocumentViewImporter implements JCRXMLImporter
 {
     public function XMLNode2MidgardObject ($node, $parent)
     {
+        if ($node->hasChildNodes() == false)
+        {
+            return;
+        }
+
+        foreach ($node->childNodes as $subnode)
+        {
+            if ($subnode instanceof DOMElement) 
+            {
+                /* The hierarchy of the content repository nodes and properties is reflected in
+                 * the hierarchy of the corresponding XML elements. */
+                $mvc_node = new midgardmvc_core_node();
+                $mvc_node->name = $subnode->tagName;
+                $mvc_node->up = $parent->id;
+                $mvc_node->create();
+          
+                /* If there's duplicate, get it and reuse */
+                if (midgard_connection::get_instance()->get_error() == MGD_ERR_DUPLICATE) 
+                {
+                    $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
+                    $group = new midgard_query_constraint_group('AND');
+                    $group->add_constraint(new \midgard_query_constraint(new \midgard_query_property('up'), '=', new \midgard_query_value($parent->id)));
+                    $group->add_constraint(new \midgard_query_constraint(new \midgard_query_property('name'), '=', new \midgard_query_value($subnode->tagName)));
+                    $q->set_constraint($group);
+                    $q->execute();
+                    $mvc_node = current($q->list_objects());
+                }
+
+                $this->XMLNode2MidgardObject($subnode, $mvc_node);
+            }
+        }
     }
 }
 
@@ -79,11 +110,11 @@ class APITestXMLImporter extends \DomDocument
     {
         /* Each JCR node becomes an XML element <sv:node>. */
         $node = $this->getElementsByTagNameNS($this->ns_sv, 'node')->item(0);
-        $importer = new SystemViewImporter();
+        $importer = new SystemViewImporter(); 
         if ($node == null)
         {
-            /* TODO, this might be Document View */
-            return;
+            $importer = new DocumentViewImporter();
+            $node = $this->getElementsByTagName('*')->item(0);
         }
 
         $importer->XMLNode2MidgardObject($node, $root);
