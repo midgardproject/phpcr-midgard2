@@ -52,6 +52,12 @@ class Midgard2XMLImporter extends \DomDocument
         }
     }
 
+    private function getPropertyValue(\DOMElement $property)
+    {
+        $typeElement = $property->getElementsByTagNameNS($this->ns_sv, 'value');
+        return $typeElement->item(0)->textContent;
+    }
+
     private function getNodeType(\DOMElement $node)
     {
         $propertyElements = $node->getElementsByTagNameNS($this->ns_sv, 'property');
@@ -60,11 +66,33 @@ class Midgard2XMLImporter extends \DomDocument
             $propertyName = $property->getAttributeNS($this->ns_sv, 'name');
             if ($propertyName == 'jcr:primaryType')
             {
-                $typeElement = $property->getElementsByTagNameNS($this->ns_sv, 'value');
-                return $typeElement->item(0)->textContent;
+                return $this->getPropertyValue($property);
             }
         }
         return null;
+    }
+
+    private function writeProperty(\midgard_object $object, \DOMElement $property)
+    {
+        $propertyName = $property->getAttributeNS($this->ns_sv, 'name');
+        if ($propertyName == 'jcr:primaryType')
+        {
+            return false;
+        }
+
+        if (substr($propertyName, 0, 4) == 'mgd:')
+        {
+            $propertyName = substr($propertyName, 4);
+            $object->$propertyName = $this->getPropertyValue($property);
+            return $object->update();
+        }
+
+        $parts = explode(':', $propertyName);
+        if (count($parts) != 2)
+        {
+            return false;
+        }
+        return $object->set_parameter($parts[0], $parts[1], $this->getPropertyValue($property));
     }
 
     private function writeNode(\midgard_object $parent, \DOMElement $node)
@@ -112,6 +140,11 @@ class Midgard2XMLImporter extends \DomDocument
         else
         {
             $object->update();
+        }
+
+        foreach ($propertyElements as $propertyElement)
+        {
+            $this->writeProperty($object, $propertyElement);
         }
 
         $nodeElements = $node->getElementsByTagNameNS($this->ns_sv, 'node');

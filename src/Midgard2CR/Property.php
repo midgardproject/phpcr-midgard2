@@ -19,6 +19,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             return substr($this->propertyName, 4);
         }
+        return null;
     }
 
     public function setValue($value, $type = NULL, $weak = FALSE)
@@ -29,17 +30,22 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function addValue($value)
     {
     }
-    
+
     public function getNativeValue()
     {
         $propertyName = $this->getMidgard2PropertyName();
+        if (!$propertyName)
+        {
+            $parts = explode(':', $this->propertyName);
+            return $this->object->get_parameter($parts[0], $parts[1]);
+        }
         return $this->object->$propertyName;
     }
     
     public function getString()
     {
-        $propertyName = $this->getMidgard2PropertyName();
-        return $this->object->$propertyName;
+        // TODO: Convert
+        return $this->getNativeValue();
     }
     
     public function getBinary()
