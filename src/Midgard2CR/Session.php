@@ -70,7 +70,7 @@ class Session implements \PHPCR\SessionInterface
     
     public function getNodeByIdentifier($id)
     {
-        return null;
+        throw new \PHPCR\RepositoryException("Not implemented");
     }
     
     public function getItem($absPath)
