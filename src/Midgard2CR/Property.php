@@ -37,6 +37,10 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         if (!$propertyName)
         {
             $parts = explode(':', $this->propertyName);
+            if (count($parts) == 1)
+            {
+                return $this->object->get_parameter('phpcr:undefined', $parts[0]);
+            }
             return $this->object->get_parameter($parts[0], $parts[1]);
         }
         return $this->object->$propertyName;

@@ -90,7 +90,8 @@ class Midgard2XMLImporter extends \DomDocument
         $parts = explode(':', $propertyName);
         if (count($parts) != 2)
         {
-            return false;
+            $parts[1] = $parts[0];
+            $parts[0] = 'phpcr:undefined';
         }
         return $object->set_parameter($parts[0], $parts[1], $this->getPropertyValue($property));
     }

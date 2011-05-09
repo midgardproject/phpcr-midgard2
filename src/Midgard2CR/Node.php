@@ -139,6 +139,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $params = $this->object->list_parameters();
         foreach ($params as $param)
         {
+            if ($param->domain == 'phpcr:undefined')
+            {
+                $this->properties[$param->name] = new Property($this, $param->name);
+                continue;
+            }
             $this->properties["{$param->domain}:{$param->name}"] = new Property($this, "{$param->domain}:{$param->name}");
         }
     }
