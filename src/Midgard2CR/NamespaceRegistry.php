@@ -9,6 +9,7 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
                                  'nt'  => 'http://www.jcp.org/jcr/nt/1.0',
                                  'mix' => 'http://www.jcp.org/jcr/mix/1.0',
                                  'xml' => 'http://www.w3.org/XML/1998/namespace',
+                                 'mgd' => 'http://www.midgard-project.org/repligard/1.4',
                                  ''    => '');
 
     public function __construct(\Midgard2CR\Session $session)
