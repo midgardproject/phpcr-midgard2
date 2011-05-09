@@ -75,7 +75,28 @@ class Session implements \PHPCR\SessionInterface
     
     public function getItem($absPath)
     {
-        return null;
+        if ($this->nodeExists($absPath))
+        {
+            return $this->getNode($absPath);
+        }
+        if ($this->propertyExists($absPath))
+        {
+            return $this->getProperty($absPath);
+        }
+        throw new \PHPCR\PathNotFoundException('No item matches path');
+    }
+
+    private function validatePath($absPath)
+    {
+        if (substr($absPath, 0, 1) != '/')
+        {
+            throw new \PHPCR\RepositoryException('Full path required');
+        }
+
+        if (strpos($absPath, '//') !== false)
+        {
+            throw new \PHPCR\RepositoryException('Invalid path');
+        }
     }
     
     public function getNode($absPath)
@@ -87,20 +108,14 @@ class Session implements \PHPCR\SessionInterface
             return $this->getRootNode();
         }
 
-        if (substr($absPath, 0, 1) == '/')
-        {
-            $absPath = substr($absPath, 1);
-        }
-        return $this->getRootNode()->getNode($absPath);
+        $this->validatePath($absPath);
+        return $this->getRootNode()->getNode(substr($absPath, 1));
     }
     
     public function getProperty($absPath)
     {
-        if (substr($absPath, 0, 1) == '/')
-        {
-            $absPath = substr($absPath, 1);
-        }
-        return $this->getRootNode()->getProperty($absPath);
+        $this->validatePath($absPath);
+        return $this->getRootNode()->getProperty(substr($absPath, 1));
     }
     
     public function itemExists($absPath)
