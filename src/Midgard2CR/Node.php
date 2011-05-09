@@ -135,6 +135,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         {
             $this->properties["mgd:{$property}"] = new Property($this, "mgd:{$property}");
         }
+
+        $params = $this->object->list_parameters();
+        foreach ($params as $param)
+        {
+            $this->properties["{$param->domain}:{$param->name}"] = new Property($this, "{$param->domain}:{$param->name}");
+        }
     }
 
     public function getProperty($relPath)
