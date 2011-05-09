@@ -20,6 +20,12 @@ class Repository implements \PHPCR\RepositoryInterface
     
     private function midgard2Connect()
     {
+        $mgd = \midgard_connection::get_instance();
+        if ($mgd->is_connected())
+        {
+            return $mgd;
+        }
+
         $filepath = ini_get('midgard.configuration_file');
         $config = new \midgard_config();
         $config->read_file_at_path($filepath);

@@ -14,6 +14,80 @@
  * constants necessary to the JCR 1.0/JSR-170 and JSR-283 specs
  */
 
+if (getenv('MIDGARD_ENV_GLOBAL_SHAREDIR') != '/tmp/JackalopeMidgard2/share')
+{
+    die("\nBefore running these tests you need to run 'export MIDGARD_ENV_GLOBAL_SHAREDIR=/tmp/JackalopeMidgard2/share'\n");
+}
+
+function getMidgardConnection() {
+    // Open connection
+    $midgard = \midgard_connection::get_instance();
+    if ($midgard->is_connected())
+    {
+        // Already connected
+        return $midgard;
+    }
+
+    prepareMidgardTestDir('share');
+    prepareMidgardTestDir('blobs');
+    prepareMidgardTestDir('var');
+    prepareMidgardTestDir('cache');
+
+    exec("cp -r Midgard2/share/* /tmp/JackalopeMidgard2/share");
+    exec("cp Midgard2/midgard2.conf /tmp/JackalopeMidgard2/midgard2.conf");
+    
+    $config = new \midgard_config();
+    $config->read_file_at_path("/tmp/JackalopeMidgard2/midgard2.conf");
+    if (!$midgard->open_config($config))
+    {
+        throw new Exception('Could not open Midgard connection to test database: ' . $midgard->get_error_string());
+    }
+
+    prepareMidgardStorage();
+
+    return $midgard;
+}
+
+function prepareMidgardStorage()
+{
+    midgard_storage::create_base_storage();
+
+    // And update as necessary
+    $re = new ReflectionExtension('midgard2');
+    $classes = $re->getClasses();
+    foreach ($classes as $refclass)
+    {
+        $parent_class = $refclass->getParentClass();
+        if (!$parent_class)
+        {
+            continue;
+        }
+        if ($parent_class->getName() != 'midgard_object')
+        {
+            continue;
+        }
+
+        $type = $refclass->getName();            
+        if (midgard_storage::class_storage_exists($type))
+        {
+            continue;
+        }
+
+        if (!midgard_storage::create_class_storage($type))
+        {
+            throw new Exception('Could not create ' . $type . ' tables in test database');
+        }
+    }
+}
+
+function prepareMidgardTestDir($dir)
+{
+    if (!file_exists("/tmp/JackalopeMidgard2/{$dir}"))
+    {
+        mkdir("/tmp/JackalopeMidgard2/{$dir}", 0777, true);
+    }
+}
+
 // Make sure we have the necessary config
 $necessaryConfigValues = array('jcr.url', 'jcr.user', 'jcr.pass', 'jcr.workspace', 'jcr.transport');
 foreach ($necessaryConfigValues as $val) {
@@ -35,6 +109,8 @@ $phpcrAutoloader = new SplClassLoader('PHPCR', dirname (__FILE__) . '/../lib/PHP
 $phpcrAutoloader->register();
 
 function getRepository($config) {
+    $mgd = getMidgardConnection();
+
     $factory = new Midgard2CR\RepositoryFactory();
     return $factory->getRepository();
 }

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Schema xmlns="http://www.midgard-project.org/repligard/1.4">
+    <type name="midgardmvc_core_login_session" table="midgardmvc_core_login_session">
+        <property name="id" type="unsigned integer" primaryfield="id">
+            <description>Local non-replication-safe database identifier</description>
+        </property>
+        <property name="userid" type="string" index="yes">
+            <description>User identifier for the authenticated session</description>
+        </property>
+        <property name="username" type="string" index="yes">
+            <description>Authenticated user's username</description>
+        </property>
+        <property name="password" type="string">
+            <description>Authenticated user's password</description>
+        </property>
+        <property name="authtype" type="string">
+            <description>Midgard authentication type used for session</description>
+        </property>
+        <property name="clientip" type="string">
+            <description>IP address user is authenticated from</description>
+        </property>
+        <property name="timestamp" type="integer">
+            <description>Login time as Unix timestamp</description>
+        </property>
+        <property name="trusted" type="boolean">
+            <description>Trusted auth</description>
+        </property>
+    </type>
+
+    <type name="midgardmvc_core_templatedir" table="midgardmvc_core_templatedir">
+        <property name="id" type="unsigned integer" primaryfield="id">
+            <description>Local non-replication-safe database identifier</description>
+        </property>
+        <property name="up" type="unsigned integer" link="midgardmvc_core_templatedir:id" upfield="up">
+            <description>Style the style is under</description>
+        </property>
+        <property name="name" type="string" index="yes" unique="yes">
+            <description>Path name of the style</description>
+        </property>
+    </type>
+
+    <type name="midgardmvc_core_template" table="midgardmvc_core_template" parent="midgardmvc_core_templatedir">
+        <property name="id" type="unsigned integer" primaryfield="id">
+            <description>Local non-replication-safe database identifier</description>
+        </property>
+        <property name="templatedir" type="unsigned integer" link="midgardmvc_core_templatedir:id" parentfield="templatedir">
+            <description>Template directory the template is in</description>
+        </property>
+        <property name="name" type="string" index="yes" unique="yes">
+            <description>Name of the template</description>
+        </property>
+        <property name="content" type="text">
+            <description>Contents of the template</description>
+            <contenttype>php</contenttype>
+        </property>
+        <property name="inherited" type="boolean">
+            <description>Whether the template is inherited to template directories under this directory</description>
+        </property>
+    </type>
+
+
+    <type name="midgardmvc_core_node" table="midgardmvc_core_node">
+        <property name="id" type="unsigned integer" primaryfield="id">
+            <description>Local non-replication-safe database identifier</description>
+        </property>
+        <property name="up" type="unsigned integer" link="midgardmvc_core_node:id" upfield="up">
+            <description>Node this node is under</description>
+        </property>
+        <property name="name" type="string" index="yes" unique="yes">
+            <description>Path name of the node</description>
+        </property>
+        <property name="title" type="string">
+            <description>Title of the node</description>
+        </property>
+        <property name="content"  type="text">
+            <description>Content of the node</description>
+            <contenttype>html</contenttype>
+        </property>
+        <property name="component" type="string" index="yes">
+            <description>Component used with the node</description>
+            <contenttype>component</contenttype>
+        </property>
+        <property name="templatedir" type="unsigned integer" link="midgardmvc_core_templatedir:id">
+            <description>Template directory to load templates for the node from</description>
+        </property>
+    </type>
+
+    <type name="midgardmvc_core_node_template" table="midgardmvc_core_node_template" parent="midgardmvc_core_node">
+        <property name="id" type="unsigned integer" primaryfield="id">
+            <description>Local non-replication-safe database identifier</description>
+        </property>
+        <property name="node" type="unsigned integer" link="midgardmvc_core_node:id" parentfield="node">
+            <description>Node the element is under</description>
+        </property>
+        <property name="name" type="string" index="yes" unique="yes">
+            <description>Name of the template</description>
+        </property>
+        <property name="content" type="text">
+            <description>Contents of the template</description>
+            <contenttype>php</contenttype>
+        </property>
+        <property name="inherited" type="boolean">
+            <description>Whether the template is inherited to subnodes</description>
+        </property>
+    </type>
+</Schema>
