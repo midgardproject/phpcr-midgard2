@@ -66,7 +66,7 @@ class Repository implements \PHPCR\RepositoryInterface
         $rootnodes = $this->getRootNodes();
         if (empty($rootnodes))
         {
-            throw new \PHPCR\NoSuchWorkspacexception('No workspaces defined');
+            throw new \PHPCR\NoSuchWorkspaceException('No workspaces defined');
         }
         return $rootnodes[0];
     }
