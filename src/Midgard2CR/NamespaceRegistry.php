@@ -9,16 +9,13 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
                                  'nt'  => 'http://www.jcp.org/jcr/nt/1.0',
                                  'mix' => 'http://www.jcp.org/jcr/mix/1.0',
                                  'xml' => 'http://www.w3.org/XML/1998/namespace',
+                                 'mgd' => 'http://www.midgard-project.org/repligard/1.4',
                                  ''    => '');
-    public function __construct()
-    {
-        $this->registry = $this->builtins;
-    }
 
-    public function NamespaceRegistry (\Midgard2CR\Session $session)
+    public function __construct(\Midgard2CR\Session $session)
     {
         $this->session = $session;    
-        $this->registry = array();
+        $this->registry = $this->builtins;
     }
 
     public function registerNamespace($prefix, $uri)
@@ -62,7 +59,7 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
     
     public function getIterator()
     {
-
+        return new ArrayIterator($this->registery);
     }
 }
 
