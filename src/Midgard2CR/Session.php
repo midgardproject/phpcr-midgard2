@@ -358,8 +358,11 @@ class Session implements \PHPCR\SessionInterface
     
     public function isLive()
     {
-        // TODO: Check Midgard connection and is_user
-        return true;
+        if ($this->user)
+        {
+            return true;
+        }
+        return false;
     }
     
     public function getAccessControlManager()

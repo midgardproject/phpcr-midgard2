@@ -29,6 +29,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function addValue($value)
     {
+        throw new \PHPCR\RepositoryException("Not allowed");
     }
 
     public function getNativeValue()

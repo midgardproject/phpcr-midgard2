@@ -68,6 +68,65 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         throw new \PHPCR\RepositoryException("Not supported");
     }
 
+    private function getMgdSchemas()
+    {
+        $mgdschemas = array();
+        $re = new \ReflectionExtension('midgard2');
+        $classes = $re->getClasses();
+        foreach ($classes as $refclass)
+        {
+            $parent_class = $refclass->getParentClass();
+            if (!$parent_class)
+            {
+                continue;
+            }
+
+            if ($parent_class->getName() != 'midgard_object')
+            {
+                continue;
+            }
+            $mgdschemas[] = $refclass->getName();
+        }
+        return $mgdschemas;
+    }
+
+    private function getChildTypes()
+    {
+        $mgdschemas = $this->getMgdSchemas();
+        $child_types = array();
+        foreach ($mgdschemas as $mgdschema)
+        {
+            if ($mgdschema == 'midgard_parameter')
+            {
+                continue;
+            }
+
+            $link_properties = array
+            (
+                'parent' => \midgard_object_class::get_property_parent($mgdschema),
+                'up' => \midgard_object_class::get_property_up($mgdschema),
+            );
+
+            $ref = new \midgard_reflection_property($mgdschema);
+            foreach ($link_properties as $type => $property)
+            {
+                $link_class = $ref->get_link_name($property);
+                if (   empty($link_class)
+                    && $ref->get_midgard_type($property) === MGD_TYPE_GUID)
+                {
+                    $child_types[] = $mgdschema;
+                    continue;
+                }
+
+                if ($link_class == get_class($this->object))
+                {
+                    $child_types[] = $mgdschema;
+                }
+            }
+        }
+        return $child_types;
+    }
+
     private function populateChildren()
     {
         if (!is_null($this->children))
@@ -75,19 +134,22 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return;
         }
 
-        $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
-        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('up'), '=', new \midgard_query_value($this->object->id)));
-        $q->execute();
-
-        if ($q->get_results_count() == 0)
+        $this->children = array();
+        $childTypes = $this->getChildTypes();
+        foreach ($childTypes as $childType)
         {
-            return;
-        }
-
-        $children = $q->list_objects();
-        foreach ($children as $child)
-        {
-            $this->children[$child->name] = new Node($child, $this, $this->getSession());
+            if ($childType == get_class($this->object))
+            {
+                $children = $this->object->list();
+            }
+            else
+            {
+                $children = $this->object->list_children($childType);
+                foreach ($children as $child)
+                {
+                    $this->children[$child->name] = new Node($child, $this, $this->getSession());
+                }
+            }
         }
     }
 
@@ -221,11 +283,19 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function hasProperty($relPath)
     {
-        return false;
+        try {
+            $this->getProperty($relPath);
+            return true;
+        }
+        catch (\PHPCR\PathNotFoundException $e) 
+        {
+            return false;
+        }
     }
     
     public function hasNodes()
     {
+        $this->populateChildren();
         if (empty($this->children))
         {
             return false;
@@ -236,7 +306,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function hasProperties()
     {
-        return false;
+        $this->populateProperties();
+        if (empty($this->properties))
+        {
+            return false;
+        }
+
+        return true;
     }
     
     public function getPrimaryNodeType()
