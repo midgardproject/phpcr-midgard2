@@ -56,7 +56,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
     {
         if ($this->namespace_registry == null)
         {
-            $this->namespace_registry = new \Midgard2CR\NamespaceRegistry($this);
+            $this->namespace_registry = new \Midgard2CR\NamespaceRegistry($this->session);
         }
 
         return $this->namespace_registry;
