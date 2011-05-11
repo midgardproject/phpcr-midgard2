@@ -66,7 +66,7 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
     
     public function getIterator()
     {
-        return new ArrayIterator($this->registery);
+        return new \ArrayIterator($this->registery);
     }
 
     public function getNamespaceManager()
