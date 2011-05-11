@@ -3,7 +3,7 @@ namespace Midgard2CR;
 
 class Workspace implements \PHPCR\WorkspaceInterface
 {
-    protected $seesion = null;
+    protected $session = null;
     protected $query_manager = null;
     protected $namespace_registry = null;
 
