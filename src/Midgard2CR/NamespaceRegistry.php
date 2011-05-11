@@ -55,18 +55,26 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
 
     public function getURI($prefix)
     {
-        return $this->registry[$prefix];
+        if (array_key_exists ($prefix, $this->registry) == true)
+        {
+            return $this->registry[$prefix];
+        }
+        throw new \PHPCR\NamespaceException("{$prefix} not registered");
     }
 
     public function getPrefix($uri)
     {
-        $reversed = array_flip($this->registry);
-        return $reversed[$uri];
+        if (in_array ($uri, $this->registry) == true)
+        {
+            $reversed = array_flip($this->registry);
+            return $reversed[$uri];
+        }
+        throw new \PHPCR\NamespaceException("{$uri} not registered");
     }
     
     public function getIterator()
     {
-        return new \ArrayIterator($this->registery);
+        return new \ArrayIterator($this->registry);
     }
 
     public function getNamespaceManager()
