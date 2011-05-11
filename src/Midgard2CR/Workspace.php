@@ -5,6 +5,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
 {
     protected $seesion = null;
     protected $query_manager = null;
+    protected $namespace_registry = null;
 
     public function Workspace (\Midgard2CR\Session $session)
     {
@@ -53,7 +54,12 @@ class Workspace implements \PHPCR\WorkspaceInterface
 
     public function getNamespaceRegistry()
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        if ($this->namespace_registry == null)
+        {
+            $this->namespace_registry = new \Midgard2CR\NamespaceRegistry($this);
+        }
+
+        return $this->namespace_registry;
     }
 
     public function getNodeTypeManager()
