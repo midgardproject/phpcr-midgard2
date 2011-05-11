@@ -7,7 +7,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
     protected $query_manager = null;
     protected $namespace_registry = null;
 
-    public function Workspace (\Midgard2CR\Session $session)
+    public function __construct (\Midgard2CR\Session $session)
     {
         $this->session = $session;
     }
