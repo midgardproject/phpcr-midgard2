@@ -6,20 +6,33 @@ class Workspace implements \PHPCR\WorkspaceInterface
     protected $session = null;
     protected $query_manager = null;
     protected $namespace_registry = null;
+    protected $name = "";
+    protected $midgard_workspace = null;
 
     public function __construct (\Midgard2CR\Session $session)
     {
         $this->session = $session;
+        $workspace = \midgard_connection::get_instance()->get_workspace();
+        if (is_object($workspace))
+        {
+            $this->midgard_workspace = $workspace;
+        }
+            
     }
 
     public function getSession()
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        return $this->session; 
     }
 
     public function getName()
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        if ($this->midgard_workspace == null)
+        {
+            return "";
+        } 
+
+        return $this->midgard_workspace->name;
     }
 
     public function copy($srcAbsPath, $destAbsPath, $srcWorkspace = NULL)
