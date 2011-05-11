@@ -5,13 +5,17 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
 {
     protected $session = null;
     protected $registry = null;
+
+    const MGD_PREFIX_MGD = 'mgd';
+    const MGD_NAMESPACE_MGD = 'http://www.midgard-project.org/repligard/1.4';
+
     protected $builtins = array(
         self::PREFIX_JCR   => self::NAMESPACE_JCR,
         self::PREFIX_NT    => self::NAMESPACE_NT,
         self::PREFIX_MIX   => self::NAMESPACE_MIX,
         self::PREFIX_XML   => self::NAMESPACE_XML,
         self::PREFIX_EMPTY => self::NAMESPACE_EMPTY,
-        'mgd' => 'http://www.midgard-project.org/repligard/1.4',
+        self::MGD_PREFIX_MGD => self::MGD_NAMESPACE_MGD,
         ''    => ''
     );
 
@@ -63,6 +67,11 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
     public function getIterator()
     {
         return new ArrayIterator($this->registery);
+    }
+
+    public function getNamespaceManager()
+    {
+        return new \Midgard2CR\NamespaceManager($this);
     }
 }
 
