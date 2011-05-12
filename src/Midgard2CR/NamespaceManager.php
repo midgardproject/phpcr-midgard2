@@ -23,7 +23,16 @@ class NamespaceManager
      */
     public function isPrefix($string)
     {
-        $prefix = $this->registry->getPrefix($string);
+        try 
+        {
+            $prefix = $this->registry->getPrefix($string);
+            return true;
+        }
+        catch (\PHPCR\NamespaceException $e)
+        {
+            return false;
+        }
+
         if ($prefix == false)
         {
             return false;
@@ -105,7 +114,16 @@ class NamespaceManager
      */ 
     public function isUri($string)
     {
-        $uri = $this->registry->getUri($string);
+        try 
+        {
+            $uri = $this->registry->getUri($string);
+            return true;
+        }
+        catch (\PHPCR\NamespaceException $e)
+        {
+            return false;
+        }
+
         if ($uri == false)
             return false;
         return true;
