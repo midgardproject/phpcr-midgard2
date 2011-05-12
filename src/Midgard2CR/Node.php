@@ -134,6 +134,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return;
         }
 
+        \midgard_connection::get_instance()->set_loglevel("debug");
+
         $this->children = array();
         $childTypes = $this->getChildTypes();
         foreach ($childTypes as $childType)
@@ -145,10 +147,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             else
             {
                 $children = $this->object->list_children($childType);
-                foreach ($children as $child)
-                {
-                    $this->children[$child->name] = new Node($child, $this, $this->getSession());
-                }
+            }
+            foreach ($children as $child)
+            {
+                $this->children[$child->name] = new Node($child, $this, $this->getSession());
             }
         }
     }
