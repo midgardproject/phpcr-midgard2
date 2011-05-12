@@ -153,6 +153,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 $this->children[$child->name] = new Node($child, $this, $this->getSession());
             }
         }
+
+        /* Add attachments */
+        $attachments = $this->object->list_attachments();
+        foreach ($attachments as $child)
+        {
+            $this->children[$child->name] = new Node($child, $this, $this->getSession);
+        }
     }
 
     public function getNode($relPath)
