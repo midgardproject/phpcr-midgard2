@@ -75,10 +75,6 @@ class Midgard2XMLImporter extends \DomDocument
     private function writeProperty(\midgard_object $object, \DOMElement $property)
     {
         $propertyName = $property->getAttributeNS($this->ns_sv, 'name');
-        if ($propertyName == 'jcr:primaryType')
-        {
-            return false;
-        }
 
         if (substr($propertyName, 0, 4) == 'mgd:')
         {
