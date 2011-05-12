@@ -137,7 +137,7 @@ class NamespaceManager
         }
 
         /* Assume, given string is '#' terminating */
-        if (substr_count($string, '#', 1) {
+        if (substr_count($string, '#', 1)) {
             $spltd = explode($string, '#');
             if ($spltd[0] != null)
                 if ($this->isUri($spltd[0] . '#')) {
