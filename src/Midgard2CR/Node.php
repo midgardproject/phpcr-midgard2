@@ -158,7 +158,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $attachments = $this->object->list_attachments();
         foreach ($attachments as $child)
         {
-            $this->children[$child->name] = new Node($child, $this, $this->getSession);
+            $this->children[$child->name] = new Node($child, $this, $this->getSession());
         }
     }
 
