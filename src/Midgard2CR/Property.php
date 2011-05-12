@@ -15,8 +15,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     private function getMidgard2PropertyName()
     {
-        $nsregistry = $this->node->getSession()->getNamespaceRegistry();
-        $nsmanager = $registry->getNamespaceManager();
+        $nsregistry = $this->node->getSession()->getWorkspace()->getNamespaceRegistry();
+        $nsmanager = $nsregistry->getNamespaceManager();
         if (!$nsmanager)
             return null;
         $tokens = $nsmanager->getPrefixTokens($this->propertyName);
