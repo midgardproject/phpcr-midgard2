@@ -7,7 +7,7 @@ class NamespaceManager
 
     public function __construct(\Midgard2CR\NamespaceRegistry $registry)
     {
-        $this->registry = $registry
+        $this->registry = $registry;
     }
 
     /**
