@@ -235,7 +235,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $this->populateProperties();
             if (!isset($this->properties[$relPath]))
             {
-                throw new \PHPCR\PathNotFoundException();
+                throw new \PHPCR\PathNotFoundException("Property at path '{$relPath}' not found");
             }
         }
 
