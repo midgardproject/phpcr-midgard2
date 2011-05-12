@@ -168,7 +168,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $this->populateChildren();
             if (!isset($this->children[$relPath]))
             {
-                throw new \PHPCR\PathNotFoundException();
+                throw new \PHPCR\PathNotFoundException("Node at path '{$relPath}' not found");
             }
         }
 
