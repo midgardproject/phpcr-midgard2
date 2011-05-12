@@ -74,7 +74,7 @@ class Midgard2XMLImporter extends \DomDocument
 
     private function writeProperty(\midgard_object $object, \DOMElement $property)
     {
-        $propertyName = $property->getAttributeNS($this->ns_sv, 'name');
+        $propertyName = $property->getAttributeNS($this->ns_sv, 'name'); 
 
         if (substr($propertyName, 0, 4) == 'mgd:')
         {
@@ -169,7 +169,12 @@ class Midgard2XMLImporter extends \DomDocument
 
         foreach ($propertyElements as $propertyElement)
         {
-            $this->writeProperty($object, $propertyElement);
+            /* Check parent and current names.
+             * getElementsByTagNameNS returns all descendants */
+            if ($propertyElement->parentNode->getAttributeNS($this->ns_sv, 'name') == $name)
+            {
+                $this->writeProperty($object, $propertyElement);
+            }
         }
 
         $nodeElements = $node->getElementsByTagNameNS($this->ns_sv, 'node');
