@@ -23,7 +23,7 @@ class NamespaceManager
      */
     public function isPrefix($string)
     {
-        $prefix = $this->registry->getPrefix();
+        $prefix = $this->registry->getPrefix($string);
         if ($prefix == false)
         {
             return false;
