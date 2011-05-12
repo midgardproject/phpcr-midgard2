@@ -75,6 +75,11 @@ class Session implements \PHPCR\SessionInterface
     
     public function getItem($absPath)
     {
+        if (substr($absPath, 0, 1) != '/') 
+        {
+            throw new \PHPCR\PathNotFoundException("Expected absoulte path. Given one '{$absPath}' is relative");
+        }
+
         if ($this->nodeExists($absPath))
         {
             return $this->getNode($absPath);
