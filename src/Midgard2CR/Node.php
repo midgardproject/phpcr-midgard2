@@ -225,9 +225,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         if (strpos($relPath, '/') !== false)
         {
             $parts = explode('/', $relPath);
-            $relPath = array_shift($parts);
-            $remainingPath = implode('/', $parts);
-            return $this->getNode($relPath)->getProperty($remainingPath);
+            $property_name = array_pop($parts);
+            $remainingPath = implode('/', $parts); 
+            return $this->getNode($remainingPath)->getProperty($property_name);
         }
 
         if (!isset($this->properties[$relPath]))
