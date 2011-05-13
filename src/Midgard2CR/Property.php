@@ -15,9 +15,15 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     private function getMidgard2PropertyName()
     {
-        if (substr($this->propertyName, 0, 4) == 'mgd:')
+        $nsregistry = $this->node->getSession()->getWorkspace()->getNamespaceRegistry();
+        $nsmanager = $nsregistry->getNamespaceManager();
+        if (!$nsmanager)
+            return null;
+        $tokens = $nsmanager->getPrefixTokens($this->propertyName);
+        if ($tokens[0] == $nsregistry::MGD_PREFIX_MGD
+            && $tokens[1] != null)
         {
-            return substr($this->propertyName, 4);
+            return $tokens[1];
         }
         return null;
     }

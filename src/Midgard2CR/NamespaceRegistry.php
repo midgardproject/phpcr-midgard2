@@ -5,12 +5,19 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
 {
     protected $session = null;
     protected $registry = null;
-    protected $builtins = array('jcr' => 'http://www.jcp.org/jcr/1.0',
-                                 'nt'  => 'http://www.jcp.org/jcr/nt/1.0',
-                                 'mix' => 'http://www.jcp.org/jcr/mix/1.0',
-                                 'xml' => 'http://www.w3.org/XML/1998/namespace',
-                                 'mgd' => 'http://www.midgard-project.org/repligard/1.4',
-                                 ''    => '');
+
+    const MGD_PREFIX_MGD = 'mgd';
+    const MGD_NAMESPACE_MGD = 'http://www.midgard-project.org/repligard/1.4';
+
+    protected $builtins = array(
+        self::PREFIX_JCR   => self::NAMESPACE_JCR,
+        self::PREFIX_NT    => self::NAMESPACE_NT,
+        self::PREFIX_MIX   => self::NAMESPACE_MIX,
+        self::PREFIX_XML   => self::NAMESPACE_XML,
+        self::PREFIX_EMPTY => self::NAMESPACE_EMPTY,
+        self::MGD_PREFIX_MGD => self::MGD_NAMESPACE_MGD,
+        ''    => ''
+    );
 
     public function __construct(\Midgard2CR\Session $session)
     {
@@ -48,18 +55,31 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
 
     public function getURI($prefix)
     {
-        return $this->registry[$prefix];
+        if (array_key_exists ($prefix, $this->registry) == true)
+        {
+            return $this->registry[$prefix];
+        }
+        throw new \PHPCR\NamespaceException("{$prefix} not registered");
     }
 
     public function getPrefix($uri)
     {
-        $reversed = array_flip($this->registry);
-        return $reversed[$uri];
+        if (in_array ($uri, $this->registry) == true)
+        {
+            $reversed = array_flip($this->registry);
+            return $reversed[$uri];
+        }
+        throw new \PHPCR\NamespaceException("{$uri} not registered");
     }
     
     public function getIterator()
     {
-        return new ArrayIterator($this->registery);
+        return new \ArrayIterator($this->registry);
+    }
+
+    public function getNamespaceManager()
+    {
+        return new \Midgard2CR\NamespaceManager($this);
     }
 }
 
