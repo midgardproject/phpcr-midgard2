@@ -15,4 +15,9 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
     {
         return new Repository();    
     }
+
+    public function getConfigurationKeys()
+    {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
+    }
 }

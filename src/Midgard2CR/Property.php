@@ -5,27 +5,58 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 {
     protected $propertyName = null;
     protected $node = null;
+    protected $type = 0;
+    protected $isMidgardProperty = false;
+    protected $midgardPropertyName = null;
 
     public function __construct(Node $node, $propertyName)
     {
         $this->propertyName = $propertyName;
         $this->node = $node;
-        parent::__construct($node->getMidgard2Object(), $node, $node->getSession());
-    }
-    
-    private function getMidgard2PropertyName()
-    {
+        $midgard_object = $node->getMidgard2Object();
+        $param = null;
+        $property_name = null;
+
+        /* Check if we get MidgardObject property */
         $nsregistry = $this->node->getSession()->getWorkspace()->getNamespaceRegistry();
         $nsmanager = $nsregistry->getNamespaceManager();
-        if (!$nsmanager)
-            return null;
         $tokens = $nsmanager->getPrefixTokens($this->propertyName);
         if ($tokens[0] == $nsregistry::MGD_PREFIX_MGD
             && $tokens[1] != null)
         {
-            return $tokens[1];
+            $property_name = $tokens[1];
+            $this->isMidgardProperty = true;
+            $this->midgardPropertyName = $property_name;
         }
-        return null;
+
+        if (!$property_name) 
+        {
+            $params = array();
+            if ($tokens[0] != null 
+                && $tokens[1] != null)
+            {
+                $params = $midgard_object->find_parameters(array("domain" => $tokens[0], "name" => $tokens[1]));
+            }
+            else 
+            {
+                $params = $midgard_object->find_parameters(array("domain" => "phpcr:undefined", "name" => $this->propertyName));
+            }
+            if (!empty($params))
+            {
+                $param = $params[0];
+            }
+
+        }
+        parent::__construct($param ? $param : $midgard_object, $node, $node->getSession());
+    }
+    
+    private function getMidgard2PropertyName()
+    {
+        if ($this->isMidgardProperty = false)
+        {
+            return null;
+        }
+        return $this->midgardPropertyName;
     }
 
     public function setValue($value, $type = NULL, $weak = FALSE)
@@ -36,6 +67,19 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function addValue($value)
     {
         throw new \PHPCR\RepositoryException("Not allowed");
+    }
+
+    public function getValue()
+    {
+        $type = $this->getType();
+        if ($type == \PHPCR\PropertyType::DATE)
+        {
+            return $this->getDate();
+        }
+        else 
+        {
+            return $this->getNativeValue();
+        } 
     }
 
     public function getNativeValue()
@@ -50,6 +94,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             }
             return $this->object->get_parameter($parts[0], $parts[1]);
         }
+        if ($this->object instanceof midgard_parameter)
+        {   
+            return $this->node->object->$propertyName;
+        }
+
         return $this->object->$propertyName;
     }
     
@@ -61,26 +110,56 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function getBinary()
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function getLong()
     {
+        $type = $this->getType();
+        if ($type == \PHPCR\PropertyType::DATE
+            || $type == \PHPCR\PropertyType::BINARY
+            || $type == \PHPCR\PropertyType::DECIMAL
+            || $type == \PHPCR\PropertyType::NAME
+            || $type == \PHPCR\PropertyType::REFERENCE
+            || $type == \PHPCR\PropertyType::DOUBLE)
+        {
+            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to LONG."); 
+        } 
+
+        return intval($this->getNativeValue());
     }
     
     public function getDouble()
     {
+        $type = $this->getType();
+        if ($type == \PHPCR\PropertyType::DATE
+            || $type == \PHPCR\PropertyType::BINARY
+            || $type == \PHPCR\PropertyType::NAME
+            || $type == \PHPCR\PropertyType::REFERENCE) 
+        {
+            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to LONG."); 
+        } 
+
+        return floatval($this->getNativeValue());       
     }
     
     public function getDecimal()
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function getDate()
     {
+        if ($this->getType() != \PHPCR\PropertyType::DATE)
+        {
+            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type FIXME) to DateTime object."); 
+        } 
+        return new \DateTime($this->getNativeValue());
     }
     
     public function getBoolean()
     {
+        return (bool) $this->getNativeValue();
     }
 
     public function getName()
@@ -95,26 +174,126 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function getProperty()
     {
+        $type = $this->getType();
+        if ($type != \PHPCR\PropertyType::PATH)
+        {
+            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to PATH type.");
+        } 
+        
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function getLength()
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function getLengths()
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
     public function getDefinition()
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
+    }
+
+    private function getJCRType($type)
+    {
+        switch ($type) 
+        {
+            case 'created':
+            case 'lastModified':
+                return \PHPCR\PropertyType::DATE;
+        }
+
+        return 0;
     }
     
+    private function getMGDType ()
+    {
+        $mrp = new \midgard_reflector_property (get_class($this->object));
+        $type = $mrp->get_midgard_type ($this->midgardPropertyName);
+
+        $type_id = 0;
+
+        switch ($type) 
+        {
+            case \MGD_TYPE_STRING:
+            case \MGD_TYPE_LONGTEXT:
+                $type_id = \PHPCR\PropertyType::STRING;
+                break;
+
+            case \MGD_TYPE_UINT:
+            case \MGD_TYPE_INT:
+                $type_id = \PHPCR\PropertyType::LONG;
+                break;
+
+            case \MGD_TYPE_FLOAT:
+                $type_id = \PHPCR\PropertyType::DOUBLE;
+                break;
+
+            case \MGD_TYPE_BOOLEAN:
+                $type_id = \PHPCR\PropertyType::BOOLEAN;
+                break;
+
+            case \MGD_TYPE_TIMESTAMP:
+                $type_id = \PHPCR\PropertyType::DATE;
+                break;
+        }
+
+        $this->type = $type_id;
+        return $this->type;
+    }
+
     public function getType()
     {
+        if ($this->type > 0)
+        {
+            return $this->type;
+        }
+
+        if ($this->isMidgardProperty)
+        {
+            return $this->getMGDType();
+        }
+
+        $parts = explode(':', $this->propertyName);
+        if (count($parts) == 1)
+        {
+            /* Try paramater which provides property type */
+            $pValue = $this->object->get_parameter('sv', 'type');
+            if (!$pValue)
+            {
+                throw new \PHPCR\RepositoryException("Unhandled type of property '{$this->propertyName}'"); 
+            }
+ 
+            $this->type = \PHPCR\PropertyType::valueFromName($pValue);
+            /* HACK HACK HACK, in my case, PHPUnit (3.5.12) consumes the whole memory when I return reference type here */
+            if ($this->type == \PHPCR\PropertyType::REFERENCE)
+            {
+                echo "REFERENCE type HACK\n";
+                $this->type = 0;
+            }
+            return $this->type;
+        }
+
+        switch ($parts[0]) 
+        {
+            case 'jcr':
+                $this->type = $this->getJCRType($parts[1]);
+                break;
+
+            default:
+                throw new \PHPCR\RepositoryException("Unhandled type of namespaced property '{$this->propertyName}'");
+        }
+
+        return $this->type;
     }
     
     public function isMultiple()
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
 
     public function isNode()
