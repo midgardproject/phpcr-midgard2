@@ -40,7 +40,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
         throw new \PHPCR\RepositoryException("Not supported");        
     }
 
-    public function klone($srcWorkspace, $srcAbsPath, $destAbsPath, $removeExisting)
+    public function cloneFrom($srcWorkspace, $srcAbsPath, $destAbsPath, $removeExisting)
     {
         throw new \PHPCR\RepositoryException("Not supported");        
     }

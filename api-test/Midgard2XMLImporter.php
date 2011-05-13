@@ -2,6 +2,7 @@
 class Midgard2XMLImporter extends \DomDocument
 {
     private $ns_sv = 'http://www.jcp.org/jcr/sv/1.0';
+    private $ns_prefix = 'sv';
 
     public function __construct($filepath)
     {
@@ -89,7 +90,18 @@ class Midgard2XMLImporter extends \DomDocument
             $parts[1] = $parts[0];
             $parts[0] = 'phpcr:undefined';
         }
-        return $object->set_parameter($parts[0], $parts[1], $this->getPropertyValue($property));
+        $parameter = new \midgard_parameter ();
+        $parameter->parentguid = $object->guid;
+        $parameter->domain = $parts[0];
+        $parameter->name = $parts[1];
+        $parameter->value = $this->getPropertyValue($property);
+        if (!$parameter->create())
+        {
+            return false;
+        }
+
+        $property_type = $property->getAttributeNS($this->ns_sv, 'type');
+        return $parameter->set_parameter($this->ns_prefix, 'type', $property_type);
     }
 
     private function mapNodeType(\midgard_object $parent, $type)
