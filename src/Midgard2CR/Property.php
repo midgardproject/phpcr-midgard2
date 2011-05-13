@@ -38,6 +38,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         throw new \PHPCR\RepositoryException("Not allowed");
     }
 
+    public function getValue()
+    {
+        throw new \PHPCR\UnsupportedRepositoryOperationException();
+    }
+
     public function getNativeValue()
     {
         $propertyName = $this->getMidgard2PropertyName();
