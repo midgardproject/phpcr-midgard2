@@ -70,11 +70,16 @@ class Session implements \PHPCR\SessionInterface
     
     public function getNodeByIdentifier($id)
     {
-        throw new \PHPCR\RepositoryException("Not implemented");
+        throw new \PHPCR\RepositoryException("Not implemented to get Node by identifier ({$id})");
     }
     
     public function getItem($absPath)
     {
+        if (substr($absPath, 0, 1) != '/') 
+        {
+            throw new \PHPCR\PathNotFoundException("Expected absoulte path. Given one '{$absPath}' is relative");
+        }
+
         if ($this->nodeExists($absPath))
         {
             return $this->getNode($absPath);
@@ -83,19 +88,19 @@ class Session implements \PHPCR\SessionInterface
         {
             return $this->getProperty($absPath);
         }
-        throw new \PHPCR\PathNotFoundException('No item matches path');
+        throw new \PHPCR\PathNotFoundException("No item matches path '{$absPath}'");
     }
 
     private function validatePath($absPath)
     {
         if (substr($absPath, 0, 1) != '/')
         {
-            throw new \PHPCR\RepositoryException('Full path required');
+            throw new \PHPCR\RepositoryException("Full path required. Given one is '{$absPath}'");
         }
 
         if (strpos($absPath, '//') !== false)
         {
-            throw new \PHPCR\RepositoryException('Invalid path');
+            throw new \PHPCR\RepositoryException("Invalid path '{$absPath}'");
         }
     }
     

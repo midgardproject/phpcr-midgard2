@@ -134,6 +134,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return;
         }
 
+        \midgard_connection::get_instance()->set_loglevel("debug");
+
         $this->children = array();
         $childTypes = $this->getChildTypes();
         foreach ($childTypes as $childType)
@@ -145,11 +147,18 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             else
             {
                 $children = $this->object->list_children($childType);
-                foreach ($children as $child)
-                {
-                    $this->children[$child->name] = new Node($child, $this, $this->getSession());
-                }
             }
+            foreach ($children as $child)
+            {
+                $this->children[$child->name] = new Node($child, $this, $this->getSession());
+            }
+        }
+
+        /* Add attachments */
+        $attachments = $this->object->list_attachments();
+        foreach ($attachments as $child)
+        {
+            $this->children[$child->name] = new Node($child, $this, $this->getSession());
         }
     }
 
@@ -168,7 +177,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $this->populateChildren();
             if (!isset($this->children[$relPath]))
             {
-                throw new \PHPCR\PathNotFoundException();
+                throw new \PHPCR\PathNotFoundException("Node at path '{$relPath}' not found");
             }
         }
 
@@ -216,9 +225,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         if (strpos($relPath, '/') !== false)
         {
             $parts = explode('/', $relPath);
-            $relPath = array_shift($parts);
-            $remainingPath = implode('/', $parts);
-            return $this->getNode($relPath)->getProperty($remainingPath);
+            $property_name = array_pop($parts);
+            $remainingPath = implode('/', $parts); 
+            return $this->getNode($remainingPath)->getProperty($property_name);
         }
 
         if (!isset($this->properties[$relPath]))
@@ -226,7 +235,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $this->populateProperties();
             if (!isset($this->properties[$relPath]))
             {
-                throw new \PHPCR\PathNotFoundException();
+                throw new \PHPCR\PathNotFoundException("Property at path '{$relPath}' not found");
             }
         }
 

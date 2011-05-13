@@ -3,22 +3,36 @@ namespace Midgard2CR;
 
 class Workspace implements \PHPCR\WorkspaceInterface
 {
-    protected $seesion = null;
+    protected $session = null;
     protected $query_manager = null;
+    protected $namespace_registry = null;
+    protected $name = "";
+    protected $midgard_workspace = null;
 
-    public function Workspace (\Midgard2CR\Session $session)
+    public function __construct (\Midgard2CR\Session $session)
     {
         $this->session = $session;
+        $workspace = \midgard_connection::get_instance()->get_workspace();
+        if (is_object($workspace))
+        {
+            $this->midgard_workspace = $workspace;
+        }
+            
     }
 
     public function getSession()
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        return $this->session; 
     }
 
     public function getName()
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        if ($this->midgard_workspace == null)
+        {
+            return "";
+        } 
+
+        return $this->midgard_workspace->name;
     }
 
     public function copy($srcAbsPath, $destAbsPath, $srcWorkspace = NULL)
@@ -53,7 +67,12 @@ class Workspace implements \PHPCR\WorkspaceInterface
 
     public function getNamespaceRegistry()
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        if ($this->namespace_registry == null)
+        {
+            $this->namespace_registry = new \Midgard2CR\NamespaceRegistry($this->session);
+        }
+
+        return $this->namespace_registry;
     }
 
     public function getNodeTypeManager()
