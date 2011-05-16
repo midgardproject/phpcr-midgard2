@@ -63,7 +63,30 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
     public function setValue($value, $type = NULL, $weak = FALSE)
     {
-        throw new \PHPCR\RepositoryException("Not allowed");
+        /* TODO, handle:
+         * \PHPCR\ValueFormatException
+         * \PHPCR\Version\VersionException 
+         * \PHPCR\Lock\LockException
+         * \PHPCR\ConstraintViolationException
+         * \PHPCR\RepositoryException
+         * \InvalidArgumentException
+         */ 
+        $propertyName = $this->getMidgard2PropertyName();
+        if ($propertyName) 
+        {
+            $this->object->$propertyName = $value;
+            return;
+        }
+
+        $this->type = $type;
+        $parts = explode(':', $this->propertyName);
+        if (count($parts) == 1)
+        {
+            $this->object->set_parameter('phpcr:undefined', $parts[0], $value);
+            return;
+        }
+
+        $this->object->set_parameter($parts[0], $parts[1], $value);
     }
     
     public function addValue($value)
@@ -96,10 +119,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             }
             return $this->object->get_parameter($parts[0], $parts[1]);
         }
-        if ($this->parameter)
+        
+        /*if ($this->parameter)
         {   
             return $this->node->object->$propertyName;
-        }
+        }*/
 
         return $this->object->$propertyName;
     }
