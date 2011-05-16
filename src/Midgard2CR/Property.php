@@ -8,11 +8,13 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     protected $type = 0;
     protected $isMidgardProperty = false;
     protected $midgardPropertyName = null;
+    protected $parameter = null;
 
     public function __construct(Node $node, $propertyName)
     {
         $this->propertyName = $propertyName;
         $this->node = $node;
+        $this->parent = $node;
         $midgard_object = $node->getMidgard2Object();
         $param = null;
         $property_name = null;
@@ -42,12 +44,12 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
                 $params = $midgard_object->find_parameters(array("domain" => "phpcr:undefined", "name" => $this->propertyName));
             }
             if (!empty($params))
-            {
-                $param = $params[0];
+            { 
+                $this->parameter = $params[0];
             }
 
         }
-        parent::__construct($param ? $param : $midgard_object, $node, $node->getSession());
+        parent::__construct($midgard_object, $node, $node->getSession());
     }
     
     private function getMidgard2PropertyName()
@@ -61,7 +63,30 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
     public function setValue($value, $type = NULL, $weak = FALSE)
     {
-        throw new \PHPCR\RepositoryException("Not allowed");
+        /* TODO, handle:
+         * \PHPCR\ValueFormatException
+         * \PHPCR\Version\VersionException 
+         * \PHPCR\Lock\LockException
+         * \PHPCR\ConstraintViolationException
+         * \PHPCR\RepositoryException
+         * \InvalidArgumentException
+         */ 
+        $propertyName = $this->getMidgard2PropertyName();
+        if ($propertyName) 
+        {
+            $this->object->$propertyName = $value;
+            return;
+        }
+
+        $this->type = $type;
+        $parts = explode(':', $this->propertyName);
+        if (count($parts) == 1)
+        {
+            $this->object->set_parameter('phpcr:undefined', $parts[0], $value);
+            return;
+        }
+
+        $this->object->set_parameter($parts[0], $parts[1], $value);
     }
     
     public function addValue($value)
@@ -94,10 +119,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             }
             return $this->object->get_parameter($parts[0], $parts[1]);
         }
-        if ($this->object instanceof midgard_parameter)
+        
+        /*if ($this->parameter)
         {   
             return $this->node->object->$propertyName;
-        }
+        }*/
 
         return $this->object->$propertyName;
     }
@@ -169,6 +195,14 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
     public function getNode()
     {
+        $type = $this->getType();
+        if ($type != \PHPCR\PropertyType::PATH
+            || $type != \PHPCR\PropertyType::REFERENCE
+            || $type != \PHPCR\Propertytype::WEAKREFERENCE)
+        {
+            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to Node type.");
+        } 
+
         return $this->node;
     }
     
@@ -262,7 +296,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         if (count($parts) == 1)
         {
             /* Try paramater which provides property type */
-            $pValue = $this->object->get_parameter('sv', 'type');
+            $pValue = null;
+            if ($this->parameter != null)
+            {
+                $pValue = $this->parameter->get_parameter('sv', 'type');
+            }
             if (!$pValue)
             {
                 throw new \PHPCR\RepositoryException("Unhandled type of property '{$this->propertyName}'"); 
@@ -304,5 +342,23 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function getIterator()
     {
          return new \ArrayIterator(array());
+    }
+
+    public function isSame (\PHPCR\ItemInterface $item)
+    {
+        if (!$item instanceof \PHPCR\PropertyInterface)
+        {
+            return false;
+        }
+
+        if ($item->getName() == $this->getName())
+        {
+            if ($item->getParent()->isSame($this->getParent()))
+            {
+                return true;
+            } 
+        }
+
+        return false;
     }
 }
