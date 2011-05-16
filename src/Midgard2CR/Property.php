@@ -13,6 +13,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     {
         $this->propertyName = $propertyName;
         $this->node = $node;
+        $this->parent = $node;
         $midgard_object = $node->getMidgard2Object();
         $param = null;
         $property_name = null;
@@ -304,5 +305,23 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function getIterator()
     {
          return new \ArrayIterator(array());
+    }
+
+    public function isSame (\PHPCR\ItemInterface $item)
+    {
+        if (!$item instanceof \PHPCR\PropertyInterface)
+        {
+            return false;
+        }
+
+        if ($item->getName() == $this->getName())
+        {
+            if ($item->getParent()->isSame($this->getParent()))
+            {
+                return true;
+            } 
+        }
+
+        return false;
     }
 }
