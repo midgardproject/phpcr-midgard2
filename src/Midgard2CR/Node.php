@@ -406,4 +406,22 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         return $this->getNodes();
     }
+
+    public function isSame(\PHPCR\ItemInterface $item)
+    {
+        if (!$item instanceof \PHPCR\NodeInterface)
+        {
+            return false;
+        }
+
+        /* TODO */
+        /* Check session */
+
+        if ($this->object->guid == $item->object->guid)
+        {
+            return true;
+        }
+
+        return false;
+    }
 }
