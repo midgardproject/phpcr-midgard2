@@ -8,6 +8,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     protected $type = 0;
     protected $isMidgardProperty = false;
     protected $midgardPropertyName = null;
+    protected $parameter = null;
 
     public function __construct(Node $node, $propertyName)
     {
@@ -43,12 +44,12 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
                 $params = $midgard_object->find_parameters(array("domain" => "phpcr:undefined", "name" => $this->propertyName));
             }
             if (!empty($params))
-            {
-                $param = $params[0];
+            { 
+                $this->parameter = $params[0];
             }
 
         }
-        parent::__construct($param ? $param : $midgard_object, $node, $node->getSession());
+        parent::__construct($midgard_object, $node, $node->getSession());
     }
     
     private function getMidgard2PropertyName()
@@ -95,7 +96,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             }
             return $this->object->get_parameter($parts[0], $parts[1]);
         }
-        if ($this->object instanceof midgard_parameter)
+        if ($this->parameter)
         {   
             return $this->node->object->$propertyName;
         }
@@ -263,7 +264,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         if (count($parts) == 1)
         {
             /* Try paramater which provides property type */
-            $pValue = $this->object->get_parameter('sv', 'type');
+            $pValue = null;
+            if ($this->parameter != null)
+            {
+                $pValue = $this->parameter->get_parameter('sv', 'type');
+            }
             if (!$pValue)
             {
                 throw new \PHPCR\RepositoryException("Unhandled type of property '{$this->propertyName}'"); 
