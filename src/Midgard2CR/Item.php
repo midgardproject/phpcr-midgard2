@@ -48,6 +48,38 @@ abstract class Item implements \PHPCR\ItemInterface
 
     public function getAncestor($depth)
     {
+        if ($depth < 0)
+        {
+            throw new \PHPCR\ItemNotFoundException("Expected positive depth value. {$depth} given.");
+        }
+
+        $n = $depth;
+        $ancestor = null;
+
+        do 
+        {
+            if ($n == 0)
+            {
+                $ancestor = $this->getSession()->getRootNode();
+                break;
+            }
+
+            $ancestor = $this->getParent();
+            if ($ancestor->getDepth() == $n)
+            {
+                break;
+            }
+        
+            $n--;
+
+        } while ($n > 0); 
+
+        if ($ancestor != null)
+        {
+            return $ancestor;
+        }
+
+        throw new \PHPCR\ItemNotFoundException("No item found at depth {$depth}");
     }
 
     public function getParent()
@@ -61,6 +93,15 @@ abstract class Item implements \PHPCR\ItemInterface
 
     public function getDepth()
     {
+        try 
+        {
+            $parent = $this->getParent();
+            return $parent->getDepth() + 1;
+        } 
+        catch (\PHPCR\ItemNotFoundException $e)
+        {
+            return 0;
+        }
     }
 
     public function getSession()
