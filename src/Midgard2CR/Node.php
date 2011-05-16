@@ -65,7 +65,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function setProperty($name, $value, $type = NULL)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        try 
+        {
+            $property = $this->getProperty($name);
+        } 
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+            /* TODO, handle namespaced properties */
+            $property = new Property ($this, $name);
+            $this->properties[$name] = $property;
+        }
+        $property->setValue ($value, $type);
     }
 
     private function getMgdSchemas()
