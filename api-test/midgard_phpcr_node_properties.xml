@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Schema xmlns="http://www.midgard-project.org/repligard/1.4">
+	<type name="midgard_property_model" table="midgard_property_model" metadata="false">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+		<property name="name" type="string">
+			<description>The name of the property</description>
+		</property>
+		<property name="type" type="string">
+			<description>The type of the property</description>
+		</property>
+		<property name="prefix" type="string">
+			<description>Prefix of the property</description>
+		</property>
+	</type>
+	<type name="midgard_property" table="midgard_property" metadata="false">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+		<property name="modelid" type="unsigned integer" link="midgard_property_model:id">
+			<description>Link to property's id</description>
+		</property>
+		<property name="modelguid" type="guid" link="midgard_property_model:guid">
+			<description>link to property's guid</description>
+		</property>
+		<property name="nodeid" type="unsigned integer" index="yes">
+			<description>ID of an object</description>
+		</property>
+		<property name="nodeguid" type="guid">
+			<description>Guid of an object</description>
+		</property>
+		<property name="typename" type="string">
+			<description>The name of the class</description>
+		</property>
+	</type>
+	<type name="midgard_property_value" table="midgard_property_value" metadata="false">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+		<property name="modelid" type="unsigned integer" link="midgard_property_model:id">
+			<description>Link to property's id</description>
+		</property>
+		<property name="objectid" type="unsigned integer" link="midgard_property_model:id">
+			<description>ID of an object</description>
+		</property>
+		<property name="value" type="string">
+			<description>ID of an object</description>
+		</property>
+	</type>
+</Schema>
