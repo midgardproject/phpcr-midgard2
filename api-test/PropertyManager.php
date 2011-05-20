@@ -4,6 +4,7 @@ class Property
 {
     private $values = null;
     public $stored;
+    public $modified;
     public $model = null;
 
     public function __construct()
@@ -11,11 +12,22 @@ class Property
         $this->values = array();
         $this->stored = false;
         $this->model = null;
+        $this->modified = false;
     }
 
     public function getValues()
     {
         return $this->values;
+    }
+
+    public function getLiterals()
+    {
+        $ret = array();
+        foreach ($this->getValues() as $v)
+        {
+            $ret[] = $v->value;
+        }
+        return $ret;
     }
 
     public function addLiteral ($val, $id)
@@ -32,12 +44,28 @@ class Property
         foreach ($this->values as $k => $v)
         {
             if ($v->value == $value->value)
-            {
-                $this->values[$k] = $value;
+            { 
                 return;
             }
         }
+        $this->modified = true; 
         array_unshift($this->values, $value);
+    }
+
+    public function setValue ($value)
+    {
+        $this->modified = true;
+        foreach ($this->values as $k => $v)
+        {
+            if ($v->id == $value->id)
+            { 
+                $this->values[$k] = $value;
+                if ($v->value == $value->value)
+                {
+                    $this->modified = false; 
+                }
+            } 
+        }      
     }
 }
 
@@ -49,14 +77,14 @@ class PropertyManager
     protected $model_property;
     protected $property_value;
 
-    public function __construct($object)
+    public function __construct ($object)
     {
         $this->object = $object;
         $this->classname = get_class($object);
         $this->populateProperties();
     }
 
-    protected function findInCache($name, $prefix)
+    protected function findInCache ($name, $prefix)
     {
         if ($this->cache == null)
         {
@@ -75,7 +103,7 @@ class PropertyManager
         return null;
     }
 
-    public function factory($name, $prefix, $type, $value = null)
+    private function propertyFactory ($name, $prefix, $type)
     {
         $property = $this->findInCache ($name, $prefix);
         if ($property == null)
@@ -84,9 +112,17 @@ class PropertyManager
             $property->model = new midgard_property_model();
             $property->model->name = $name;
             $property->model->prefix = $prefix ? $prefix : "";
-            $property->model->type = $type; 
+            $property->model->type = $type;
+            $property->modified = true;
             array_unshift($this->cache, $property);
         }
+
+        return $property;
+    }
+
+    public function factory ($name, $prefix, $type, $value = null)
+    {
+        $property = $this->propertyFactory ($name, $prefix, $type);
 
         if ($value != null)
         {
@@ -123,19 +159,20 @@ class PropertyManager
         $ret = $q->list_objects();
         foreach ($ret as $p)
         { 
-            $property = $this->factory($p->name, $p->prefix, $p->type, null);
+            $property = $this->propertyFactory($p->name, $p->prefix, $p->type);
             $property->stored = true;
             $property->model->id = $p->modelid;
            
             $value = new midgard_property_value();
             $value->id = $p->valueid;
             $value->modelid = $p->modelid;
-            $value->value = $p->value;
+            $value->value = $p->value; 
             $property->addValue($value);
+            $property->modified = false;
         }
     }
 
-    private function createProperty($property)
+    private function createProperty ($property)
     {
         /* Check if there's property model */
         $model = null;
@@ -225,8 +262,23 @@ class PropertyManager
         }
     }
 
-    private function populateValues($property)
+    private function populateValues ($property)
     {
+        $populate = false;
+        foreach ($property->getValues() as $value)
+        {
+            if (!$value->guid)
+            {
+                $populate = true;
+                break;
+            }
+        }
+
+        if (!$populate)
+        {
+            return;
+        }
+
         $storage = new midgard_query_storage("midgard_property_value");
         $q = new midgard_query_select ($storage);
         $q->set_constraint
@@ -250,11 +302,11 @@ class PropertyManager
         $ret = $q->list_objects();
         foreach ($ret as $p)
         { 
-            $property->addValue($p);
+            $property->setValue($p);
         }
     }
 
-    private function updateProperty($property)
+    private function updateProperty ($property)
     {
         /* Replace values with objects fetched from storage */
         $this->populateValues($property);
@@ -273,7 +325,7 @@ class PropertyManager
         }
     }
 
-    private function deleteProperty($property)
+    private function deleteProperty ($property)
     {
         
     }
@@ -282,6 +334,11 @@ class PropertyManager
     { 
         foreach ($this->cache as $property)
         {
+            if (!$property->modified)
+            {
+                continue;
+            }
+
             if ($property->stored)
             {
                 $this->updateProperty($property);
