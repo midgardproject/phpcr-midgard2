@@ -29,6 +29,7 @@ function getMidgardConnection() {
     }
 
     prepareMidgardTestDir('share');
+    prepareMidgardTestDir('views');
     prepareMidgardTestDir('blobs');
     prepareMidgardTestDir('var');
     prepareMidgardTestDir('cache');
@@ -152,10 +153,10 @@ function getJCRSession($config, $credentials = null) {
         }
         return $repository->login($credentials, $config['workspace']);
     } elseif (isset($config['workspace'])) {
-        throw new \PHPCR\RepositoryException(jackalope_baseCase::NOTSUPPORTEDLOGIN);
+        throw new \PHPCR\RepositoryException("Not supported login");
         //return $repository->login(null, $config['workspace']);
     } else {
-        throw new \PHPCR\RepositoryException(jackalope_baseCase::NOTSUPPORTEDLOGIN);
+        throw new \PHPCR\RepositoryException("Not supported login");
         //return $repository->login(null, null);
     }
 }
