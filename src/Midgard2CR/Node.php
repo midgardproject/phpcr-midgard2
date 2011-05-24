@@ -203,12 +203,90 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
         return $this->children[$relPath];        
     }
-    
+
+    private function getNodesSimilar($name)
+    {
+        $ret = array();
+
+        $nsregistry = $this->getSession()->getWorkspace()->getNamespaceRegistry();
+        $nsmanager = $nsregistry->getNamespaceManager();
+
+        $prefix = $nsmanager->getPrefix($name);
+        if ($prefix == null)
+        {
+            return $ret;
+        }
+
+        foreach ($this->children as $n => $o)
+        {
+            $node_prefix = $nsmanager->getPrefix($o->getName());
+            if ($node_prefix == $prefix)
+            {
+                $ret = $o;
+            }
+        }
+
+        return $ret;
+    }
+
+    private function getNodesEqual($name)
+    {
+        $ret = array();
+
+        if (array_key_exists($name, $this->children))
+        { 
+            $ret[] = $this->children[$name];
+        }
+            
+        return $ret;
+    }
+
     public function getNodes($filter = NULL)
     {
-        // TODO: Filtering support
         $this->populateChildren();
-        return new \ArrayIterator($this->children);
+
+        $nodes = array();
+
+        if ($filter == null) 
+        {
+            return new \ArrayIterator($this->children);
+        }
+
+        if (is_string($filter))
+        {
+            $filters = array();
+            $parts = explode('|', $filter);
+            if (!isset($parts[1]))
+            {
+                $filters[] = $filter;
+            }
+            else 
+            {
+                foreach($parts as $p)
+                {
+                    $filters[] = trim($p);
+                }
+            }
+
+            foreach ($filters as $f)
+            {
+                if (strpos($f, '*') !== false)
+                {
+                    $nodes = array_merge($nodes, $this->getNodesSimilar($f));
+                }
+                else 
+                {
+                    $nodes = array_merge($nodes, $this->getNodesEqual($f));
+                }
+            }
+        } 
+
+        if (is_array($filter))
+        {
+            /* TODO */
+        }
+
+        return new \ArrayIterator($nodes);
     }
 
     private function populateProperties()
