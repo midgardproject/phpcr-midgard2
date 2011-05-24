@@ -83,6 +83,9 @@ function prepareMidgardStorage()
     /* Prepare properties view */
     midgard_storage::create_class_storage("midgard_property_view");
 
+    /* Prepare namespace registry */
+    midgard_storage::create_class_storage("midgard_namespace_registry");
+
     /* Create required root node */
     $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
     $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('up'), '=', new \midgard_query_value(0)));
