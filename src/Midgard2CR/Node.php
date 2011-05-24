@@ -175,7 +175,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function getNode($relPath)
     {
         $remainingPath = '';
-        if (strpos($relPath, '/') !== false)
+        $pos = strpos($relPath, '/');
+        /* Convert to relative path when absolute one has been given */
+        if ($pos === 0)
+        {
+            $relPath = substr($relPath, 1);
+        }
+        else if ($pos !== false)
         {
             $parts = explode('/', $relPath);
             $relPath = array_shift($parts);
