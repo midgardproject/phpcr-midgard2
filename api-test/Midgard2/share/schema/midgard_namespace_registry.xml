@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Schema xmlns="http://www.midgard-project.org/repligard/1.4">
+	<type name="midgard_namespace_registry" table="midgard_namespace_registry" metadata="false">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+		<property name="uri" type="string">
+			<description>Uri</description>
+		</property>
+		<property name="prefix" type="string">
+			<description>Prefix</description>
+		</property>
+	</type>
+</Schema>
