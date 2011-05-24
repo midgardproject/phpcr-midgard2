@@ -187,7 +187,7 @@ class Midgard2XMLImporter extends \DomDocument
             $object->update();
         }
 
-        $propertyManager = new PropertyManager($object);
+        $propertyManager = new \Midgard2CR\PropertyManager($object);
 
         foreach ($propertyElements as $propertyElement)
         {
