@@ -3,52 +3,46 @@ namespace Midgard2CR;
 
 class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterface
 {
+    protected $propertyFullName = null;
     protected $propertyName = null;
+    protected $propertyPrefix = null;
     protected $node = null;
     protected $type = 0;
     protected $isMidgardProperty = false;
-    protected $midgardPropertyName = null;
-    protected $parameter = null;
+    protected $midgardPropertyName = null; 
+    protected $manager = null;
+    protected $isMultiple = false;
 
-    public function __construct(Node $node, $propertyName)
+    public function __construct(Node $node, $propertyName, \Midgard2CR\PropertyManager $manager = null)
     {
-        $this->propertyName = $propertyName;
+        $this->propertyFullName = $propertyName;
         $this->node = $node;
         $this->parent = $node;
         $midgard_object = $node->getMidgard2Object();
-        $param = null;
-        $property_name = null;
+        $this->manager = $manager;
 
         /* Check if we get MidgardObject property */
         $nsregistry = $this->node->getSession()->getWorkspace()->getNamespaceRegistry();
         $nsmanager = $nsregistry->getNamespaceManager();
-        $tokens = $nsmanager->getPrefixTokens($this->propertyName);
+        $tokens = $nsmanager->getPrefixTokens($propertyName);
         if ($tokens[0] == $nsregistry::MGD_PREFIX_MGD
             && $tokens[1] != null)
         {
-            $property_name = $tokens[1];
             $this->isMidgardProperty = true;
-            $this->midgardPropertyName = $property_name;
+            $this->midgardPropertyName = $tokens[1];
         }
 
-        if (!$property_name) 
+        if ($tokens[1] != null)
         {
-            $params = array();
-            if ($tokens[0] != null 
-                && $tokens[1] != null)
-            {
-                $params = $midgard_object->find_parameters(array("domain" => $tokens[0], "name" => $tokens[1]));
-            }
-            else 
-            {
-                $params = $midgard_object->find_parameters(array("domain" => "phpcr:undefined", "name" => $this->propertyName));
-            }
-            if (!empty($params))
-            { 
-                $this->parameter = $params[0];
-            }
-
+            $this->propertyPrefix = $tokens[0];
+            $this->propertyName = $tokens[1];
+        } 
+        else 
+        {
+            $this->propertyPrefix = 'phpcr:undefined';
+            $this->propertyName = $propertyName;
         }
+
         parent::__construct($midgard_object, $node, $node->getSession());
     }
     
@@ -62,7 +56,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     }
 
     public function setValue($value, $type = NULL, $weak = FALSE)
-    {
+    { 
         /* TODO, handle:
          * \PHPCR\ValueFormatException
          * \PHPCR\Version\VersionException 
@@ -79,14 +73,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         }
 
         $this->type = $type;
-        $parts = explode(':', $this->propertyName);
-        if (count($parts) == 1)
-        {
-            $this->object->set_parameter('phpcr:undefined', $parts[0], $value);
-            return;
-        }
-
-        $this->object->set_parameter($parts[0], $parts[1], $value);
+        $property = $this->manager->factory ($this->propertyName, $this->propertyPrefix, $type, $value);
     }
     
     public function addValue($value)
@@ -110,22 +97,18 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function getNativeValue()
     {
         $propertyName = $this->getMidgard2PropertyName();
-        if (!$propertyName)
+        if ($propertyName)
         {
-            $parts = explode(':', $this->propertyName);
-            if (count($parts) == 1)
-            {
-                return $this->object->get_parameter('phpcr:undefined', $parts[0]);
-            }
-            return $this->object->get_parameter($parts[0], $parts[1]);
+            return $this->object->$propertyName;
         }
-        
-        /*if ($this->parameter)
-        {   
-            return $this->node->object->$propertyName;
-        }*/
-
-        return $this->object->$propertyName;
+ 
+        $property = $this->manager->getProperty($this->propertyName, $this->propertyPrefix);
+        $ret = $property->getLiterals();
+        if (empty($ret))
+        {
+            return null;
+        }
+        return $ret[0];
     }
     
     public function getString()
@@ -190,7 +173,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
     public function getName()
     {
-        return $this->propertyName;
+        return $this->propertyFullName;
     }
 
     public function getNode()
@@ -230,18 +213,6 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function getDefinition()
     {
         throw new \PHPCR\UnsupportedRepositoryOperationException();
-    }
-
-    private function getJCRType($type)
-    {
-        switch ($type) 
-        {
-            case 'created':
-            case 'lastModified':
-                return \PHPCR\PropertyType::DATE;
-        }
-
-        return 0;
     }
     
     private function getMGDType ()
@@ -292,39 +263,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return $this->getMGDType();
         }
 
-        $parts = explode(':', $this->propertyName);
-        if (count($parts) == 1)
-        {
-            /* Try paramater which provides property type */
-            $pValue = null;
-            if ($this->parameter != null)
-            {
-                $pValue = $this->parameter->get_parameter('sv', 'type');
-            }
-            if (!$pValue)
-            {
-                throw new \PHPCR\RepositoryException("Unhandled type of property '{$this->propertyName}'"); 
-            }
- 
-            $this->type = \PHPCR\PropertyType::valueFromName($pValue);
-            /* HACK HACK HACK, in my case, PHPUnit (3.5.12) consumes the whole memory when I return reference type here */
-            if ($this->type == \PHPCR\PropertyType::REFERENCE)
-            {
-                echo "REFERENCE type HACK\n";
-                $this->type = 0;
-            }
-            return $this->type;
-        }
-
-        switch ($parts[0]) 
-        {
-            case 'jcr':
-                $this->type = $this->getJCRType($parts[1]);
-                break;
-
-            default:
-                throw new \PHPCR\RepositoryException("Unhandled type of namespaced property '{$this->propertyName}'");
-        }
+        $property = $this->manager->getProperty($this->propertyName, $this->propertyPrefix);
+        $this->type = \PHPCR\PropertyType::valueFromName($property->model->type);
 
         return $this->type;
     }

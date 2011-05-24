@@ -5,6 +5,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 {
     protected $children = null;
     protected $properties = null;
+    protected $propertyManager = null;
 
     public function addNode($relPath, $primaryNodeTypeName = NULL)
     {
@@ -70,9 +71,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $property = $this->getProperty($name);
         } 
         catch (\PHPCR\PathNotFoundException $e)
-        {
-            /* TODO, handle namespaced properties */
-            $property = new Property ($this, $name);
+        { 
+            $property = new Property ($this, $name, $this->propertyManager);
             $this->properties[$name] = $property;
         }
         $property->setValue ($value, $type);
@@ -214,18 +214,18 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         foreach ($this->object as $property => $value)
         {
-            $this->properties["mgd:{$property}"] = new Property($this, "mgd:{$property}");
+            $this->properties["mgd:{$property}"] = new Property($this, "mgd:{$property}", null);
         }
 
-        $params = $this->object->list_parameters();
-        foreach ($params as $param)
+        $this->propertyManager = new \Midgard2CR\PropertyManager($this->object);
+        foreach ($this->propertyManager->listModels() as $name => $model)
         {
-            if ($param->domain == 'phpcr:undefined')
+            if ($model->prefix == 'phpcr:undefined')
             {
-                $this->properties[$param->name] = new Property($this, $param->name);
+                $this->properties[$model->name] = new Property($this, $model->name, $this->propertyManager);
                 continue;
             }
-            $this->properties["{$param->domain}:{$param->name}"] = new Property($this, "{$param->domain}:{$param->name}");
+            $this->properties[$name] = new Property($this, $name, $this->propertyManager);
         }
     }
 
