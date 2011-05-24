@@ -134,6 +134,11 @@ class PropertyManager
         return $property;
     }
 
+    public function getProperty ($name, $prefix)
+    {
+        return $this->findInCache ($name, $prefix);
+    }
+
     protected function populateProperties()
     {
         /* TODO, validate this->object, if there's ID or GUID property */
@@ -172,6 +177,20 @@ class PropertyManager
             $property->addValue($value);
             $property->modified = false;
         }
+    }
+
+    public function listModels()
+    {
+        $ret = array();
+
+        foreach ($this->cache as $property)
+        {
+            $model = $property->model;
+            $name = $model->prefix ? $model->prefix . ":" . $model->name : $model->name;
+            $ret[$name] = $model;
+        }
+
+        return $ret;
     }
 
     private function createProperty ($property)
