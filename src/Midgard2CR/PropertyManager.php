@@ -1,6 +1,8 @@
 <?php
 
-class Property
+namespace Midgard2CR;
+
+class PropertyHolder
 {
     private $values = null;
     public $stored;
@@ -32,7 +34,7 @@ class Property
 
     public function addLiteral ($val, $id)
     {
-        $value = new midgard_property_value();
+        $value = new \midgard_property_value();
         $value->id = $id;
         $value->value = $val;
 
@@ -108,8 +110,8 @@ class PropertyManager
         $property = $this->findInCache ($name, $prefix);
         if ($property == null)
         {
-            $property = new Property();
-            $property->model = new midgard_property_model();
+            $property = new PropertyHolder();
+            $property->model = new \midgard_property_model();
             $property->model->name = $name;
             $property->model->prefix = $prefix ? $prefix : "";
             $property->model->type = $type;
@@ -136,15 +138,15 @@ class PropertyManager
     {
         /* TODO, validate this->object, if there's ID or GUID property */
 
-        $storage = new midgard_query_storage("midgard_property_view");
-        $q = new midgard_query_select ($storage);
+        $storage = new \midgard_query_storage("midgard_property_view");
+        $q = new \midgard_query_select ($storage);
         $q->set_constraint
             (
-                new midgard_query_constraint
+                new \midgard_query_constraint
                 (
-                    new midgard_query_property('nodeid'),
+                    new \midgard_query_property('nodeid'),
                     '=',
-                    new midgard_query_value($this->object->id)
+                    new \midgard_query_value($this->object->id)
                 )
             );
 
@@ -163,7 +165,7 @@ class PropertyManager
             $property->stored = true;
             $property->model->id = $p->modelid;
            
-            $value = new midgard_property_value();
+            $value = new \midgard_property_value();
             $value->id = $p->valueid;
             $value->modelid = $p->modelid;
             $value->value = $p->value; 
@@ -176,27 +178,27 @@ class PropertyManager
     {
         /* Check if there's property model */
         $model = null;
-        $storage = new midgard_query_storage("midgard_property_model");
-        $q = new midgard_query_select ($storage);
-        $name_constraint = new midgard_query_constraint
+        $storage = new \midgard_query_storage("midgard_property_model");
+        $q = new \midgard_query_select ($storage);
+        $name_constraint = new \midgard_query_constraint
             (
-                new midgard_query_property('name'),
+                new \midgard_query_property('name'),
                 '=',
-                new midgard_query_value($property->model->name)
+                new \midgard_query_value($property->model->name)
             );
-        $prefix_constraint = new midgard_query_constraint
+        $prefix_constraint = new \midgard_query_constraint
             (
-                new midgard_query_property('prefix'),
+                new \midgard_query_property('prefix'),
                 '=',
-                new midgard_query_value($property->model->prefix)
+                new \midgard_query_value($property->model->prefix)
             );
-        $type_constraint = new midgard_query_constraint
+        $type_constraint = new \midgard_query_constraint
             (
-                new midgard_query_property('type'),
+                new \midgard_query_property('type'),
                 '=',
-                new midgard_query_value($property->model->type)
+                new \midgard_query_value($property->model->type)
             );
-        $group = new midgard_query_constraint_group();
+        $group = new \midgard_query_constraint_group();
         $group->add_constraint($name_constraint);
         $group->add_constraint($prefix_constraint);
         $group->add_constraint($type_constraint);
@@ -211,7 +213,7 @@ class PropertyManager
         }
 
         $replication_disabled = false;
-        $mgd = midgard_connection::get_instance();
+        $mgd = \midgard_connection::get_instance();
 
         try {
 
@@ -230,7 +232,7 @@ class PropertyManager
             } 
     
             /* associate property model with object */
-            $node_property = new midgard_property();
+            $node_property = new \midgard_property();
             $node_property->modelid = $model->id;
             $node_property->propertyguid = $model->guid;
             $node_property->nodeid = $this->object->id;
@@ -252,7 +254,7 @@ class PropertyManager
             if ($replication_disabled)
             {
                 //$mgd->enable_replication(true);
-                throw new midgard_error_exception($e->getMessage());
+                throw new \midgard_error_exception($e->getMessage());
             }
         }
 
@@ -279,15 +281,15 @@ class PropertyManager
             return;
         }
 
-        $storage = new midgard_query_storage("midgard_property_value");
-        $q = new midgard_query_select ($storage);
+        $storage = new \midgard_query_storage("midgard_property_value");
+        $q = new \midgard_query_select ($storage);
         $q->set_constraint
             (
-                new midgard_query_constraint
+                new \midgard_query_constraint
                 (
-                    new midgard_query_property('modelid'),
+                    new \midgard_query_property('modelid'),
                     '=',
-                    new midgard_query_value($property->model->id)
+                    new \midgard_query_value($property->model->id)
                 )
             );
 
