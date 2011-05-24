@@ -25,7 +25,7 @@ class NamespaceManager
     {
         try 
         {
-            $prefix = $this->registry->getPrefix($string);
+            $prefix = $this->registry->getUri($string);
             return true;
         }
         catch (\PHPCR\NamespaceException $e)
@@ -116,7 +116,7 @@ class NamespaceManager
     {
         try 
         {
-            $uri = $this->registry->getUri($string);
+            $uri = $this->registry->getPrefix($string);
             return true;
         }
         catch (\PHPCR\NamespaceException $e)
