@@ -149,9 +149,9 @@ class PropertyManager
             (
                 new \midgard_query_constraint
                 (
-                    new \midgard_query_property('nodeid'),
+                    new \midgard_query_property('objectguid'),
                     '=',
-                    new \midgard_query_value($this->object->id)
+                    new \midgard_query_value($this->object->guid)
                 )
             );
 
@@ -263,6 +263,7 @@ class PropertyManager
             { 
                 $value->modelid = $model->id;
                 $value->modelguid = $model->guid;
+                $value->objectguid = $this->object->guid;
                 $value->create();
             }
 
