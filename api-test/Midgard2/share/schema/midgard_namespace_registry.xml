@@ -7,7 +7,7 @@
 		<property name="uri" type="string">
 			<description>Uri</description>
 		</property>
-		<property name="prefix" type="string">
+		<property name="prefix" type="string" unique="yes">
 			<description>Prefix</description>
 		</property>
 	</type>
