@@ -291,7 +291,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function getIterator()
     {
-         return new \ArrayIterator(array());
+        $v = $this->getValue();
+        return new \ArrayIterator(is_array($v) ? $v : array($v));
     }
 
     public function isSame (\PHPCR\ItemInterface $item)
