@@ -104,10 +104,20 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
  
         $property = $this->manager->getProperty($this->propertyName, $this->propertyPrefix);
         $ret = $property->getLiterals();
+
+        /* Empty value */
         if (empty($ret))
         {
             return null;
         }
+
+        /* Multivalue */
+        if (count($ret) > 1)
+        {
+            return $ret;
+        }
+
+        /* Single value */
         return $ret[0];
     }
     
