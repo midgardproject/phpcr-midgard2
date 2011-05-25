@@ -54,6 +54,12 @@ abstract class Item implements \PHPCR\ItemInterface
             throw new \PHPCR\ItemNotFoundException("Invalid depth ({$depth}) value.");
         }
 
+        /* n is the depth of this Item, which returns this Item itself. */
+        if ($depth == $this->getDepth())
+        {
+            return $this;
+        }
+
         $ancestor = $this;
 
         while (true) 

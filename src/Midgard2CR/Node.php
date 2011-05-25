@@ -5,6 +5,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 {
     protected $children = null;
     protected $properties = null;
+    protected $propertyManager = null;
 
     public function addNode($relPath, $primaryNodeTypeName = NULL)
     {
@@ -70,9 +71,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $property = $this->getProperty($name);
         } 
         catch (\PHPCR\PathNotFoundException $e)
-        {
-            /* TODO, handle namespaced properties */
-            $property = new Property ($this, $name);
+        { 
+            $property = new Property ($this, $name, $this->propertyManager);
             $this->properties[$name] = $property;
         }
         $property->setValue ($value, $type);
@@ -175,7 +175,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function getNode($relPath)
     {
         $remainingPath = '';
-        if (strpos($relPath, '/') !== false)
+        $pos = strpos($relPath, '/');
+        /* Convert to relative path when absolute one has been given */
+        if ($pos === 0)
+        {
+            $relPath = substr($relPath, 1);
+        }
+        else if ($pos !== false)
         {
             $parts = explode('/', $relPath);
             $relPath = array_shift($parts);
@@ -197,12 +203,134 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
         return $this->children[$relPath];        
     }
-    
+
+    private function getItemsSimilar($items, $name)
+    {
+        $ret = array();
+
+        $nsregistry = $this->getSession()->getWorkspace()->getNamespaceRegistry();
+        $nsmanager = $nsregistry->getNamespaceManager();
+
+        $prefix = $nsmanager->getPrefix($name);
+        if ($prefix == null)
+        {
+            return $ret;
+        }
+
+        foreach ($items as $n => $o)
+        {
+            $node_prefix = $nsmanager->getPrefix($o->getName());
+            if ($node_prefix == $prefix)
+            {
+                $ret[] = $o;
+            }
+        }
+
+        return $ret;
+    }
+
+    private function getItemsEqual($items, $name)
+    {
+        $ret = array();
+
+        if (array_key_exists($name, $this->children))
+        { 
+            $ret[] = $items[$name];
+        }
+            
+        return $ret;
+    }
+
+    private function getItemsFiltered($items, $filter)
+    {
+        /* TODO wildcards '*filter*' */
+
+        $filteredItems = array();
+
+        if (is_string($filter))
+        {
+            $filters = array();
+            $parts = explode('|', $filter);
+            if (!isset($parts[1]))
+            {
+                $filters[] = $filter;
+            }
+            else 
+            {
+                foreach($parts as $p)
+                {
+                    $filters[] = trim($p);
+                }
+            }
+
+            foreach ($filters as $f)
+            {
+                if (strpos($f, '*') !== false)
+                {
+                    $filteredItems = array_merge($filteredItems, $this->getItemsSimilar($items, $f));
+                }
+                else 
+                {
+                    $filteredItems = array_merge($filteredItems, $this->getItemsEqual($items, $f));
+                }
+            }
+        } 
+
+        if (is_array($filter))
+        {
+            /* TODO */
+        }
+
+        return new \ArrayIterator($filteredItems);
+   
+    }
+
     public function getNodes($filter = NULL)
     {
-        // TODO: Filtering support
         $this->populateChildren();
-        return new \ArrayIterator($this->children);
+
+        if ($filter == null) 
+        {
+            return new \ArrayIterator($this->children);
+        }
+
+        return $this->getItemsFiltered($this->children, $filter); 
+
+        if (is_string($filter))
+        {
+            $filters = array();
+            $parts = explode('|', $filter);
+            if (!isset($parts[1]))
+            {
+                $filters[] = $filter;
+            }
+            else 
+            {
+                foreach($parts as $p)
+                {
+                    $filters[] = trim($p);
+                }
+            }
+
+            foreach ($filters as $f)
+            {
+                if (strpos($f, '*') !== false)
+                {
+                    $nodes = array_merge($nodes, $this->getItemsSimilar($this->children, $f));
+                }
+                else 
+                {
+                    $nodes = array_merge($nodes, $this->getItemsEqual($this->children, $f));
+                }
+            }
+        } 
+
+        if (is_array($filter))
+        {
+            /* TODO */
+        }
+
+        return new \ArrayIterator($nodes);
     }
 
     private function populateProperties()
@@ -214,18 +342,18 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         foreach ($this->object as $property => $value)
         {
-            $this->properties["mgd:{$property}"] = new Property($this, "mgd:{$property}");
+            $this->properties["mgd:{$property}"] = new Property($this, "mgd:{$property}", null);
         }
 
-        $params = $this->object->list_parameters();
-        foreach ($params as $param)
+        $this->propertyManager = new \Midgard2CR\PropertyManager($this->object);
+        foreach ($this->propertyManager->listModels() as $name => $model)
         {
-            if ($param->domain == 'phpcr:undefined')
+            if ($model->prefix == 'phpcr:undefined')
             {
-                $this->properties[$param->name] = new Property($this, $param->name);
+                $this->properties[$model->name] = new Property($this, $model->name, $this->propertyManager);
                 continue;
             }
-            $this->properties["{$param->domain}:{$param->name}"] = new Property($this, "{$param->domain}:{$param->name}");
+            $this->properties[$name] = new Property($this, $name, $this->propertyManager);
         }
     }
 
@@ -259,6 +387,14 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getProperties($filter = NULL)
     {
+        $this->populateProperties();
+
+        if ($filter == null) 
+        {
+            return new \ArrayIterator($this->properties);
+        }
+
+        return $this->getItemsFiltered($this->properties, $filter); 
     }
 
     public function getPropertiesValues($filter=null)
@@ -272,6 +408,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getIdentifier()
     {
+        $this->populateProperties();
+
+        /* Try uuid first */
+        $uuid = $this->propertyManager->getProperty("uuid", "jcr");
+        if ($uuid != null) 
+        {
+            $values = $uuid->getLiterals();
+            return $values[0];
+        }
+
+        /* Return guid if uuid is not found */
         return $this->object->guid;
     }
     
@@ -302,6 +449,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function hasProperty($relPath)
     {
+        $pos = strpos($relPath, '/');
+        /* Convert to relative path when absolute one has been given */
+        if ($pos === 0)
+        {
+            $relPath = substr($relPath, 1);
+        }
+
         try {
             $this->getProperty($relPath);
             return true;
@@ -382,14 +536,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getSharedSet()
     {
+        return new \ArrayIterator(array($this));
     }
     
     public function removeSharedSet()
     {
+        throw new \PHPCR\RepositoryException("Not supported");
     }
     
     public function removeShare()
     {
+        throw new \PHPCR\RepositoryException("Not supported");
     }
     
     public function isCheckedOut()

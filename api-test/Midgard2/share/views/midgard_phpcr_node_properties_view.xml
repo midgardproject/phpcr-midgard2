@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Schema xmlns="http://www.midgard-project.org/repligard/1.4">
+	<view name="midgard_property_view" class="midgard_property_model"> 
+		<!-- Property value -->
+		<property name="valueid" use="midgard_property_value:id"/>
+		<property name="value"	use="midgard_property_value:value" />
+		<property name="objectguid"	use="midgard_property_value:objectguid" />
+
+		<!-- Property -->
+		<property name="modelid" use="midgard_property_model:id" />
+		<property name="name" use="midgard_property_model:name" />
+		<property name="type" use="midgard_property_model:type" />
+		<property name="prefix" use="midgard_property_model:prefix" />
+
+		<!-- Node's property -->
+		<property name="nodeid" use="midgard_property:nodeid" />
+
+		<!-- Joins -->
+		<join type="left" class="midgard_property">
+			<condition left="midgard_property:modelid" right="midgard_property_model:id" />
+		</join>
+
+		<join type="left" class="midgard_property_value">
+			<condition left="midgard_property_value:modelid" right="midgard_property_model:id" />
+		</join>
+
+		<!-- Dummy constraint to workaround WHERE appended without metadata -->
+		<constraint property="midgard_property_model:id" operator="&gt;" value="0" value_type="unsigned integer" />
+
+	</view>
+</Schema>

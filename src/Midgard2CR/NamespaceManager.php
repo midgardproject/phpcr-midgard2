@@ -25,7 +25,7 @@ class NamespaceManager
     {
         try 
         {
-            $prefix = $this->registry->getPrefix($string);
+            $prefix = $this->registry->getUri($string);
             return true;
         }
         catch (\PHPCR\NamespaceException $e)
@@ -74,7 +74,7 @@ class NamespaceManager
         }
   
         /* Given string is uri */
-        if (substr_count($string, '/') > 0) {
+        if (substr_count('/', $string) > 0) {
             $uri_tokens = $this->getUriTokens($string);
             if ($uri_tokens[0] != null) {
                 $tokens[0] = $this->registry->getPrefix($uri_tokens[0]);
@@ -86,7 +86,7 @@ class NamespaceManager
         /* Given string is prefix statement */
         if (substr_count($string, ':') > 0) 
         {
-            $spltd = explode($string, ':');
+            $spltd = explode(':', $string);
             if ($this->isPrefix($spltd[0]) == true) {
                 $tokens[0] = $spltd[0];
                 $tokens[1] = $spltd[1];
@@ -116,7 +116,7 @@ class NamespaceManager
     {
         try 
         {
-            $uri = $this->registry->getUri($string);
+            $uri = $this->registry->getPrefix($string);
             return true;
         }
         catch (\PHPCR\NamespaceException $e)
@@ -156,7 +156,7 @@ class NamespaceManager
 
         /* Assume, given string is '#' terminating */
         if (substr_count($string, '#', 1)) {
-            $spltd = explode($string, '#');
+            $spltd = explode('#', $string);
             if ($spltd[0] != null)
                 if ($this->isUri($spltd[0] . '#')) {
                     $tokens[0] = $spltd[0] . '#';
