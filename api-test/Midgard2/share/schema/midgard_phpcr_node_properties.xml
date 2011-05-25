@@ -41,8 +41,8 @@
 		<property name="modelid" type="unsigned integer" link="midgard_property_model:id">
 			<description>Link to property's model id</description>
 		</property>
-		<property name="objectid" type="unsigned integer" index="yes">
-			<description>ID of an object</description>
+		<property name="objectguid" type="guid" index="yes">
+			<description>Guid of an object</description>
 		</property>
 		<property name="value" type="string">
 			<description>Literal value</description>
