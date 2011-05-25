@@ -39,13 +39,13 @@
 			<description>Local non-replication-safe database identifier</description>
 		</property>
 		<property name="modelid" type="unsigned integer" link="midgard_property_model:id">
-			<description>Link to property's id</description>
+			<description>Link to property's model id</description>
 		</property>
-		<property name="objectid" type="unsigned integer" link="midgard_property_model:id">
+		<property name="objectid" type="unsigned integer" index="yes">
 			<description>ID of an object</description>
 		</property>
 		<property name="value" type="string">
-			<description>ID of an object</description>
+			<description>Literal value</description>
 		</property>
 	</type>
 </Schema>
