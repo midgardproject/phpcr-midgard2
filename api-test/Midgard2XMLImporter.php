@@ -1,4 +1,7 @@
 <?php
+
+require_once(dirname(__FILE__) . '/../src/Midgard2CR/PropertyManager.php');
+
 class Midgard2XMLImporter extends \DomDocument
 {
     private $ns_sv = 'http://www.jcp.org/jcr/sv/1.0';
@@ -8,6 +11,7 @@ class Midgard2XMLImporter extends \DomDocument
     {
         parent::__construct('1.0', 'UTF-8');
         $this->load($filepath);
+        $this->filepath = $filepath;
     }
 
     private function append_nodes(\DomNode $node, $parent)
@@ -73,7 +77,7 @@ class Midgard2XMLImporter extends \DomDocument
         return null;
     }
 
-    private function writeProperty(\midgard_object $object, \DOMElement $property)
+    private function writeProperty(\midgard_object $object, \DOMElement $property, $propertyManager)
     {
         $propertyName = $property->getAttributeNS($this->ns_sv, 'name'); 
 
@@ -90,18 +94,20 @@ class Midgard2XMLImporter extends \DomDocument
             $parts[1] = $parts[0];
             $parts[0] = 'phpcr:undefined';
         }
-        $parameter = new \midgard_parameter ();
-        $parameter->parentguid = $object->guid;
-        $parameter->domain = $parts[0];
-        $parameter->name = $parts[1];
-        $parameter->value = $this->getPropertyValue($property);
-        if (!$parameter->create())
-        {
-            return false;
-        }
 
-        $property_type = $property->getAttributeNS($this->ns_sv, 'type');
-        return $parameter->set_parameter($this->ns_prefix, 'type', $property_type);
+        /* Take multivalues into account */
+        $n_values = $property->getElementsByTagName('value')->length;
+        for ($i = 0; $i < $n_values; $i++)
+        {
+            $vnode = $property->getElementsByTagName('value')->item($i);
+     
+            /* Create properties */
+            $propertyManager->factory($parts[1], $parts[0], 
+                $property->getAttributeNS($this->ns_sv, 'type'),
+                $vnode->nodeValue); 
+        }    
+
+        return true;
     }
 
     private function mapNodeType(\midgard_object $parent, $type)
@@ -156,13 +162,23 @@ class Midgard2XMLImporter extends \DomDocument
                 $object = $sibling;
             }
         }
+
         if (!$object)
         {
             $object = new $class();
             $object->name = $name;
             if ($class == 'midgard_attachment')
             {
-                $object->parentguid = $parent->guid;
+                /* Try to get attachment if it exists already */
+                $atts = $parent->find_attachments(array("name" => $name));
+                if (!empty($atts))
+                {
+                    $object = $atts[0];
+                } 
+                else 
+                {
+                    $object->parentguid = $parent->guid;
+                }
             }
             else
             {
@@ -179,20 +195,49 @@ class Midgard2XMLImporter extends \DomDocument
             $object->update();
         }
 
+        $propertyManager = new \Midgard2CR\PropertyManager($object);
+
         foreach ($propertyElements as $propertyElement)
         {
             /* Check parent and current names.
              * getElementsByTagNameNS returns all descendants */
             if ($propertyElement->parentNode->getAttributeNS($this->ns_sv, 'name') == $name)
             {
-                $this->writeProperty($object, $propertyElement);
+                $this->writeProperty($object, $propertyElement, $propertyManager);
             }
         }
+
+        $propertyManager->save();
 
         $nodeElements = $node->getElementsByTagNameNS($this->ns_sv, 'node');
         foreach ($nodeElements as $nodeElement)
         {
             $this->writeNode($object, $nodeElement);
+        }
+    }
+
+    private function createNamespaces()
+    {
+        $simpleXML = simplexml_import_dom($this);
+
+        /* For each XML namespace declaration with prefix P and URI U:
+         *
+         * If the namespace registry does not contain a mapping to U then
+         * such a mapping is added to the registry. 
+         *
+         */
+        foreach ($simpleXML->getDocNamespaces() as $prefix => $uri)
+        {
+            $q = new \midgard_query_select(new \midgard_query_storage('midgard_namespace_registry'));
+            $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('prefix'), '=', new \midgard_query_value($prefix)));
+            $q->execute();
+            if ($q->get_results_count() == 0)
+            {
+                $ns = new \midgard_namespace_registry();
+                $ns->prefix = $prefix;
+                $ns->uri = $uri;
+                $ns->create();
+            }           
         }
     }
 
@@ -210,6 +255,9 @@ class Midgard2XMLImporter extends \DomDocument
         }
 
         $root_node = $this->documentElement;
+
+        $this->createNamespaces();
+
         $this->writeNode($root_object, $root_node);
     }
 }

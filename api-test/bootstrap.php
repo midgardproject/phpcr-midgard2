@@ -29,6 +29,7 @@ function getMidgardConnection() {
     }
 
     prepareMidgardTestDir('share');
+    prepareMidgardTestDir('views');
     prepareMidgardTestDir('blobs');
     prepareMidgardTestDir('var');
     prepareMidgardTestDir('cache');
@@ -78,6 +79,12 @@ function prepareMidgardStorage()
             throw new Exception('Could not create ' . $type . ' tables in test database');
         }
     }
+
+    /* Prepare properties view */
+    midgard_storage::create_class_storage("midgard_property_view");
+
+    /* Prepare namespace registry */
+    midgard_storage::create_class_storage("midgard_namespace_registry");
 
     /* Create required root node */
     $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
@@ -152,10 +159,10 @@ function getJCRSession($config, $credentials = null) {
         }
         return $repository->login($credentials, $config['workspace']);
     } elseif (isset($config['workspace'])) {
-        throw new \PHPCR\RepositoryException(jackalope_baseCase::NOTSUPPORTEDLOGIN);
+        throw new \PHPCR\RepositoryException("Not supported login");
         //return $repository->login(null, $config['workspace']);
     } else {
-        throw new \PHPCR\RepositoryException(jackalope_baseCase::NOTSUPPORTEDLOGIN);
+        throw new \PHPCR\RepositoryException("Not supported login");
         //return $repository->login(null, null);
     }
 }

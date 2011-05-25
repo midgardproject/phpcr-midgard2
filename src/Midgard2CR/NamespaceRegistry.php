@@ -23,6 +23,23 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
     {
         $this->session = $session;    
         $this->registry = $this->builtins;
+
+        $q = new \midgard_query_select(new \midgard_query_storage('midgard_namespace_registry')); 
+        $q->execute();
+        if ($q->get_results_count() > 0)
+        {
+            foreach ($q->list_objects() as $ns)
+            {
+                try 
+                {
+                    $this->registerNamespace($ns->prefix, $ns->uri);
+                }
+                catch (\PHPCR\NamespaceException $e)
+                {
+                    /* Ignore */
+                }
+            }
+        }
     }
 
     public function registerNamespace($prefix, $uri)
