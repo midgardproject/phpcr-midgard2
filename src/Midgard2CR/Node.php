@@ -408,6 +408,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getIdentifier()
     {
+        $this->populateProperties();
+
+        /* Try uuid first */
+        $uuid = $this->propertyManager->getProperty("uuid", "jcr");
+        if ($uuid != null) 
+        {
+            $values = $uuid->getLiterals();
+            return $values[0];
+        }
+
+        /* Return guid if uuid is not found */
         return $this->object->guid;
     }
     
