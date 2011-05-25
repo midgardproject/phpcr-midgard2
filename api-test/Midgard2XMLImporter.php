@@ -11,6 +11,7 @@ class Midgard2XMLImporter extends \DomDocument
     {
         parent::__construct('1.0', 'UTF-8');
         $this->load($filepath);
+        $this->filepath = $filepath;
     }
 
     private function append_nodes(\DomNode $node, $parent)
@@ -208,6 +209,31 @@ class Midgard2XMLImporter extends \DomDocument
         }
     }
 
+    private function createNamespaces()
+    {
+        $simpleXML = simplexml_import_dom($this);
+
+        /* For each XML namespace declaration with prefix P and URI U:
+         *
+         * If the namespace registry does not contain a mapping to U then
+         * such a mapping is added to the registry. 
+         *
+         */
+        foreach ($simpleXML->getDocNamespaces() as $prefix => $uri)
+        {
+            $q = new \midgard_query_select(new \midgard_query_storage('midgard_namespace_registry'));
+            $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('prefix'), '=', new \midgard_query_value($prefix)));
+            $q->execute();
+            if ($q->get_results_count() == 0)
+            {
+                $ns = new \midgard_namespace_registry();
+                $ns->prefix = $prefix;
+                $ns->uri = $uri;
+                $ns->create();
+            }           
+        }
+    }
+
     public function execute()
     {
         $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
@@ -222,6 +248,9 @@ class Midgard2XMLImporter extends \DomDocument
         }
 
         $root_node = $this->documentElement;
+
+        $this->createNamespaces();
+
         $this->writeNode($root_object, $root_node);
     }
 }
