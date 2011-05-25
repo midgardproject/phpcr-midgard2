@@ -95,10 +95,17 @@ class Midgard2XMLImporter extends \DomDocument
             $parts[0] = 'phpcr:undefined';
         }
 
-        /* Create properties */
-        $propertyManager->factory($parts[1], $parts[0], 
-            $property->getAttributeNS($this->ns_sv, 'type'),
-            $this->getPropertyValue($property)); 
+        /* Take multivalues into account */
+        $n_values = $property->getElementsByTagName('value')->length;
+        for ($i = 0; $i < $n_values; $i++)
+        {
+            $vnode = $property->getElementsByTagName('value')->item($i);
+     
+            /* Create properties */
+            $propertyManager->factory($parts[1], $parts[0], 
+                $property->getAttributeNS($this->ns_sv, 'type'),
+                $vnode->nodeValue); 
+        }    
 
         return true;
     }
