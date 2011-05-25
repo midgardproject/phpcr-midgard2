@@ -204,7 +204,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $this->children[$relPath];        
     }
 
-    private function getNodesSimilar($name)
+    private function getItemsSimilar($items, $name)
     {
         $ret = array();
 
@@ -217,40 +217,35 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return $ret;
         }
 
-        foreach ($this->children as $n => $o)
+        foreach ($items as $n => $o)
         {
             $node_prefix = $nsmanager->getPrefix($o->getName());
             if ($node_prefix == $prefix)
             {
-                $ret = $o;
+                $ret[] = $o;
             }
         }
 
         return $ret;
     }
 
-    private function getNodesEqual($name)
+    private function getItemsEqual($items, $name)
     {
         $ret = array();
 
         if (array_key_exists($name, $this->children))
         { 
-            $ret[] = $this->children[$name];
+            $ret[] = $items[$name];
         }
             
         return $ret;
     }
 
-    public function getNodes($filter = NULL)
+    private function getItemsFiltered($items, $filter)
     {
-        $this->populateChildren();
+        /* TODO wildcards '*filter*' */
 
-        $nodes = array();
-
-        if ($filter == null) 
-        {
-            return new \ArrayIterator($this->children);
-        }
+        $filteredItems = array();
 
         if (is_string($filter))
         {
@@ -272,11 +267,60 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 if (strpos($f, '*') !== false)
                 {
-                    $nodes = array_merge($nodes, $this->getNodesSimilar($f));
+                    $filteredItems = array_merge($filteredItems, $this->getItemsSimilar($items, $f));
                 }
                 else 
                 {
-                    $nodes = array_merge($nodes, $this->getNodesEqual($f));
+                    $filteredItems = array_merge($filteredItems, $this->getItemsEqual($items, $f));
+                }
+            }
+        } 
+
+        if (is_array($filter))
+        {
+            /* TODO */
+        }
+
+        return new \ArrayIterator($filteredItems);
+   
+    }
+
+    public function getNodes($filter = NULL)
+    {
+        $this->populateChildren();
+
+        if ($filter == null) 
+        {
+            return new \ArrayIterator($this->children);
+        }
+
+        return $this->getItemsFiltered($this->children, $filter); 
+
+        if (is_string($filter))
+        {
+            $filters = array();
+            $parts = explode('|', $filter);
+            if (!isset($parts[1]))
+            {
+                $filters[] = $filter;
+            }
+            else 
+            {
+                foreach($parts as $p)
+                {
+                    $filters[] = trim($p);
+                }
+            }
+
+            foreach ($filters as $f)
+            {
+                if (strpos($f, '*') !== false)
+                {
+                    $nodes = array_merge($nodes, $this->getItemsSimilar($this->children, $f));
+                }
+                else 
+                {
+                    $nodes = array_merge($nodes, $this->getItemsEqual($this->children, $f));
                 }
             }
         } 
@@ -343,6 +387,14 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getProperties($filter = NULL)
     {
+        $this->populateProperties();
+
+        if ($filter == null) 
+        {
+            return new \ArrayIterator($this->properties);
+        }
+
+        return $this->getItemsFiltered($this->properties, $filter); 
     }
 
     public function getPropertiesValues($filter=null)
