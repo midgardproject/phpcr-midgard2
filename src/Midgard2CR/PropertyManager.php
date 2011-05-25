@@ -339,6 +339,7 @@ class PropertyManager
             {
                 $value->modelid = $property->model->id;
                 $value->modelguid = $property->model->guid;
+                $value->objectguid = $this->object->guid;
                 $value->create();
                 return;
             }
