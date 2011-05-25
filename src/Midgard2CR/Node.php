@@ -449,6 +449,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function hasProperty($relPath)
     {
+        $pos = strpos($relPath, '/');
+        /* Convert to relative path when absolute one has been given */
+        if ($pos === 0)
+        {
+            $relPath = substr($relPath, 1);
+        }
+
         try {
             $this->getProperty($relPath);
             return true;
@@ -529,14 +536,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getSharedSet()
     {
+        return new \ArrayIterator(array($this));
     }
     
     public function removeSharedSet()
     {
+        throw new \PHPCR\RepositoryException("Not supported");
     }
     
     public function removeShare()
     {
+        throw new \PHPCR\RepositoryException("Not supported");
     }
     
     public function isCheckedOut()
