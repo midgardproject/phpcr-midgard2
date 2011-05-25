@@ -4,6 +4,7 @@
 		<!-- Property value -->
 		<property name="valueid" use="midgard_property_value:id"/>
 		<property name="value"	use="midgard_property_value:value" />
+		<property name="objectguid"	use="midgard_property_value:objectguid" />
 
 		<!-- Property -->
 		<property name="modelid" use="midgard_property_model:id" />
