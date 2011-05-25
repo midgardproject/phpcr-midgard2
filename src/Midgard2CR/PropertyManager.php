@@ -154,6 +154,7 @@ class PropertyManager
                     new \midgard_query_value($this->object->guid)
                 )
             );
+        $q->add_order(new \midgard_query_property("valueid"), SORT_ASC);
 
         $q->execute();
         if ($q->get_results_count() == 0)
