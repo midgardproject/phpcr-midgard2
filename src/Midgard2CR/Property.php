@@ -114,13 +114,29 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         /* Multivalue */
         if (count($ret) > 1)
         {
+            $this->isMultiple = true;
             return $ret;
         }
 
         /* Single value */
         return $ret[0];
     }
-    
+
+    private function transformValue($func)
+    {
+        $v = $this->getNativeValue();
+        if ($this->isMultiple)
+        {
+            $va = array();
+            foreach ($this->getIterator() as $value)
+            {
+                $va[] = $func($value);
+            }
+            return $va;
+        }
+        return $func($v);
+    }
+
     public function getString()
     {
         // TODO: Convert
@@ -129,7 +145,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function getBinary()
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        $f = fopen('php://memory', 'rwb+');
+        fwrite($f, $this->getValue());
+        rewind($f);
+
+        return $f; 
     }
     
     public function getLong()
@@ -138,14 +158,13 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         if ($type == \PHPCR\PropertyType::DATE
             || $type == \PHPCR\PropertyType::BINARY
             || $type == \PHPCR\PropertyType::DECIMAL
-            || $type == \PHPCR\PropertyType::NAME
             || $type == \PHPCR\PropertyType::REFERENCE
             || $type == \PHPCR\PropertyType::DOUBLE)
         {
             throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to LONG."); 
         } 
 
-        return intval($this->getNativeValue());
+        return $this->transformValue('intval');
     }
     
     public function getDouble()
@@ -153,32 +172,67 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         $type = $this->getType();
         if ($type == \PHPCR\PropertyType::DATE
             || $type == \PHPCR\PropertyType::BINARY
-            || $type == \PHPCR\PropertyType::NAME
             || $type == \PHPCR\PropertyType::REFERENCE) 
         {
-            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to LONG."); 
+            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to DOUBLE."); 
         } 
-
-        return floatval($this->getNativeValue());       
+        
+        return $this->transformValue('floatval'); 
     }
     
     public function getDecimal()
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        $v = $this->transformValue('floatval');
+        $current = setlocale(LC_ALL, '0'); 
+        setlocale(LC_ALL, 'C');
+        if (is_array($v))
+        {
+            foreach ($v as $value)
+            {
+                $ret[] = (string)$value;
+            }
+        }
+        else 
+        {
+            $ret = (string)$v;
+        }
+        setlocale(LC_ALL, $current);
+
+        return $ret;
     }
     
     public function getDate()
     {
-        if ($this->getType() != \PHPCR\PropertyType::DATE)
+        $type = $this->getType();
+        if ($type == \PHPCR\PropertyType::DATE
+            || $type == \PHPCR\PropertyType::STRING)
         {
-            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type FIXME) to DateTime object."); 
+            try 
+            {
+                $date = new \DateTime($this->getNativeValue());
+                return $date;
+            }
+            catch (\Exception $e)
+            {
+                /* Silently ignore */
+            }
         } 
-        return new \DateTime($this->getNativeValue());
+        throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type)  . ") to DateTime object.");
     }
     
     public function getBoolean()
     {
-        return (bool) $this->getNativeValue();
+        $v = $this->getNativeValue();
+        if ($this->isMultiple)
+        {
+            $va = array();
+            foreach ($this->getIterator() as $value)
+            {
+                $va[] = (bool) $value;
+            }
+            return $va;
+        }
+        return (bool) $v;
     }
 
     public function getName()
@@ -189,12 +243,24 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function getNode()
     {
         $type = $this->getType();
-        if ($type != \PHPCR\PropertyType::PATH
-            || $type != \PHPCR\PropertyType::REFERENCE
-            || $type != \PHPCR\Propertytype::WEAKREFERENCE)
+        if ($type == \PHPCR\PropertyType::PATH)
         {
-            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to Node type.");
-        } 
+            /* TODO */
+            throw new \PHPCR\RepositoryException("Not implemented");
+        }
+
+        if ($type == \PHPCR\PropertyType::REFERENCE)
+        {
+            return $this->parent->getSession()->getNodeByIdentifier($this->getValue());
+        }
+
+        if ($type == \PHPCR\Propertytype::WEAKREFERENCE)
+        {
+            /* TODO */
+            throw new \PHPCR\RepositoryException("Not implemented");
+        }
+    
+        throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to Node type."); 
 
         return $this->node;
     }
@@ -212,12 +278,27 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function getLength()
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        $v = $this->getNativeValue();
+        if (is_array($v))
+        {
+            throw new \PHPCR\ValueFormatException("Can not get multivalue length");
+        }
+        return strlen($this->getString());
     }
     
     public function getLengths()
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        $v = $this->getNativeValue();
+        if (is_array($v))
+        {
+            /* Native values are always strings */
+            foreach ($v as $values)
+            {
+                $ret[] = strlen($values);
+            }
+            return $ret;
+        }
+        throw new \PHPCR\ValueFormatException("Can not get lengths of single value");
     }
     
     public function getDefinition()
@@ -265,7 +346,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     {
         if ($this->type > 0)
         {
-            return $this->type;
+            return (int)$this->type;
         }
 
         if ($this->isMidgardProperty)
