@@ -130,6 +130,12 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function getBinary()
     {
+        $f = fopen('php://memory', 'rwb+');
+        fwrite($f, $this->getValue());
+        rewind($f);
+
+        return $f;
+
         throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
@@ -223,7 +229,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function getLength()
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        return strlen($this->getString());
     }
     
     public function getLengths()
