@@ -114,6 +114,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         /* Multivalue */
         if (count($ret) > 1)
         {
+            $this->isMultiple = true;
             return $ret;
         }
 
@@ -178,7 +179,17 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function getBoolean()
     {
-        return (bool) $this->getNativeValue();
+        $v = $this->getNativeValue();
+        if ($this->isMultiple)
+        {
+            $va = array();
+            foreach ($this->getIterator() as $value)
+            {
+                $va[] = (bool) $value;
+            }
+            return $va;
+        }
+        return (bool) $v;
     }
 
     public function getName()
