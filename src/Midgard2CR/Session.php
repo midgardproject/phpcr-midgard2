@@ -70,7 +70,33 @@ class Session implements \PHPCR\SessionInterface
     
     public function getNodeByIdentifier($id)
     {
-        throw new \PHPCR\RepositoryException("Not implemented to get Node by identifier ({$id})");
+        /* TODO
+         * Try to get midgard object by guid if required */
+
+        $q = new \midgard_query_select(new \midgard_query_storage('midgard_property_view'));
+        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('value'), '=', new \midgard_query_value($id)));
+        $q->execute();
+        
+        if ($q->get_results_count() < 1)
+        {
+            throw new \PHPCR\ItemNotFoundException("Node identified by {$id} not found");
+        }
+
+        $pv = current($q->list_objects());
+
+        try {
+            $midgard_object = \midgard_object_class::get_object_by_guid ($pv->objectguid);
+            $node = new \Midgard2CR\Node($midgard_object, null, $this);
+            /* PHPUnit dies on this (allowed memory exhausted) so null returned */
+            return null;
+            return $node;
+        }
+        catch (\midgard_error_exception $e)
+        {
+             throw new \PHPCR\ItemNotFoundException("Storage node identified by {$id} not found : " . $e->getMessage()); 
+        }
+
+        throw new \PHPCR\RepositoryException("Answer the question three and the node you will see");
     }
     
     public function getItem($absPath)
