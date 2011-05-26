@@ -243,12 +243,24 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function getNode()
     {
         $type = $this->getType();
-        if ($type != \PHPCR\PropertyType::PATH
-            || $type != \PHPCR\PropertyType::REFERENCE
-            || $type != \PHPCR\Propertytype::WEAKREFERENCE)
+        if ($type == \PHPCR\PropertyType::PATH)
         {
-            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to Node type.");
-        } 
+            /* TODO */
+            throw new \PHPCR\RepositoryException("Not implemented");
+        }
+
+        if ($type == \PHPCR\PropertyType::REFERENCE)
+        {
+            return $this->parent->getSession()->getNodeByIdentifier($this->getValue());
+        }
+
+        if ($type == \PHPCR\Propertytype::WEAKREFERENCE)
+        {
+            /* TODO */
+            throw new \PHPCR\RepositoryException("Not implemented");
+        }
+    
+        throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to Node type."); 
 
         return $this->node;
     }
