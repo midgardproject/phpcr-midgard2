@@ -88,12 +88,16 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function getValue()
     {
         $type = $this->getType();
-        if ($type == \PHPCR\PropertyType::DATE)
+
+        switch ($type) 
         {
+        case \PHPCR\PropertyType::DATE:
             return $this->getDate();
-        }
-        else 
-        {
+
+        case \PHPCR\PropertyType::BINARY:
+            return $this->getBinary();
+
+        default:
             return $this->getNativeValue();
         } 
     }
@@ -105,7 +109,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             return $this->object->$propertyName;
         }
- 
+
         $property = $this->manager->getProperty($this->propertyName, $this->propertyPrefix);
         $ret = $property->getLiterals();
 
@@ -150,7 +154,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function getBinary()
     {
         $f = fopen('php://memory', 'rwb+');
-        fwrite($f, $this->getValue());
+        fwrite($f, $this->getNativeValue());
         rewind($f);
 
         return $f; 
