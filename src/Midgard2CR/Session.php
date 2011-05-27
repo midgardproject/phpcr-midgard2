@@ -203,6 +203,7 @@ class Session implements \PHPCR\SessionInterface
             $mobject->up = $parent->getMidgard2Object()->id;
             if ($mobject->create() === true)
             {
+                $node->getPropertyManager()->save();
                 return true;
             }
 
@@ -215,6 +216,7 @@ class Session implements \PHPCR\SessionInterface
             $mobject = $node->getMidgard2Object();
             if ($mobject->update() === true)
             {
+                $node->getPropertyManager()->save();
                 return true;
             }
 

@@ -58,7 +58,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         // Unspecified yet.
         throw new \PHPCR\RepositoryException("Not supported");
     }
-    
+
+    public function getPropertyManager()
+    {
+        $this->populateProperties();
+        return $this->propertyManager;
+    }
+
     public function orderBefore($srcChildRelPath, $destChildRelPath)
     {
         throw new \PHPCR\UnsupportedRepositoryOperationException();
