@@ -287,6 +287,10 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function getLength()
     {
         $v = $this->getNativeValue();
+        if ($this->type == \PHPCR\PropertyType::BINARY)
+        {
+            return strlen(base64_decode($v));
+        }
         if (is_array($v))
         {
             throw new \PHPCR\ValueFormatException("Can not get multivalue length");
