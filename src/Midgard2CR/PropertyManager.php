@@ -86,7 +86,7 @@ class PropertyManager
         $this->modifiedModels = array();
     }
 
-    protected function findInCache ($name, $prefix)
+    protected function findInCache ($name, $prefix, $type)
     {
         if ($this->cache == null)
         {
@@ -98,7 +98,15 @@ class PropertyManager
             if ($property->model->name == $name
                 && $property->model->prefix == $prefix)
             {
-                return $property;
+                if ($type == null)
+                {
+                    return $property;
+                }
+
+                if ($property->model->type == $type)
+                {
+                    return $property;
+                }
             }
         }
 
@@ -107,7 +115,7 @@ class PropertyManager
 
     private function propertyFactory ($name, $prefix, $type)
     {
-        $property = $this->findInCache ($name, $prefix);
+        $property = $this->findInCache ($name, $prefix, $type);
         if ($property == null)
         {
             $property = new PropertyHolder();
@@ -134,9 +142,9 @@ class PropertyManager
         return $property;
     }
 
-    public function getProperty ($name, $prefix)
+    public function getProperty ($name, $prefix, $type = null)
     {
-        return $this->findInCache ($name, $prefix);
+        return $this->findInCache ($name, $prefix, $type);
     }
 
     protected function populateProperties()
