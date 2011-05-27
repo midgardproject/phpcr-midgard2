@@ -76,17 +76,17 @@ class PropertyManager
     protected $cache = array();
     protected $classname = null;
     protected $object = null;
-    protected $model_property;
-    protected $property_value;
+    protected $modifiedModels = null;
 
     public function __construct ($object)
     {
         $this->object = $object;
         $this->classname = get_class($object);
         $this->populateProperties();
+        $this->modifiedModels = array();
     }
 
-    protected function findInCache ($name, $prefix)
+    protected function findInCache ($name, $prefix, $type)
     {
         if ($this->cache == null)
         {
@@ -98,7 +98,15 @@ class PropertyManager
             if ($property->model->name == $name
                 && $property->model->prefix == $prefix)
             {
-                return $property;
+                if ($type == null)
+                {
+                    return $property;
+                }
+
+                if ($property->model->type == $type)
+                {
+                    return $property;
+                }
             }
         }
 
@@ -107,7 +115,7 @@ class PropertyManager
 
     private function propertyFactory ($name, $prefix, $type)
     {
-        $property = $this->findInCache ($name, $prefix);
+        $property = $this->findInCache ($name, $prefix, $type);
         if ($property == null)
         {
             $property = new PropertyHolder();
@@ -134,9 +142,9 @@ class PropertyManager
         return $property;
     }
 
-    public function getProperty ($name, $prefix)
+    public function getProperty ($name, $prefix, $type = null)
     {
-        return $this->findInCache ($name, $prefix);
+        return $this->findInCache ($name, $prefix, $type);
     }
 
     protected function populateProperties()
@@ -192,6 +200,38 @@ class PropertyManager
         }
 
         return $ret;
+    }
+
+    public function getModel($name, $prefix)
+    {
+        foreach ($this->cache as $property)
+        {
+            if ($property->model->name == $name
+                && $property->model->prefix == $prefix)
+            {
+                return $property->model;
+            }
+        }
+
+        return null;
+    }
+
+    public function setModelType($name, $prefix, $type)
+    {
+        $model = $this->getModel($name, $prefix);
+        if (!$model)
+        {
+            return;
+        }
+
+        if ($model->type == $type)
+        {
+            return;
+        }
+
+        $model->type = $type;
+
+        $this->modifiedModels[] = $model;
     }
 
     private function createProperty ($property)
@@ -371,6 +411,19 @@ class PropertyManager
             {
                 $this->createProperty($property); 
             }
+        }
+
+        /* TODO, Optimize this.
+         *
+         * Models should be updated before property is saved, 
+         * so calculate which models should be updated using 
+         * properties info.
+         */
+        foreach ($this->modifiedModels as $model)
+        {
+            $model_object = new \midgard_property_model($model->id);
+            $model_object->type = $model->type;
+            $model_object->update();
         }
     }
 }
