@@ -72,8 +72,12 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return;
         }
 
-        $this->type = $type;
-        $property = $this->manager->factory ($this->propertyName, $this->propertyPrefix, $type, $value);
+        $property = $this->manager->factory($this->propertyName, $this->propertyPrefix, $type, $value);
+        if ($this->type != $type) 
+        {
+            $this->type = $type;
+            $this->manager->setModelType($this->propertyName, $this->propertyPrefix, $type);
+        }
     }
     
     public function addValue($value)

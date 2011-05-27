@@ -76,14 +76,14 @@ class PropertyManager
     protected $cache = array();
     protected $classname = null;
     protected $object = null;
-    protected $model_property;
-    protected $property_value;
+    protected $modifiedModels = null;
 
     public function __construct ($object)
     {
         $this->object = $object;
         $this->classname = get_class($object);
         $this->populateProperties();
+        $this->modifiedModels = array();
     }
 
     protected function findInCache ($name, $prefix)
@@ -192,6 +192,38 @@ class PropertyManager
         }
 
         return $ret;
+    }
+
+    public function getModel($name, $prefix)
+    {
+        foreach ($this->cache as $property)
+        {
+            if ($property->model->name == $name
+                && $property->model->prefix == $prefix)
+            {
+                return $property->model;
+            }
+        }
+
+        return null;
+    }
+
+    public function setModelType($name, $prefix, $type)
+    {
+        $model = $this->getModel($name, $prefix);
+        if (!$model)
+        {
+            return;
+        }
+
+        if ($model->type == $type)
+        {
+            return;
+        }
+
+        $model->type = $type;
+
+        $this->modifiedModels[] = $model;
     }
 
     private function createProperty ($property)
@@ -371,6 +403,19 @@ class PropertyManager
             {
                 $this->createProperty($property); 
             }
+        }
+
+        /* TODO, Optimize this.
+         *
+         * Models should be updated before property is saved, 
+         * so calculate which models should be updated using 
+         * properties info.
+         */
+        foreach ($this->modifiedModels as $model)
+        {
+            $model_object = new \midgard_property_model($model->id);
+            $model_object->type = $model->type;
+            $model_object->update();
         }
     }
 }
