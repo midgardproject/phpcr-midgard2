@@ -262,6 +262,20 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         $type = $this->getType();
         if ($type == \PHPCR\PropertyType::PATH)
         {
+            $path = $this->getValue();
+            /* TODO, handle /./../ paths */
+            if (strpos($path, ".") == false)
+            {
+                try 
+                {
+                    $node = $this->node->getNode($path);
+                    return $node;
+                }
+                catch (\PHPCR\PathNotFoundException $e)
+                {
+                    throw new \PHPCR\ItemNotFoundException($e->getMessage());
+                }
+            }
             /* TODO */
             throw new \PHPCR\RepositoryException("Not implemented");
         }
