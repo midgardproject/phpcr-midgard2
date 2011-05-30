@@ -263,6 +263,10 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         if ($type == \PHPCR\PropertyType::PATH)
         {
             $path = $this->getValue();
+            if (is_array($path))
+            {
+                throw new \PHPCR\RepositoryException("Path array not implemented");
+            }
             /* TODO, handle /./../ paths */
             if (strpos($path, ".") == false)
             {
