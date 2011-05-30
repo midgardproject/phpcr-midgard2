@@ -217,6 +217,15 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             try 
             {
+                $v = $this->getNativeValue();
+                if (is_array($v))
+                {
+                    foreach ($v as $value)
+                    {
+                        $ret[] = new \DateTime($value);
+                    }
+                    return $ret;
+                }
                 $date = new \DateTime($this->getNativeValue());
                 return $date;
             }
@@ -259,7 +268,18 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
         if ($type == \PHPCR\PropertyType::REFERENCE)
         {
-            return $this->parent->getSession()->getNodeByIdentifier($this->getValue());
+            $v = $this->getValue();
+            if (is_array($v))
+            {
+                foreach ($v as $id)
+                {
+                    $ret[] = $this->parent->getSession()->getNodeByIdentifier($id);
+                } 
+
+                return $ret;
+            }
+        
+            return $this->parent->getSession()->getNodeByIdentifier($v);
         }
 
         if ($type == \PHPCR\Propertytype::WEAKREFERENCE)
