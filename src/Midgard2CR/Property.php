@@ -318,8 +318,18 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to PATH type.");
         } 
-        
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+
+        $path = $this->getValue();
+        if (is_array($path))
+        {
+            foreach ($path as $v)
+            {
+                $ret[] = $this->node->getProperty($v);
+            }
+            return $ret;
+        }
+
+        return $this->node->getProperty($path);
     }
     
     public function getLength()
@@ -331,7 +341,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         }
         if (is_array($v))
         {
-            throw new \PHPCR\ValueFormatException("Can not get multivalue length");
+            return $this->getLengths();
         }
         return strlen($this->getString());
     }
