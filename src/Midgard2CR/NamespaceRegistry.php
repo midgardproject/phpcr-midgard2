@@ -48,6 +48,14 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
         {
             throw new \PHPCR\NamespaceException("Cannot register builtin namespaces");
         }
+
+        $lowprefix = strtolower($prefix);
+        if (strpos($lowprefix, "xml") !== false
+            || strpos($lowprefix, "mgd") !== false)
+        {
+            throw new \PHPCR\NamespaceException("Prefix beginning with 'xml' or 'mgd' can not be registered");
+        }
+
         $this->registry[$prefix] = $uri;
     }
 
