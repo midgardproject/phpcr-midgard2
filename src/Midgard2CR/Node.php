@@ -150,7 +150,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return;
         }
 
-        \midgard_connection::get_instance()->set_loglevel("debug");
+        //\midgard_connection::get_instance()->set_loglevel("debug");
 
         $this->children = array();
         $childTypes = $this->getChildTypes();
