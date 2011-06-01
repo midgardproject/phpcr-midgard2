@@ -597,4 +597,65 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         return false;
     }
+
+    private function getMidgardRelativePath($object)
+    {
+        $storage = new \midgard_query_storage('midgardmvc_core_node');
+
+        /* By default we prepare to join core node and blob.
+         * SELECT t1.id, ... FROM midgardmvc_core_node AS t1 JOIN blobs AS t2 ON t1.guid = t2.parent_guid WHERE t2.name='NAME';
+         */ 
+        $joined_storage = new \midgard_query_storage('midgard_attachment');
+        $left_property_join = new \midgard_query_property('guid');
+        $right_property_join = new \midgard_query_property('parentguid', $joined_storage);    
+
+        if (is_a($object, 'midgardmvc_core_node'))
+        {
+            /* Join nodes 
+             * SELECT t1.id, ... FROM midgardmvc_core_node AS t1 JOIN midgardmvc_core_node AS t2 ON t1.id = t2.up WHERE t2.name='NAME'
+             */ 
+            $joined_storage = new \midgard_query_storage('midgardmvc_core_node');
+            $left_property_join = new \midgard_query_property('id');
+            $right_property_join = new \midgard_query_property('up', $joined_storage);    
+        }
+
+        $q = new \midgard_query_select($storage);
+        $q->add_join("INNER", $left_property_join, $right_property_join);
+
+        /* Set name constraint */
+        $q->set_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('name', $joined_storage), 
+                '=', 
+                new \midgard_query_value($object->name)
+            )
+        );
+        
+        $q->execute();
+
+        /* Relative path is : $returnedobjects[0]->name / $object->name */
+
+        return $q->list_objects();
+    }
+
+    public static function getMidgardPath($object)
+    {
+        $elements = array();
+
+        /* We expect last object to have up property = 0.
+         * Last object is root node. */
+        do 
+        {
+            array_unshift($elements, $object->name);
+            $objects = self::getMidgardRelativePath($object);
+            if (empty($objects))
+            {
+                break;
+            }
+            $object = $objects[0];
+
+        } while (!empty($objects) && $object->up != 0);
+
+        return '/' . implode("/", $elements);
+    }
 }
