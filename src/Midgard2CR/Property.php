@@ -317,28 +317,29 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             throw new \PHPCR\RepositoryException("Not implemented");
         }
 
-        if ($type == \PHPCR\PropertyType::REFERENCE)
+        if ($type == \PHPCR\PropertyType::REFERENCE
+            || $type == \PHPCR\PropertyType::WEAKREFERENCE)
         {
-            $v = $this->getValue();
-            if (is_array($v))
-            {
-                foreach ($v as $id)
+            try {
+                $v = $this->getValue();
+                if (is_array($v))
                 {
-                    $ret[] = $this->parent->getSession()->getNodeByIdentifier($id);
-                } 
+                    foreach ($v as $id)
+                    {
+                        $ret[] = $this->parent->getSession()->getNodeByIdentifier($id);
+                    } 
 
-                return $ret;
-            }
+                    return $ret;
+                }
         
-            return $this->parent->getSession()->getNodeByIdentifier($v);
+                return $this->parent->getSession()->getNodeByIdentifier($v);
+            }
+            catch (\PHPCR\PathNotFoundException $e)
+            {
+                    throw new \PHPCR\ItemNotFoundException($e->getMessage());
+            }
         }
-
-        if ($type == \PHPCR\Propertytype::WEAKREFERENCE)
-        {
-            /* TODO */
-            throw new \PHPCR\RepositoryException("Not implemented");
-        }
-    
+   
         throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to Node type."); 
 
         return $this->node;
