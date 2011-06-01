@@ -110,6 +110,24 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return $this->object->$propertyName;
         }
 
+        /* Get mgdschema object property if we can map such */
+        if ($this->propertyPrefix == "jcr")
+        {
+            switch ($this->propertyName)
+            {
+            case 'created':
+                return $this->object->metadata->created;
+
+            case 'mimeType':
+                if (!is_a($this->object, 'midgard_attachment'))
+                {
+                    throw new \PHPCR\RepositoryException ("Expected underlying midgard_attachment object. Given is " . get_class($this->object));
+                }
+                return $this->object->mimetype;
+            }
+
+        }
+
         $property = $this->manager->getProperty($this->propertyName, $this->propertyPrefix);
         $ret = $property->getLiterals();
 
@@ -147,8 +165,16 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
     public function getString()
     {
-        // TODO: Convert
-        return $this->getNativeValue();
+        $type = $this->getType();
+
+        switch ($type) 
+        {
+        case \PHPCR\PropertyType::DATE:
+            return $this->getDate()->format("c");
+
+        default:
+            return $this->getNativeValue();
+        } 
     }
     
     public function getBinary()
@@ -226,7 +252,14 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
                     }
                     return $ret;
                 }
-                $date = new \DateTime($this->getNativeValue());
+                if ($v instanceof \DateTime)
+                {
+                    $date = $v;
+                }
+                else 
+                {
+                    $date = new \DateTime($this->getNativeValue());
+                }
                 return $date;
             }
             catch (\Exception $e)
