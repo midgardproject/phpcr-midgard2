@@ -74,9 +74,9 @@ class Session implements \PHPCR\SessionInterface
          * Try to get midgard object by guid if required */
 
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_property_view'));
-        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('value'), '=', new \midgard_query_value($id)));
+        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('value'), '=', new \midgard_query_value($id))); 
         $q->execute();
-        
+       
         if ($q->get_results_count() < 1)
         {
             throw new \PHPCR\ItemNotFoundException("Node identified by {$id} not found");
@@ -88,7 +88,7 @@ class Session implements \PHPCR\SessionInterface
             $midgard_object = \midgard_object_class::get_object_by_guid ($pv->objectguid);
             $node = new \Midgard2CR\Node($midgard_object, null, $this);
             /* PHPUnit dies on this (allowed memory exhausted) so null returned */
-            return null;
+            //return null;
             return $node;
         }
         catch (\midgard_error_exception $e)
@@ -363,21 +363,26 @@ class Session implements \PHPCR\SessionInterface
     
     public function setNamespacePrefix($prefix, $uri)
     {
+        $nsReg = $this->getWorkspace()->getNamespaceRegistry();
+        $nsReg->registerNamespace($prefix, $uri);
     }
     
     public function getNamespacePrefixes()
     {
-        return array();
+        $nsReg = $this->getWorkspace()->getNamespaceRegistry();
+        return $nsReg->getPrefixes();
     }
     
     public function getNamespaceURI($prefix)
     {
-        return '';
+        $nsReg = $this->getWorkspace()->getNamespaceRegistry();
+        return $nsReg->getUri($prefix);
     }
     
     public function getNamespacePrefix($uri)
     {
-        return '';
+        $nsReg = $this->getWorkspace()->getNamespaceRegistry();
+        return $nsReg->getPrefix($uri);   
     }
     
     public function logout()

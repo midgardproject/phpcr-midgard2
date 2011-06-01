@@ -217,6 +217,15 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             try 
             {
+                $v = $this->getNativeValue();
+                if (is_array($v))
+                {
+                    foreach ($v as $value)
+                    {
+                        $ret[] = new \DateTime($value);
+                    }
+                    return $ret;
+                }
                 $date = new \DateTime($this->getNativeValue());
                 return $date;
             }
@@ -253,13 +262,42 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         $type = $this->getType();
         if ($type == \PHPCR\PropertyType::PATH)
         {
+            $path = $this->getValue();
+            if (is_array($path))
+            {
+                throw new \PHPCR\RepositoryException("Path array not implemented");
+            }
+            /* TODO, handle /./../ paths */
+            if (strpos($path, ".") == false)
+            {
+                try 
+                {
+                    $node = $this->node->getNode($path);
+                    return $node;
+                }
+                catch (\PHPCR\PathNotFoundException $e)
+                {
+                    throw new \PHPCR\ItemNotFoundException($e->getMessage());
+                }
+            }
             /* TODO */
             throw new \PHPCR\RepositoryException("Not implemented");
         }
 
         if ($type == \PHPCR\PropertyType::REFERENCE)
         {
-            return $this->parent->getSession()->getNodeByIdentifier($this->getValue());
+            $v = $this->getValue();
+            if (is_array($v))
+            {
+                foreach ($v as $id)
+                {
+                    $ret[] = $this->parent->getSession()->getNodeByIdentifier($id);
+                } 
+
+                return $ret;
+            }
+        
+            return $this->parent->getSession()->getNodeByIdentifier($v);
         }
 
         if ($type == \PHPCR\Propertytype::WEAKREFERENCE)
@@ -280,8 +318,18 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to PATH type.");
         } 
-        
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+
+        $path = $this->getValue();
+        if (is_array($path))
+        {
+            foreach ($path as $v)
+            {
+                $ret[] = $this->node->getProperty($v);
+            }
+            return $ret;
+        }
+
+        return $this->node->getProperty($path);
     }
     
     public function getLength()
@@ -293,7 +341,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         }
         if (is_array($v))
         {
-            throw new \PHPCR\ValueFormatException("Can not get multivalue length");
+            return $this->getLengths();
         }
         return strlen($this->getString());
     }
