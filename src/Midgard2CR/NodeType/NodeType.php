@@ -5,7 +5,7 @@ class NodeType implements \PHPCR\NodeTypeInterface
 {
     protected $classname = null;
 
-    public function NodeType ($classname) {
+    public function __construct($classname) {
         if ($classname === null
             || $classname === "")
         {
