@@ -300,7 +300,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             {
                 throw new \PHPCR\RepositoryException("Path array not implemented");
             }
-            /* TODO, handle /./../ paths */
+            /* TODO, handle /./ path */
             if (strpos($path, ".") == false)
             {
                 try 
@@ -330,8 +330,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
                     } 
 
                     return $ret;
-                }
-        
+                } 
                 return $this->parent->getSession()->getNodeByIdentifier($v);
             }
             catch (\PHPCR\PathNotFoundException $e)
