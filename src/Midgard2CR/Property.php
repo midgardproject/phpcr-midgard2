@@ -45,7 +45,12 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
         parent::__construct($midgard_object, $node, $node->getSession());
     }
-    
+
+    public function getParentNode()
+    {
+        return $this->node;
+    }
+
     private function getMidgard2PropertyName()
     {
         if ($this->isMidgardProperty = false)
