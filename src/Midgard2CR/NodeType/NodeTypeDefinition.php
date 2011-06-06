@@ -1,7 +1,7 @@
 <?php
 namespace Midgard2CR\NodeType;
 
-public class NodeTypeDefinition implements \PHPCR\NodeTypeDefinitionInterface
+class NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeDefinitionInterface
 {
     protected $childNodeDefinitions = array();
     protected $propertyDefinitions = array();
@@ -38,7 +38,7 @@ public class NodeTypeDefinition implements \PHPCR\NodeTypeDefinitionInterface
         return $this->primaryItemName;
     }
 
-    public funciton hasOrderableChildNodes()
+    public function hasOrderableChildNodes()
     {
         return $this->hasOrderableChildNodes;
     }
