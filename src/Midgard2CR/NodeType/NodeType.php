@@ -1,30 +1,26 @@
 <?php
-namespace Midgard2CR;
+namespace Midgard2CR\NodeType;
 
-class NodeType implements \PHPCR\NodeTypeInterface
+class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInterface
 {
-    protected $classname = null;
+    protected $nodeTypeName = null;
+    protected $manager = null;
 
-    public function __construct($classname) {
-        if ($classname === null
-            || $classname === "")
+    public function __construct($nodeTypeName, NodeTypeManager $manager) {
+        if ($nodeTypeName === null
+            || $nodeTypeName === "")
         {
-            throw new \PHPCR\RepositoryException("Can not initialize NodeType for empty classname");
+            throw new \PHPCR\RepositoryException("Can not initialize NodeType for empty name");
         }
         
-        $mrp = new midgard_reflector_property ($classname);
-        if (!$mrp) 
-        {
-            throw new \PHPCR\NoSuchNodeTypeException("Invalid Node '{$classname}' name"); 
-        }
-
-        $this->classname = $classname;
+        $this->nodeTypeName = $nodeTypeName;
+        $this->manager = $manager;
     }
 
     public function getSupertypes()
     {
         $rv = array();
-        $o = midgard_schema_object::factory ($this->classname);
+        $o = \midgard_schema_object::factory ($this->classname);
         $parentname = $o->parent();
 
         if ($parentname != null)
@@ -44,7 +40,7 @@ class NodeType implements \PHPCR\NodeTypeInterface
     {
         $rv = array();
 
-        $children = midgard_reflector_object::list_children($this->classname);
+        $children = \midgard_reflector_object::list_children($this->classname);
         if (!is_empty($children))
         {
             foreach ($children as $name => $v)
@@ -105,7 +101,7 @@ class NodeType implements \PHPCR\NodeTypeInterface
     public function canRemoveProperty($propertyName)
     {
         // Determine if property is registered for MgdSchema class
-        $mrp = new midgard_reflector_property ($this->classname);
+        $mrp = new \midgard_reflector_property ($this->classname);
 
         // Property is registered for GObject, so we can not remove it
         $mtype = $mrp->get_midgard_type ($propertyName);
