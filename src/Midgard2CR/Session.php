@@ -86,9 +86,8 @@ class Session implements \PHPCR\SessionInterface
 
         try {
             $midgard_object = \midgard_object_class::get_object_by_guid ($pv->objectguid);
-            $node = new \Midgard2CR\Node($midgard_object, null, $this);
-            /* PHPUnit dies on this (allowed memory exhausted) so null returned */
-            //return null;
+            $midgard_path = \Midgard2CR\Node::getMidgardPath($midgard_object);
+            $node = $this->getNode($midgard_path);
             return $node;
         }
         catch (\midgard_error_exception $e)

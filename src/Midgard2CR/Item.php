@@ -136,6 +136,7 @@ abstract class Item implements \PHPCR\ItemInterface
 
     public function accept(\PHPCR\ItemVisitorInterface $visitor)
     {
+        $visitor->visit($this);
     }
 
     public function refresh($keepChanges)

@@ -45,7 +45,12 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
         parent::__construct($midgard_object, $node, $node->getSession());
     }
-    
+
+    public function getParentNode()
+    {
+        return $this->node;
+    }
+
     private function getMidgard2PropertyName()
     {
         if ($this->isMidgardProperty = false)
@@ -110,6 +115,24 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return $this->object->$propertyName;
         }
 
+        /* Get mgdschema object property if we can map such */
+        if ($this->propertyPrefix == "jcr")
+        {
+            switch ($this->propertyName)
+            {
+            case 'created':
+                return $this->object->metadata->created;
+
+            case 'mimeType':
+                if (!is_a($this->object, 'midgard_attachment'))
+                {
+                    throw new \PHPCR\RepositoryException ("Expected underlying midgard_attachment object. Given is " . get_class($this->object));
+                }
+                return $this->object->mimetype;
+            }
+
+        }
+
         $property = $this->manager->getProperty($this->propertyName, $this->propertyPrefix);
         $ret = $property->getLiterals();
 
@@ -147,8 +170,16 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
     public function getString()
     {
-        // TODO: Convert
-        return $this->getNativeValue();
+        $type = $this->getType();
+
+        switch ($type) 
+        {
+        case \PHPCR\PropertyType::DATE:
+            return $this->getDate()->format("c");
+
+        default:
+            return $this->getNativeValue();
+        } 
     }
     
     public function getBinary()
@@ -226,7 +257,14 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
                     }
                     return $ret;
                 }
-                $date = new \DateTime($this->getNativeValue());
+                if ($v instanceof \DateTime)
+                {
+                    $date = $v;
+                }
+                else 
+                {
+                    $date = new \DateTime($this->getNativeValue());
+                }
                 return $date;
             }
             catch (\Exception $e)
@@ -267,7 +305,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             {
                 throw new \PHPCR\RepositoryException("Path array not implemented");
             }
-            /* TODO, handle /./../ paths */
+            /* TODO, handle /./ path */
             if (strpos($path, ".") == false)
             {
                 try 
@@ -284,28 +322,28 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             throw new \PHPCR\RepositoryException("Not implemented");
         }
 
-        if ($type == \PHPCR\PropertyType::REFERENCE)
+        if ($type == \PHPCR\PropertyType::REFERENCE
+            || $type == \PHPCR\PropertyType::WEAKREFERENCE)
         {
-            $v = $this->getValue();
-            if (is_array($v))
-            {
-                foreach ($v as $id)
+            try {
+                $v = $this->getValue();
+                if (is_array($v))
                 {
-                    $ret[] = $this->parent->getSession()->getNodeByIdentifier($id);
+                    foreach ($v as $id)
+                    {
+                        $ret[] = $this->parent->getSession()->getNodeByIdentifier($id);
+                    } 
+
+                    return $ret;
                 } 
-
-                return $ret;
+                return $this->parent->getSession()->getNodeByIdentifier($v);
             }
-        
-            return $this->parent->getSession()->getNodeByIdentifier($v);
+            catch (\PHPCR\PathNotFoundException $e)
+            {
+                    throw new \PHPCR\ItemNotFoundException($e->getMessage());
+            }
         }
-
-        if ($type == \PHPCR\Propertytype::WEAKREFERENCE)
-        {
-            /* TODO */
-            throw new \PHPCR\RepositoryException("Not implemented");
-        }
-    
+   
         throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to Node type."); 
 
         return $this->node;

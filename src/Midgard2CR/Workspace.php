@@ -8,6 +8,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
     protected $namespace_registry = null;
     protected $name = "";
     protected $midgard_workspace = null;
+    protected $nodeTypeManager = null;
 
     public function __construct (\Midgard2CR\Session $session)
     {
@@ -77,7 +78,11 @@ class Workspace implements \PHPCR\WorkspaceInterface
 
     public function getNodeTypeManager()
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        if ($this->nodeTypeManager == null)
+        {
+            $this->nodeTypeManager = new NodeType\NodeTypeManager();
+        }
+        return $this->nodeTypeManager;
     }
 
     public function getObservationManager()
