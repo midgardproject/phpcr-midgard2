@@ -1,8 +1,8 @@
 <?php
 namespace Midgard2CR\NodeType;
-\use ArrayObject;
+use \ArrayObject;
 
-public class NodeTypeTemplate implements \PHPCR\NodeTypeTemplateInterface
+class NodeTypeTemplate extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeTemplateInterface
 {
     //protected $childNodeDefinitions = array();
     //protected $propertyDefinitions = array();
@@ -17,7 +17,7 @@ public class NodeTypeTemplate implements \PHPCR\NodeTypeTemplateInterface
 
     }
 
-    public function setAbstract(bool $toggle)
+    public function setAbstract($toggle)
     {
         $this->isAbstract = $toggle;
     }
@@ -27,7 +27,7 @@ public class NodeTypeTemplate implements \PHPCR\NodeTypeTemplateInterface
         $this->supertypeNames = $names;
     }
 
-    public function setMixin(bool $toggle)
+    public function setMixin($toggle)
     {
         $this->isMixin = $toggle;
     }
@@ -37,7 +37,7 @@ public class NodeTypeTemplate implements \PHPCR\NodeTypeTemplateInterface
         $this->name = $name;
     }
 
-    public function setOrderableChildNodes(bool $toggle)
+    public function setOrderableChildNodes($toggle)
     {
         $this->hasOrderableChildNodes = $toggle;
     }
@@ -47,7 +47,7 @@ public class NodeTypeTemplate implements \PHPCR\NodeTypeTemplateInterface
         $this->primaryItemName = $name;
     }
 
-    public function setQueryable(bool $toggle)
+    public function setQueryable($toggle)
     {
         $this->isQueryable = $toggle;
     }
