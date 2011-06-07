@@ -478,7 +478,15 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function hasNode($relPath)
     {
-        try {
+        $pos = strpos($relPath, '/');
+        if ($pos === 0)
+        {
+            throw new \InvalidArgumentException("Expected relative path. Absolute given");
+            /* Take few glasses if Absolute given ;) */
+        }
+
+        try 
+        {
             $this->getNode($relPath);
             return true;
         }
@@ -491,10 +499,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function hasProperty($relPath)
     {
         $pos = strpos($relPath, '/');
-        /* Convert to relative path when absolute one has been given */
         if ($pos === 0)
         {
-            $relPath = substr($relPath, 1);
+            throw new \InvalidArgumentException("Expected relative path. Absolute given");
         }
 
         try {
