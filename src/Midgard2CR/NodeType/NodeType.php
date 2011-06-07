@@ -3,17 +3,25 @@ namespace Midgard2CR\NodeType;
 
 class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInterface
 {
-    protected $nodeTypeName = null;
     protected $manager = null;
 
-    public function __construct($nodeTypeName, NodeTypeManager $manager) {
-        if ($nodeTypeName === null
-            || $nodeTypeName === "")
+    public function __construct($ntt, NodeTypeManager $manager) {
+        $this->name = $ntt->getName();
+        if ($this->name === null
+            || $this->name === "")
         {
             throw new \PHPCR\RepositoryException("Can not initialize NodeType for empty name");
         }
-        
-        $this->nodeTypeName = $nodeTypeName;
+
+        $this->childNodeDefinitions = $ntt->getDeclaredChildNodeDefinitions();
+        $this->propertyDefinitions = $ntt->getDeclaredPropertyDefinitions();
+        $this->supertypeNames = $ntt->getDeclaredSuperTypeNames();
+        $this->primaryItemName = $ntt->getPrimaryItemName();
+        $this->hasOrderableChildNodes = $ntt->hasOrderableChildNodes();
+        $this->isAbstract = $ntt->isAbstract();
+        $this->isMixin = $ntt->isMixin();
+        $this->isQueryable = $ntt->isQueryable();
+
         $this->manager = $manager;
     }
 
