@@ -454,15 +454,26 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getIndex()
     {
-       throw new \PHPCR\RepositoryException("Not supported");
+        /* We do not support same name siblings */
+        return 1;
     }
     
     public function getReferences($name = NULL)
     {
+        /* TODO:
+         * If node has jcr:uuid property
+         *  get it's value
+         *  query properties with such value, which are declared as reference property model
+         *  query references
+         * If not, return empty iterator */
+        return new \ArrayIterator(array());
     }
     
     public function getWeakReferences($name = NULL)
     {
+        /* TODO:
+         * Check getReferences comments */
+        return  new \ArrayIterator(array());
     }
     
     public function hasNode($relPath)
@@ -552,6 +563,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getDefinition()
     {
+        return null;
     }
     
     public function update($srcWorkspace)
