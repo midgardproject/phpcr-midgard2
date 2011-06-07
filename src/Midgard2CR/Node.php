@@ -418,7 +418,22 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getPrimaryItem()
     {
-        throw new \PHPCR\ItemNotFoundException();
+        try
+        {
+            $primaryType = $this->getPropertyValue('jcr:primaryType');
+            $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+            $nt = $ntm->getNodeType($primaryType);
+            $primaryItem = $nt->getPrimaryItemName();
+            if ($primaryItem == null)
+            {
+                throw new \PHPCR\ItemNotFoundException("PrimaryItem not found for {$this->getName()} node");
+            }
+        }
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+                throw new \PHPCR\ItemNotFoundException("primaryType property not found for {$this->getName()} node");
+        }
+        return $primaryItem;
     }
     
     public function getIdentifier()
