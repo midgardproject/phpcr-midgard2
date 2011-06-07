@@ -9,6 +9,7 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
     public function __construct()
     {
         $this->registerStandardTypes();
+        $this->registerMidgard2Types();
     }
 
     private function registerStandardTypes()
@@ -72,6 +73,36 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
         /* mix:etag */
         $etag = $this->createNamedNodeTypeTemplate('mix:etag', true);
         $this->registerNodeType($etag, false);
+    }
+
+    private function registerMidgard2Types()
+    {
+        /* Register abstract MidgardObject */
+        $mgdObject = $this->createNamedNodeTypeTemplate('mgd:object', false);
+        $mgdObject->setAbstract(true);
+        $this->registerNodeType($mgdObject, false);
+
+
+        /* Register all types */
+        $re = new \ReflectionExtension('midgard2');
+        $classes = $re->getClasses();
+        foreach ($classes as $refclass)
+        {
+            $parent_class = $refclass->getParentClass();
+            if (!$parent_class)
+            {
+                continue;
+            }
+
+            if ($parent_class->getName() != 'midgard_object')
+            {
+                continue;
+            }
+            $mgdschemaName = 'mgd:' . $refclass->getName();
+            $mgdschemaType = $this->createNamedNodeTypeTemplate($mgdschemaName, false);
+            $mgdschemaType->setDeclaredSuperTypeNames(array('mgd:object'));
+            $this->registerNodeType($mgdschemaType, false);
+        }
     }
 
     public function createNodeDefinitionTemplate()
