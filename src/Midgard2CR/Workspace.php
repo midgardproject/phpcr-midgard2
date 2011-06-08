@@ -17,8 +17,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
         if (is_object($workspace))
         {
             $this->midgard_workspace = $workspace;
-        }
-            
+        }            
     }
 
     public function getSession()
