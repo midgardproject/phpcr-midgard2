@@ -98,6 +98,7 @@ class Midgard2XMLImporter extends \DomDocument
         /* Take multivalues into account */
         $n_values = $property->getElementsByTagName('value')->length;
         $propertyType = $property->getAttributeNS($this->ns_sv, 'type');
+        $isBinary = false;
 
         for ($i = 0; $i < $n_values; $i++)
         {
@@ -114,11 +115,11 @@ class Midgard2XMLImporter extends \DomDocument
                 if ($blob->write_content($vnode->nodeValue))
                     $att->create();
 
-                continue;
+                $isBinary = true;
             }
 
-            /* Create properties */
-            $propertyManager->factory($parts[1], $parts[0], $propertyType, $vnode->nodeValue); 
+            /* Create property models and values */
+            $propertyManager->factory($parts[1], $parts[0], $propertyType, $isBinary == true ? " " : $vnode->nodeValue); 
         }    
 
         return true;

@@ -12,13 +12,14 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     protected $midgardPropertyName = null; 
     protected $manager = null;
     protected $isMultiple = false;
+    protected $midgardObject = null;
 
     public function __construct(Node $node, $propertyName, \Midgard2CR\PropertyManager $manager = null)
     {
         $this->propertyFullName = $propertyName;
         $this->node = $node;
         $this->parent = $node;
-        $midgard_object = $node->getMidgard2Object();
+        $this->midgardObject = $node->getMidgard2Object();
         $this->manager = $manager;
 
         /* Check if we get MidgardObject property */
@@ -43,7 +44,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             $this->propertyName = $propertyName;
         }
 
-        parent::__construct($midgard_object, $node, $node->getSession());
+        parent::__construct($this->midgardObject, $node, $node->getSession());
     }
 
     public function getParentNode()
@@ -177,6 +178,9 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         case \PHPCR\PropertyType::DATE:
             return $this->getDate()->format("c");
 
+        case \PHPCR\PropertyType::BINARY:
+            return base64_decode($this->getNativeValue());
+
         default:
             return $this->getNativeValue();
         } 
@@ -184,11 +188,20 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function getBinary()
     {
-        $f = fopen('php://memory', 'rwb+');
-        fwrite($f, $this->getNativeValue());
-        rewind($f);
+        $ret = array();
+        $attachments = $this->midgardObject->list_attachments();
+        if (empty($atts))
+        {
+            return null;
+        }
 
-        return $f; 
+        foreach ($attachments as $att)
+        {
+            $blob = new midgard_blob($att);
+            $ret[] = $blob->get_handler();
+        }
+
+        return count($ret) == 1 ? $ret[0] : $ret;
     }
     
     public function getLong()
@@ -373,13 +386,14 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     public function getLength()
     {
         $v = $this->getNativeValue();
-        if ($this->type == \PHPCR\PropertyType::BINARY)
-        {
-            return strlen(base64_decode($v));
-        }
         if (is_array($v))
         {
             return $this->getLengths();
+        }
+
+        if ($this->type == \PHPCR\PropertyType::BINARY)
+        {
+            return strlen(base64_decode($v));
         }
         return strlen($this->getString());
     }
@@ -392,6 +406,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             /* Native values are always strings */
             foreach ($v as $values)
             {
+                if ($this->type == \PHPCR\PropertyType::BINARY)
+                {
+                    $ret[] = strlen(base64_decode($values));
+                    continue;
+                }
                 $ret[] = strlen($values);
             }
             return $ret;
@@ -460,7 +479,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function isMultiple()
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        return $this->isMultiple;
     }
 
     public function isNode()
