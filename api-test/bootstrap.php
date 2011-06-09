@@ -44,6 +44,8 @@ function getMidgardConnection() {
         throw new Exception('Could not open Midgard connection to test database: ' . $midgard->get_error_string());
     }
 
+    $config->create_blobdir();
+
     prepareMidgardStorage();
 
     return $midgard;
