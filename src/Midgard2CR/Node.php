@@ -418,7 +418,22 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getPrimaryItem()
     {
-        throw new \PHPCR\ItemNotFoundException();
+        try
+        {
+            $primaryType = $this->getPropertyValue('jcr:primaryType');
+            $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+            $nt = $ntm->getNodeType($primaryType);
+            $primaryItem = $nt->getPrimaryItemName();
+            if ($primaryItem == null)
+            {
+                throw new \PHPCR\ItemNotFoundException("PrimaryItem not found for {$this->getName()} node");
+            }
+        }
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+                throw new \PHPCR\ItemNotFoundException("primaryType property not found for {$this->getName()} node");
+        }
+        return $primaryItem;
     }
     
     public function getIdentifier()
@@ -439,20 +454,39 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getIndex()
     {
-       throw new \PHPCR\RepositoryException("Not supported");
+        /* We do not support same name siblings */
+        return 1;
     }
     
     public function getReferences($name = NULL)
     {
+        /* TODO:
+         * If node has jcr:uuid property
+         *  get it's value
+         *  query properties with such value, which are declared as reference property model
+         *  query references
+         * If not, return empty iterator */
+        return new \ArrayIterator(array());
     }
     
     public function getWeakReferences($name = NULL)
     {
+        /* TODO:
+         * Check getReferences comments */
+        return  new \ArrayIterator(array());
     }
     
     public function hasNode($relPath)
     {
-        try {
+        $pos = strpos($relPath, '/');
+        if ($pos === 0)
+        {
+            throw new \InvalidArgumentException("Expected relative path. Absolute given");
+            /* Take few glasses if Absolute given ;) */
+        }
+
+        try 
+        {
             $this->getNode($relPath);
             return true;
         }
@@ -465,10 +499,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function hasProperty($relPath)
     {
         $pos = strpos($relPath, '/');
-        /* Convert to relative path when absolute one has been given */
         if ($pos === 0)
         {
-            $relPath = substr($relPath, 1);
+            throw new \InvalidArgumentException("Expected relative path. Absolute given");
         }
 
         try {
@@ -537,6 +570,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getDefinition()
     {
+        return null;
     }
     
     public function update($srcWorkspace)

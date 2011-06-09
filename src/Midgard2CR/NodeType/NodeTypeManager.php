@@ -9,6 +9,7 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
     public function __construct()
     {
         $this->registerStandardTypes();
+        $this->registerMidgard2Types();
     }
 
     private function registerStandardTypes()
@@ -74,6 +75,36 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
         $this->registerNodeType($etag, false);
     }
 
+    private function registerMidgard2Types()
+    {
+        /* Register abstract MidgardObject */
+        $mgdObject = $this->createNamedNodeTypeTemplate('mgd:object', false);
+        $mgdObject->setAbstract(true);
+        $this->registerNodeType($mgdObject, false);
+
+
+        /* Register all types */
+        $re = new \ReflectionExtension('midgard2');
+        $classes = $re->getClasses();
+        foreach ($classes as $refclass)
+        {
+            $parent_class = $refclass->getParentClass();
+            if (!$parent_class)
+            {
+                continue;
+            }
+
+            if ($parent_class->getName() != 'midgard_object')
+            {
+                continue;
+            }
+            $mgdschemaName = 'mgd:' . $refclass->getName();
+            $mgdschemaType = $this->createNamedNodeTypeTemplate($mgdschemaName, false);
+            $mgdschemaType->setDeclaredSuperTypeNames(array('mgd:object'));
+            $this->registerNodeType($mgdschemaType, false);
+        }
+    }
+
     public function createNodeDefinitionTemplate()
     {
        return new NodeDefinitionTemplate();
@@ -115,7 +146,12 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
         {
             throw new \PHPCR\NodeType\NoSuchNodeTypeException("Node '{$nodeTypeName}' is not registered");
         }
-        return new NodeType($nodeTypeName, $this);
+
+        if (isset($this->primaryNodeTypes[$nodeTypeName]))
+        {
+            return $this->primaryNodeTypes[$nodeTypeName];
+        }
+        $this->mixinNodeTypes[$nodeTypeName];
     }
 
     public function getPrimaryNodeTypes()
@@ -150,11 +186,11 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
 
         if ($ntd->isMixin() == true)
         {
-            $this->mixinNodeTypes[$name] = $ntd;
+            $this->mixinNodeTypes[$name] = new NodeType($ntd, $this);
             return;
         }
         
-        $this->primaryNodeTypes[$name] = $ntd;
+        $this->primaryNodeTypes[$name] = new NodeType($ntd, $this);
     }
 
     public function registerNodeTypes(array $definitions, $allowUpdate)

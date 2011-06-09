@@ -12,6 +12,26 @@ class Repository implements \PHPCR\RepositoryInterface
             return new Session($this);
         }
         $connection = $this->midgard2Connect();
+
+        /* Create workspace if it doesn't exist and such has been requested */
+        if ($workspaceName != null)
+        {
+            $ws = new \midgard_workspace();
+            $wmanager = new \midgard_workspace_manager($connection);
+            if ($wmanager->path_exists($workspaceName) == false)
+            {
+                $ws->name = $workspaceName;
+                $wmanager->create_workspace($ws, "");
+            }
+            else 
+            {
+                $wmanager->get_workspace_by_path($ws, $workspaceName);   
+            }
+
+            $connection->enable_workspace(true);
+            $connection->set_workspace($ws);
+        }
+
         $user = $this->midgard2Login($credentials);
         $rootObject = $this->getRootObject($workspaceName);
         
