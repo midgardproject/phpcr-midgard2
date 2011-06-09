@@ -97,14 +97,28 @@ class Midgard2XMLImporter extends \DomDocument
 
         /* Take multivalues into account */
         $n_values = $property->getElementsByTagName('value')->length;
+        $propertyType = $property->getAttributeNS($this->ns_sv, 'type');
+
         for ($i = 0; $i < $n_values; $i++)
         {
             $vnode = $property->getElementsByTagName('value')->item($i);
-     
+
+            /* For every binary value, create attachment and midgard blob to store binary content */
+            if ($propertyType == 'Binary')
+            {
+                $att = new midgard_attachment();
+                $att->name = $propertyName;
+                $att->parentguid = $object->guid;
+
+                $blob = new midgard_blob($att);
+                if ($blob->write_content($vnode->nodeValue))
+                    $att->create();
+
+                continue;
+            }
+
             /* Create properties */
-            $propertyManager->factory($parts[1], $parts[0], 
-                $property->getAttributeNS($this->ns_sv, 'type'),
-                $vnode->nodeValue); 
+            $propertyManager->factory($parts[1], $parts[0], $propertyType, $vnode->nodeValue); 
         }    
 
         return true;
