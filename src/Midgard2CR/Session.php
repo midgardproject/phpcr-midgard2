@@ -46,7 +46,7 @@ class Session implements \PHPCR\SessionInterface
     public function getWorkspace()
     {
         if ($this->workspace == null)
-        {
+        { 
             $this->workspace = new \Midgard2CR\Workspace($this);
         }
 
