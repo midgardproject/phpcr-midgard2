@@ -51,6 +51,9 @@ function getMidgardConnection() {
 
 function prepareMidgardStorage()
 {
+    /* Be prepared for workspace */
+    midgard_connection::get_instance()->enable_workspace(true);
+
     midgard_storage::create_base_storage();
 
     // And update as necessary
