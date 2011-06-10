@@ -132,7 +132,7 @@ class Midgard2XMLImporter extends \DomDocument
                 $att->parentguid = $object->guid;
 
                 $blob = new midgard_blob($att);
-                if ($blob->write_content($vnode->nodeValue))
+                if ($blob->write_content(base64_decode($vnode->nodeValue)))
                     $att->create();
 
                 $isBinary = true;
