@@ -10,6 +10,9 @@
 		<property name="type" type="string">
 			<description>The type of the property</description>
 		</property>
+		<property name="multiple" type="bool">
+			<description>Multiple flag</description>
+		</property>
 		<property name="prefix" type="string">
 			<description>Prefix of the property</description>
 		</property>
