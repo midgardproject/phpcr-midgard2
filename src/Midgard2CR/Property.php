@@ -110,6 +110,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
     public function getNativeValue()
     {
+        if ($this->type == \PHPCR\PropertyType::BINARY)
+        {
+            return $this->getBinary();
+        } 
+
         $propertyName = $this->getMidgard2PropertyName();
         if ($propertyName)
         {
@@ -179,7 +184,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return $this->getDate()->format("c");
 
         case \PHPCR\PropertyType::BINARY:
-            return base64_decode($this->getNativeValue());
+            return $this->transformValue('stream_get_contents');
+            return stream_get_contents($this->getBinary());
 
         default:
             return $this->getNativeValue();
@@ -190,15 +196,21 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     {
         $ret = array();
         $attachments = $this->midgardObject->list_attachments();
-        if (empty($atts))
+        if (empty($attachments))
         {
             return null;
         }
 
         foreach ($attachments as $att)
         {
-            $blob = new midgard_blob($att);
-            $ret[] = $blob->get_handler();
+            $blob = new \midgard_blob($att);
+            $ret[] = $blob->get_handler('r');
+        }
+
+        /* Remove this, once we provide multiple flag in model */
+        if (count($ret) > 1)
+        {
+            $this->isMultiple = true;
         }
 
         return count($ret) == 1 ? $ret[0] : $ret;
@@ -393,7 +405,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
         if ($this->type == \PHPCR\PropertyType::BINARY)
         {
-            return strlen(base64_decode($v));
+            $stat = fstat($v);
+            return $stat['size'];
         }
         return strlen($this->getString());
     }
@@ -408,7 +421,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             {
                 if ($this->type == \PHPCR\PropertyType::BINARY)
                 {
-                    $ret[] = strlen(base64_decode($values));
+                    $stat = fstat($values);
+                    $ret[] = $stat['size'];
                     continue;
                 }
                 $ret[] = strlen($values);
