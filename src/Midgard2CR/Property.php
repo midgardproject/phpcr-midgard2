@@ -184,8 +184,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return $this->getDate()->format("c");
 
         case \PHPCR\PropertyType::BINARY:
-            return $this->transformValue('stream_get_contents');
-            return stream_get_contents($this->getBinary());
+            return $this->transformValue('stream_get_contents'); 
 
         default:
             return $this->getNativeValue();
@@ -403,7 +402,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return $this->getLengths();
         }
 
-        if ($this->type == \PHPCR\PropertyType::BINARY)
+        if ($this->type === \PHPCR\PropertyType::BINARY)
         {
             $stat = fstat($v);
             return $stat['size'];
@@ -493,7 +492,13 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function isMultiple()
     {
-        return $this->isMultiple;
+        if ($this->isMidgardProperty)
+        {
+            return false;
+        }
+
+        $model = $this->manager->getModel($this->propertyName, $this->propertyPrefix);
+        return $model->multiple;
     }
 
     public function isNode()
