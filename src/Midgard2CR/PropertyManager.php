@@ -113,7 +113,7 @@ class PropertyManager
         return null;
     }
 
-    private function propertyFactory ($name, $prefix, $type)
+    private function propertyFactory ($name, $prefix, $type, $multiple)
     {
         $property = $this->findInCache ($name, $prefix, $type);
         if ($property == null)
@@ -123,6 +123,7 @@ class PropertyManager
             $property->model->name = $name;
             $property->model->prefix = $prefix ? $prefix : "";
             $property->model->type = $type;
+            $property->model->multiple = $multiple;
             $property->modified = true;
             array_unshift($this->cache, $property);
         }
@@ -130,9 +131,9 @@ class PropertyManager
         return $property;
     }
 
-    public function factory ($name, $prefix, $type, $value = null)
+    public function factory ($name, $prefix, $type, $multiple, $value = null)
     {
-        $property = $this->propertyFactory ($name, $prefix, $type);
+        $property = $this->propertyFactory ($name, $prefix, $type, $multiple);
 
         if ($value != null)
         {
@@ -175,7 +176,7 @@ class PropertyManager
         $ret = $q->list_objects();
         foreach ($ret as $p)
         { 
-            $property = $this->propertyFactory($p->name, $p->prefix, $p->type);
+            $property = $this->propertyFactory($p->name, $p->prefix, $p->type, $p->multiple);
             $property->stored = true;
             $property->model->id = $p->modelid;
            
