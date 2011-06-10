@@ -96,8 +96,15 @@ class Midgard2XMLImporter extends \DomDocument
         }
 
         /* Take multivalues into account */
+        $isMultiple = false;
         $n_values = $property->getElementsByTagName('value')->length;
         $propertyType = $property->getAttributeNS($this->ns_sv, 'type');
+        $multiAttr = $property->getAttributeNS($this->ns_sv, 'multiple');
+        if ($n_values > 1 || $multiAttr == 'true')
+        {
+            $isMultiple = true;
+        }
+
         $isBinary = false;
 
         for ($i = 0; $i < $n_values; $i++)
@@ -107,19 +114,32 @@ class Midgard2XMLImporter extends \DomDocument
             /* For every binary value, create attachment and midgard blob to store binary content */
             if ($propertyType == 'Binary')
             {
+                /* Do not attempt to create new attachment or blob if there's already one */
+                if ($isMultiple == false)
+                {
+                    $dups = $object->list_attachments();
+                    foreach ($dups as $duplicate)
+                    {
+                        if ($duplicate->name == $propertyName)
+                        {
+                            /* Property is not multiple, silently return */
+                            return true;
+                        }
+                    }
+                }
                 $att = new midgard_attachment();
                 $att->name = $propertyName;
                 $att->parentguid = $object->guid;
 
                 $blob = new midgard_blob($att);
-                if ($blob->write_content($vnode->nodeValue))
+                if ($blob->write_content(base64_decode($vnode->nodeValue)))
                     $att->create();
 
                 $isBinary = true;
             }
 
             /* Create property models and values */
-            $propertyManager->factory($parts[1], $parts[0], $propertyType, $isBinary == true ? " " : $vnode->nodeValue); 
+            $propertyManager->factory($parts[1], $parts[0], $propertyType, $isMultiple, $isBinary == true ? " " : $vnode->nodeValue); 
         }    
 
         return true;
