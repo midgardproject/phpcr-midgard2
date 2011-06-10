@@ -6,11 +6,12 @@
 		<property name="value"	use="midgard_property_value:value" />
 		<property name="objectguid"	use="midgard_property_value:objectguid" />
 
-		<!-- Property -->
+		<!-- Property Model -->
 		<property name="modelid" use="midgard_property_model:id" />
 		<property name="name" use="midgard_property_model:name" />
 		<property name="type" use="midgard_property_model:type" />
 		<property name="prefix" use="midgard_property_model:prefix" />
+		<property name="multiple" use="midgard_property_model:multiple" />
 
 		<!-- Node's property -->
 		<property name="nodeid" use="midgard_property:nodeid" />
