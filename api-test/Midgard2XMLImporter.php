@@ -139,7 +139,7 @@ class Midgard2XMLImporter extends \DomDocument
             }
 
             /* Create property models and values */
-            $propertyManager->factory($parts[1], $parts[0], $propertyType, $isBinary == true ? " " : $vnode->nodeValue); 
+            $propertyManager->factory($parts[1], $parts[0], $propertyType, $isMultiple, $isBinary == true ? " " : $vnode->nodeValue); 
         }    
 
         return true;
