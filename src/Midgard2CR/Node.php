@@ -82,6 +82,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $this->properties[$name] = $property;
         }
         $property->setValue ($value, $type);
+        return $property;
     }
 
     private function getMgdSchemas()
