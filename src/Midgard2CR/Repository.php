@@ -14,7 +14,7 @@ class Repository implements \PHPCR\RepositoryInterface
         $connection = $this->midgard2Connect();
 
         /* Create workspace if it doesn't exist and such has been requested */
-        if ($workspaceName != null)
+        if ($workspaceName != null && (version_compare(mgd_version(), '10.05.4', '>')))
         {
             $ws = new \midgard_workspace();
             $wmanager = new \midgard_workspace_manager($connection);
