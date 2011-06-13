@@ -54,7 +54,6 @@ class Value
         $ret = array();
         foreach ($values as $value)
         {
-            echo "FROM ARRAY, ADDING {$value} \n";
             $ret[] = self::$method($values);
         }
         return $ret;
