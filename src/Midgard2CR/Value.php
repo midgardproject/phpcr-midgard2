@@ -54,7 +54,7 @@ class Value
         $ret = array();
         foreach ($values as $value)
         {
-            $ret[] = self::$method($values);
+            $ret[] = static::$method($value);
         }
         return $ret;
     }
@@ -97,6 +97,14 @@ class DateValue extends Value
 class LongValue extends Value
 {
 
+}
+
+class BinaryValue extends Value
+{
+    public static function toString($value)
+    { 
+        return stream_get_contents($value);
+    } 
 }
 
 class ValueFactory
