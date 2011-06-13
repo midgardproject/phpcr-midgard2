@@ -91,7 +91,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
 
     public function getVersionManager()
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        throw new \PHPCR\UnsupportedRepositoryOperationException("Not supported");        
     }
 
     public function getAccessibleWorkspaceNames()
