@@ -1,5 +1,6 @@
 <?php
 namespace Midgard2CR;
+require_once 'Value.php';
 
 class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterface
 {
@@ -159,40 +160,20 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         return $ret[0];
     }
 
-    private function transformValue($func)
-    {
-        $v = $this->getNativeValue();
-        if ($this->isMultiple)
-        {
-            $va = array();
-            foreach ($this->getIterator() as $value)
-            {
-                $va[] = $func($value);
-            }
-            return $va;
-        }
-        return $func($v);
-    }
-
     public function getString()
     {
         $type = $this->getType();
-
-        switch ($type) 
-        {
-        case \PHPCR\PropertyType::DATE:
-            return $this->getDate()->format("c");
-
-        case \PHPCR\PropertyType::BINARY:
-            return $this->transformValue('stream_get_contents'); 
-
-        default:
-            return $this->getNativeValue();
-        } 
+        return ValueFactory::transformValue($this->getNativeValue(), $type, \PHPCR\PropertyType::STRING);
     }
     
     public function getBinary()
     {
+        if ($this->type != \PHPCR\PropertyType::BINARY)
+        {
+            $sv = new StringValue();
+            return ValueFactory::transformValue($this->getNativeValue(), $this->type, \PHPCR\PropertyType::BINARY);
+        }
+
         $ret = array();
         $attachments = $this->midgardObject->list_attachments();
         if (empty($attachments))
@@ -200,10 +181,14 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return null;
         }
 
+        $name = $this->getName();
         foreach ($attachments as $att)
         {
-            $blob = new \midgard_blob($att);
-            $ret[] = $blob->get_handler('r');
+            if ($name == $att->name)
+            {
+                $blob = new \midgard_blob($att);
+                $ret[] = $blob->get_handler('r');
+            }
         }
 
         /* Remove this, once we provide multiple flag in model */
@@ -226,8 +211,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to LONG."); 
         } 
-
-        return $this->transformValue('intval');
+        
+        return ValueFactory::transformValue($this->getNativeValue(), $type, \PHPCR\PropertyType::LONG);
     }
     
     public function getDouble()
@@ -239,29 +224,14 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to DOUBLE."); 
         } 
-        
-        return $this->transformValue('floatval'); 
+
+        return ValueFactory::transformValue($this->getNativeValue(), $type, \PHPCR\PropertyType::DOUBLE);
     }
     
     public function getDecimal()
     {
-        $v = $this->transformValue('floatval');
-        $current = setlocale(LC_ALL, '0'); 
-        setlocale(LC_ALL, 'C');
-        if (is_array($v))
-        {
-            foreach ($v as $value)
-            {
-                $ret[] = (string)$value;
-            }
-        }
-        else 
-        {
-            $ret = (string)$v;
-        }
-        setlocale(LC_ALL, $current);
-
-        return $ret;
+        $type = $this->getType();
+        return ValueFactory::transformValue($this->getNativeValue(), $type, \PHPCR\PropertyType::DECIMAL);
     }
     
     public function getDate()
@@ -301,17 +271,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function getBoolean()
     {
-        $v = $this->getNativeValue();
-        if ($this->isMultiple)
-        {
-            $va = array();
-            foreach ($this->getIterator() as $value)
-            {
-                $va[] = (bool) $value;
-            }
-            return $va;
-        }
-        return (bool) $v;
+        $type = $this->getType();
+        return ValueFactory::transformValue($this->getNativeValue(), $type, \PHPCR\PropertyType::BOOLEAN);
     }
 
     public function getName()
