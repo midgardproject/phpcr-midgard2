@@ -247,7 +247,10 @@ class Midgard2XMLImporter extends \DomDocument
         $nodeElements = $node->getElementsByTagNameNS($this->ns_sv, 'node');
         foreach ($nodeElements as $nodeElement)
         {
-            $this->writeNode($object, $nodeElement);
+            if ($nodeElement->parentNode->getAttributeNS($this->ns_sv, 'name') == $name) 
+            {           
+                $this->writeNode($object, $nodeElement);
+            }
         }
     }
 
