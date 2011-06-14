@@ -182,12 +182,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         $remainingPath = '';
         $pos = strpos($relPath, '/');
+        
         /* Convert to relative path when absolute one has been given */
+        /* FIXME, Remove this part once absolute path is considered invalid
+         * https://github.com/phpcr/phpcr-api-tests/issues/9 */
         if ($pos === 0)
         {
             $relPath = substr($relPath, 1);
+            $pos = strpos($relPath, '/');
         }
-        else if ($pos !== false)
+
+        if ($pos !== false)
         {
             $parts = explode('/', $relPath);
             $relPath = array_shift($parts);
