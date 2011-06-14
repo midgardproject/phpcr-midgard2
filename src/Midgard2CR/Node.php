@@ -413,7 +413,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $this->getItemsFiltered($this->properties, $filter); 
     }
 
-    public function getPropertiesValues($filter=null)
+    public function getPropertiesValues($filter=null, $dereference=true)
     {
     }   
     
