@@ -224,23 +224,56 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $this->children[$relPath];        
     }
 
-    private function getItemsSimilar($items, $name)
+    private function getItemsSimilar($items, $nsname)
     {
         $ret = array();
 
         $nsregistry = $this->getSession()->getWorkspace()->getNamespaceRegistry();
         $nsmanager = $nsregistry->getNamespaceManager();
 
-        $prefix = $nsmanager->getPrefix($name);
-        if ($prefix == null)
-        {
-            return $ret;
-        }
-
         foreach ($items as $n => $o)
         {
-            $node_prefix = $nsmanager->getPrefix($o->getName());
-            if ($node_prefix == $prefix)
+            $prefixMatch = false;
+            $nameMatch = false;
+            $itemName = $o->getName();
+            $node_prefix = $nsmanager->getPrefix($itemName);
+            $prefix = $nsname[0];
+            $name = $nsname[1];
+
+            if ($prefix != "")
+            {
+                /* Compare prefix */
+                if ($node_prefix == $prefix)
+                {
+                    $prefixMatch = true;
+                }
+            }
+            else if ($prefix == '*')
+            {
+                /* Prefix wildcard, everything matches */
+                $prefixMatch = true;
+            }
+
+            if ($name != '' && $name != '*') 
+            {
+                /* Clean given name and item name:
+                 * From name remove wildcard and from item's one - prefix. */
+                $name = str_replace('*', '', $name);
+                $itemName = str_replace($prefix . ':' , '', $itemName);
+                $pos = strpos($itemName, $name);
+               
+                if ($pos !== false)
+                {
+                    $nameMatch = true;
+                }
+            }
+            else if ($name == '*')
+            {
+                /* Wildcard so everything matches */
+                $nameMatch = true;
+            }
+
+            if ($prefixMatch == true && $nameMatch == true)
             {
                 $ret[] = $o;
             }
@@ -249,9 +282,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $ret;
     }
 
-    private function getItemsEqual($items, $name)
+    private function getItemsEqual($items, $nsnames)
     {
         $ret = array();
+
+        $prefix = $nsnames[0];
+        $name = $nsnames[1];
 
         if (array_key_exists($name, $this->children))
         {
@@ -261,9 +297,22 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $ret;
     }
 
+    /* Return array of prefixes and names.
+     * Any prefix or name might be empty or null:
+     * 
+     * jcr:*
+     * prefix = "jcr", name = "*"
+     *
+     * my doc
+     * prefix = "", name = "my doc"
+     *
+     * jcr:created
+     * prefix = "jcr", name = "created"
+     */
     private function getFiltersFromString($filter)
     {
         $filters = array();
+        $filtered = array();
         $parts = explode('|', $filter);
         if (!isset($parts[1]))
         {
@@ -276,7 +325,24 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 $filters[] = trim($p);
             }
         }
-        return $filters;
+        foreach ($filters as $f)
+        {
+            $parts = explode(':', $f);
+            $prefix = "";
+            $name = "";
+            if (isset($parts[1]))
+            {
+                $prefix = $parts[0];
+                $name = $parts[1]; 
+            }
+            else 
+            {
+                $name = $parts[0];
+            }
+            $filtered[] = array($prefix, $name);
+        }
+
+        return $filtered; 
     }
 
     private function getFiltersFromArray($filter)
@@ -303,19 +369,21 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         if(is_array($filter))
         {
             $filters = $this->getFiltersFromArray($filter);
-        }
+        } 
 
-        foreach ($filters as $f)
+        foreach ($filters as $i => $f)
         {
-            if (strpos($f, '*') !== false)
-            {
+            if (strpos($f[0], '*') !== false 
+                || strpos($f[1], '*') !== false)
+            { 
                 $filteredItems = array_merge($filteredItems, $this->getItemsSimilar($items, $f));
             }
             else 
-            {
+            { 
                 $filteredItems = array_merge($filteredItems, $this->getItemsEqual($items, $f));
             }
         }
+
         return new \ArrayIterator($filteredItems);   
     }
 
