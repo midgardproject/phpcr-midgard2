@@ -9,7 +9,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     protected $propertyPrefix = null;
     protected $node = null;
     protected $type = 0;
-    protected $isMidgardProperty = false;
+    protected $isMidgardProperty;
     protected $midgardPropertyName = null; 
     protected $manager = null;
     protected $isMultiple = false;
@@ -22,6 +22,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         $this->parent = $node;
         $this->midgardObject = $node->getMidgard2Object();
         $this->manager = $manager;
+        $this->isMidgardProperty = false;
 
         /* Check if we get MidgardObject property */
         $nsregistry = $this->node->getSession()->getWorkspace()->getNamespaceRegistry();
@@ -55,7 +56,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
     private function getMidgard2PropertyName()
     {
-        if ($this->isMidgardProperty = false)
+        if ($this->isMidgardProperty == false)
         {
             return null;
         }
@@ -440,7 +441,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return (int)$this->type;
         }
 
-        if ($this->isMidgardProperty)
+        if ($this->isMidgardProperty == true)
         {
             return $this->getMGDType();
         }
