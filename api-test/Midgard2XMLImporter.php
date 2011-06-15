@@ -213,6 +213,7 @@ class Midgard2XMLImporter extends \DomDocument
                 else 
                 {
                     $object->parentguid = $parent->guid;
+                    $object->mimetype = 'nt:file';
                 }
             }
             else

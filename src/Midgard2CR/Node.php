@@ -174,7 +174,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $attachments = $this->object->list_attachments();
         foreach ($attachments as $child)
         {
-            $this->children[$child->name] = new Node($child, $this, $this->getSession());
+            /* If this is not nt:file, then it's either custom 
+             * attachment or binary property */
+            if ($child->mimetype == 'nt:file')
+            {
+                $this->children[$child->name] = new Node($child, $this, $this->getSession());
+            }
         }
     }
 
