@@ -1,6 +1,8 @@
 <?php
 namespace Midgard2CR;
 
+use ArrayIterator;
+
 class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 {
     protected $children = null;
@@ -280,7 +282,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
             if ($prefixMatch == true && $nameMatch == true)
             {
-                $ret[] = $o;
+                $ret[$o->getName()] = $o;
             }
         }
 
@@ -296,7 +298,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         if (array_key_exists($name, $this->children))
         {
-            $ret[] = $items[$name];
+            $ret[$name] = $items[$name];
         }
             
         return $ret;
@@ -362,7 +364,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     private function getItemsFiltered($items, $filter)
     {
-        /* TODO wildcards '*filter*' */
+        if ($filter == null)
+        {
+            return $items;
+        } 
 
         $filteredItems = array();
 
@@ -456,20 +461,26 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $this->getProperty($name)->getNativeValue();
     }
     
-    public function getProperties($filter = NULL)
+    public function getProperties($filter = null)
     {
         $this->populateProperties();
-
-        if ($filter == null) 
+        $ret = $this->getItemsFiltered($this->properties, $filter);
+        foreach ($ret as $property)
         {
-            return new \ArrayIterator($this->properties);
+            $name = $property->getName();
+            $ret[$name] = $this->properties[$name]; 
         }
-
-        return $this->getItemsFiltered($this->properties, $filter); 
+        return new \ArrayIterator($ret);
     }
 
-    public function getPropertiesValues($filter=null)
+    public function getPropertiesValues($filter = null)
     {
+        $ret = $this->getProperties($filter);
+        foreach ($ret as $name => $o)
+        {
+            $ret[$name] = $this->properties[$name]->getValue(); 
+        }
+        return new \ArrayIterator($ret);
     }   
     
     public function getPrimaryItem()
