@@ -400,6 +400,10 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     private function getMGDType ()
     {
+        if (!class_exists('\midgard_reflector_property'))
+        {
+            return null;
+        }
         $mrp = new \midgard_reflector_property (get_class($this->object));
         $type = $mrp->get_midgard_type ($this->midgardPropertyName);
 
