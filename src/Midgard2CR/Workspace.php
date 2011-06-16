@@ -52,7 +52,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
 
     public function getLockManager()
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        throw new \PHPCR\UnsupportedRepositoryOperationException("Not supported");        
     }
 
     public function getQueryManager()
@@ -86,12 +86,12 @@ class Workspace implements \PHPCR\WorkspaceInterface
 
     public function getObservationManager()
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        throw new \PHPCR\UnsupportedRepositoryOperationException("Not supported");        
     }
 
     public function getVersionManager()
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        throw new \PHPCR\UnsupportedRepositoryOperationException("Not supported");        
     }
 
     public function getAccessibleWorkspaceNames()
@@ -111,11 +111,11 @@ class Workspace implements \PHPCR\WorkspaceInterface
 
     public function createWorkspace($name, $srcWorkspace = NULL)
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        throw new \PHPCR\UnsupportedRepositoryOperationException("Not supported");        
     }
 
     public function deleteWorkspace($name)
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        throw new \PHPCR\UnsupportedRepositoryOperationException("Not supported");        
     }
 }
