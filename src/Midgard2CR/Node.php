@@ -476,12 +476,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function getPropertiesValues($filter=null, $dereference=true)
     {
-        $ret = $this->getProperties($filter);
-        foreach ($ret as $name => $o)
+        $properties = $this->getProperties($filter);
+        $ret = array();
+        foreach ($properties as $name => $o)
         {
             $ret[$name] = $this->properties[$name]->getValue(); 
         }
-        return new \ArrayIterator($ret);
+        return $ret;
     }   
     
     public function getPrimaryItem()
@@ -501,7 +502,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         {
                 throw new \PHPCR\ItemNotFoundException("primaryType property not found for {$this->getName()} node");
         }
-        return $primaryItem;
+        if ($this->hasNode($primaryItem))
+        {
+            return $this->getNode($primaryItem);
+        }
+        
+        return $this->getProperty($primaryItem);
     }
     
     public function getIdentifier()
@@ -528,10 +534,18 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getReferences($name = NULL)
     {
-        /* TODO:
-         * If node has jcr:uuid property
-         *  get it's value
-         *  query properties with such value, which are declared as reference property model
+        $ret = array();
+        $this->populateProperties();
+        /* If node has jcr:uuid property */
+        if (!$this->hasProperty('jcr:uuid'))
+        {
+            return new \ArrayIterator($ret);
+        }
+         
+        /* get its value */
+        $uuid = $this->getPropertyValue('jcr:uuid');
+
+        /*  query properties with such value, which are declared as reference property model
          *  query references
          * If not, return empty iterator */
         return new \ArrayIterator(array());

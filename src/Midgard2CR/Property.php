@@ -105,6 +105,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         case \PHPCR\PropertyType::BINARY:
             return $this->getBinary();
 
+        case \PHPCR\PropertyType::PATH:
+        case \PHPCR\PropertyType::REFERENCE:
+        case \PHPCR\PropertyType::WEAKREFERENCE:
+            return $this->getNode();
+
         default:
             return $this->getNativeValue();
         } 
@@ -286,7 +291,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         $type = $this->getType();
         if ($type == \PHPCR\PropertyType::PATH)
         {
-            $path = $this->getValue();
+            $path = $this->getNativeValue();
             if (is_array($path))
             {
                 throw new \PHPCR\RepositoryException("Path array not implemented");
@@ -312,7 +317,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             || $type == \PHPCR\PropertyType::WEAKREFERENCE)
         {
             try {
-                $v = $this->getValue();
+                $v = $this->getNativeValue();
                 if (is_array($v))
                 {
                     foreach ($v as $id)
