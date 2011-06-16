@@ -533,10 +533,18 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getReferences($name = NULL)
     {
-        /* TODO:
-         * If node has jcr:uuid property
-         *  get it's value
-         *  query properties with such value, which are declared as reference property model
+        $ret = array();
+        $this->populateProperties();
+        /* If node has jcr:uuid property */
+        if (!$this->hasProperty('jcr:uuid'))
+        {
+            return new \ArrayIterator($ret);
+        }
+         
+        /* get its value */
+        $uuid = $this->getPropertyValue('jcr:uuid');
+
+        /*  query properties with such value, which are declared as reference property model
          *  query references
          * If not, return empty iterator */
         return new \ArrayIterator(array());
