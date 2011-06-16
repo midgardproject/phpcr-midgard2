@@ -475,12 +475,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function getPropertiesValues($filter = null)
     {
-        $ret = $this->getProperties($filter);
-        foreach ($ret as $name => $o)
+        $properties = $this->getProperties($filter);
+        $ret = array();
+        foreach ($properties as $name => $o)
         {
             $ret[$name] = $this->properties[$name]->getValue(); 
         }
-        return new \ArrayIterator($ret);
+        return $ret;
     }   
     
     public function getPrimaryItem()
@@ -500,7 +501,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         {
                 throw new \PHPCR\ItemNotFoundException("primaryType property not found for {$this->getName()} node");
         }
-        return $primaryItem;
+        if ($this->hasNode($primaryItem))
+        {
+            return $this->getNode($primaryItem);
+        }
+        
+        return $this->getProperty($primaryItem);
     }
     
     public function getIdentifier()
