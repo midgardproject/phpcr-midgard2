@@ -1,6 +1,8 @@
 <?php
 namespace Midgard2CR;
 
+use ArrayIterator;
+
 class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 {
     protected $children = null;
@@ -175,7 +177,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $attachments = $this->object->list_attachments();
         foreach ($attachments as $child)
         {
-            $this->children[$child->name] = new Node($child, $this, $this->getSession());
+            /* If this is not nt:file, then it's either custom 
+             * attachment or binary property */
+            if ($child->mimetype == 'nt:file')
+            {
+                $this->children[$child->name] = new Node($child, $this, $this->getSession());
+            }
         }
     }
 
@@ -183,12 +190,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         $remainingPath = '';
         $pos = strpos($relPath, '/');
+        
         /* Convert to relative path when absolute one has been given */
+        /* FIXME, Remove this part once absolute path is considered invalid
+         * https://github.com/phpcr/phpcr-api-tests/issues/9 */
         if ($pos === 0)
         {
             $relPath = substr($relPath, 1);
+            $pos = strpos($relPath, '/');
         }
-        else if ($pos !== false)
+
+        if ($pos !== false)
         {
             $parts = explode('/', $relPath);
             $relPath = array_shift($parts);
@@ -220,46 +232,95 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $this->children[$relPath];        
     }
 
-    private function getItemsSimilar($items, $name)
+    private function getItemsSimilar($items, $nsname)
     {
         $ret = array();
 
         $nsregistry = $this->getSession()->getWorkspace()->getNamespaceRegistry();
         $nsmanager = $nsregistry->getNamespaceManager();
 
-        $prefix = $nsmanager->getPrefix($name);
-        if ($prefix == null)
-        {
-            return $ret;
-        }
-
         foreach ($items as $n => $o)
         {
-            $node_prefix = $nsmanager->getPrefix($o->getName());
-            if ($node_prefix == $prefix)
+            $prefixMatch = false;
+            $nameMatch = false;
+            $itemName = $o->getName();
+            $node_prefix = $nsmanager->getPrefix($itemName);
+            $prefix = $nsname[0];
+            $name = $nsname[1];
+
+            if ($prefix != "")
             {
-                $ret[] = $o;
+                /* Compare prefix */
+                if ($node_prefix == $prefix)
+                {
+                    $prefixMatch = true;
+                }
+            }
+            else if ($prefix == '*')
+            {
+                /* Prefix wildcard, everything matches */
+                $prefixMatch = true;
+            }
+
+            if ($name != '' && $name != '*') 
+            {
+                /* Clean given name and item name:
+                 * From name remove wildcard and from item's one - prefix. */
+                $name = str_replace('*', '', $name);
+                $itemName = str_replace($prefix . ':' , '', $itemName);
+                $pos = strpos($itemName, $name);
+               
+                if ($pos !== false)
+                {
+                    $nameMatch = true;
+                }
+            }
+            else if ($name == '*')
+            {
+                /* Wildcard so everything matches */
+                $nameMatch = true;
+            }
+
+            if ($prefixMatch == true && $nameMatch == true)
+            {
+                $ret[$o->getName()] = $o;
             }
         }
 
         return $ret;
     }
 
-    private function getItemsEqual($items, $name)
+    private function getItemsEqual($items, $nsnames)
     {
         $ret = array();
 
+        $prefix = $nsnames[0];
+        $name = $nsnames[1];
+
         if (array_key_exists($name, $this->children))
         {
-            $ret[] = $items[$name];
+            $ret[$name] = $items[$name];
         }
             
         return $ret;
     }
 
+    /* Return array of prefixes and names.
+     * Any prefix or name might be empty or null:
+     * 
+     * jcr:*
+     * prefix = "jcr", name = "*"
+     *
+     * my doc
+     * prefix = "", name = "my doc"
+     *
+     * jcr:created
+     * prefix = "jcr", name = "created"
+     */
     private function getFiltersFromString($filter)
     {
         $filters = array();
+        $filtered = array();
         $parts = explode('|', $filter);
         if (!isset($parts[1]))
         {
@@ -272,7 +333,24 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 $filters[] = trim($p);
             }
         }
-        return $filters;
+        foreach ($filters as $f)
+        {
+            $parts = explode(':', $f);
+            $prefix = "";
+            $name = "";
+            if (isset($parts[1]))
+            {
+                $prefix = $parts[0];
+                $name = $parts[1]; 
+            }
+            else 
+            {
+                $name = $parts[0];
+            }
+            $filtered[] = array($prefix, $name);
+        }
+
+        return $filtered; 
     }
 
     private function getFiltersFromArray($filter)
@@ -287,7 +365,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     private function getItemsFiltered($items, $filter)
     {
-        /* TODO wildcards '*filter*' */
+        if ($filter == null)
+        {
+            return $items;
+        } 
 
         $filteredItems = array();
 
@@ -299,19 +380,21 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         if(is_array($filter))
         {
             $filters = $this->getFiltersFromArray($filter);
-        }
+        } 
 
-        foreach ($filters as $f)
+        foreach ($filters as $i => $f)
         {
-            if (strpos($f, '*') !== false)
-            {
+            if (strpos($f[0], '*') !== false 
+                || strpos($f[1], '*') !== false)
+            { 
                 $filteredItems = array_merge($filteredItems, $this->getItemsSimilar($items, $f));
             }
             else 
-            {
+            { 
                 $filteredItems = array_merge($filteredItems, $this->getItemsEqual($items, $f));
             }
         }
+
         return new \ArrayIterator($filteredItems);   
     }
 
@@ -379,20 +462,26 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $this->getProperty($name)->getNativeValue();
     }
     
-    public function getProperties($filter = NULL)
+    public function getProperties($filter = null)
     {
         $this->populateProperties();
-
-        if ($filter == null) 
+        $ret = $this->getItemsFiltered($this->properties, $filter);
+        foreach ($ret as $property)
         {
-            return new \ArrayIterator($this->properties);
+            $name = $property->getName();
+            $ret[$name] = $this->properties[$name]; 
         }
-
-        return $this->getItemsFiltered($this->properties, $filter); 
+        return new \ArrayIterator($ret);
     }
 
     public function getPropertiesValues($filter=null, $dereference=true)
     {
+        $ret = $this->getProperties($filter);
+        foreach ($ret as $name => $o)
+        {
+            $ret[$name] = $this->properties[$name]->getValue(); 
+        }
+        return new \ArrayIterator($ret);
     }   
     
     public function getPrimaryItem()
