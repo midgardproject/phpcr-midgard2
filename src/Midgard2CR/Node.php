@@ -481,6 +481,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         foreach ($properties as $name => $o)
         {
             $ret[$name] = $this->properties[$name]->getValue(); 
+            /* FIXME, optimize this */
+            if ($dereference == true)
+            {
+                $type = $this->properties[$name]->getType();
+                if ($type == \PHPCR\PropertyType::WEAKREFERENCE
+                    || $type == \PHPCR\PropertyType::REFERENCE
+                    || $type == \PHPCR\PropertyType::PATH)
+                {
+                    $ret[$name] = $this->properties[$name]->getNode();
+                }
+            }
         }
         return $ret;
     }   
@@ -532,7 +543,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return 1;
     }
     
-    public function getReferences($name = NULL)
+    private function getReferencesByType($name = null, $type)
     {
         $ret = array();
         $this->populateProperties();
@@ -545,17 +556,73 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         /* get its value */
         $uuid = $this->getPropertyValue('jcr:uuid');
 
-        /*  query properties with such value, which are declared as reference property model
-         *  query references
-         * If not, return empty iterator */
-        return new \ArrayIterator(array());
+        if ($uuid === null || $uuid === "")
+        {
+            throw new \PHPCR\RepositoryException("Invalid empty uuid value");
+        }
+
+        /*  query properties with such value, which are declared as reference property model */
+        $storage = new \midgard_query_storage('midgard_property_view');
+        $qs = new \midgard_query_select($storage);
+        $group = new \midgard_query_constraint_group('AND');
+        $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('value'),
+                '=',
+                new \midgard_query_value($uuid)
+            )
+        );
+
+        $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('type'),
+                '=',
+                new \midgard_query_value($type)
+            )
+        );
+
+        if ($name != null)
+        {
+            $group->add_constraint(
+                new \midgard_query_constraint(
+                    new \midgard_query_property('name'),
+                    '=',
+                    new \midgard_query_value($name)
+                )
+            );
+        }
+
+        $qs->set_constraint($group);
+        $qs->execute();
+        if ($qs->get_results_count() < 1)
+        {
+            return new \ArrayIterator($ret);
+        }
+
+        $properties = $qs->list_objects();
+
+        /* query references */
+        foreach ($properties as $property)
+        {
+            $midgard_object = \midgard_object_class::get_object_by_guid($property->objectguid);
+            $path = self::getMidgardPath($midgard_object);
+            /* Convert to JCR path */
+            $path = str_replace ('/jackalope', '', $path);
+            $node = $this->session->getNode($path);
+            //$node = $this->getSession()->getNodeByIdentifier($property->value);
+            $ret[] = $node->getProperty($property->name);
+        } 
+        return new \ArrayIterator($ret);
     }
-    
+
+    public function getReferences($name = null)
+    {
+        return $this->getReferencesByType($name, 'Reference');
+    }
+
     public function getWeakReferences($name = NULL)
     {
-        /* TODO:
-         * Check getReferences comments */
-        return  new \ArrayIterator(array());
+        return $this->getReferencesByType($name, 'WeakReference');
     }
     
     public function hasNode($relPath)
@@ -723,9 +790,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return false;
     }
 
-    private function getMidgardRelativePath($object)
+    private function getMidgardRelativePath($object, $typename = null)
     {
-        $storage = new \midgard_query_storage('midgardmvc_core_node');
+        $storage = new \midgard_query_storage($typename ? $typename : get_class($object));
 
         /* By default we prepare to join core node and blob.
          * SELECT t1.id, ... FROM midgardmvc_core_node AS t1 JOIN blobs AS t2 ON t1.guid = t2.parent_guid WHERE t2.name='NAME';
@@ -747,16 +814,35 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $q = new \midgard_query_select($storage);
         $q->add_join("INNER", $left_property_join, $right_property_join);
 
-        /* Set name constraint */
-        $q->set_constraint(
+        /* Set name and guid constraints */
+        $group = new \midgard_query_constraint_group('AND');
+        $group->add_constraint(
             new \midgard_query_constraint(
                 new \midgard_query_property('name', $joined_storage), 
                 '=', 
                 new \midgard_query_value($object->name)
             )
         );
+        $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('guid', $joined_storage), 
+                '=', 
+                new \midgard_query_value($object->guid)
+            )
+        );
+
+        $q->set_constraint($group);
         
         $q->execute();
+
+        /* Force mvc node, path can be /mvcnode/mvcnode/attachment/attachment */
+        if ($q->resultscount == 0)
+        {
+            if (is_a($object, 'midgard_attachment'))
+            {
+                return self::getMidgardRelativePath($object, 'midgardmvc_core_node');
+            }
+        }
 
         /* Relative path is : $returnedobjects[0]->name / $object->name */
 
@@ -772,14 +858,14 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         do 
         {
             array_unshift($elements, $object->name);
-            $objects = self::getMidgardRelativePath($object);
+            $objects = self::getMidgardRelativePath($object, null);
             if (empty($objects))
             {
                 break;
             }
             $object = $objects[0];
 
-        } while (!empty($objects) && $object->up != 0);
+        } while (!empty($objects));
 
         return '/' . implode("/", $elements);
     }
