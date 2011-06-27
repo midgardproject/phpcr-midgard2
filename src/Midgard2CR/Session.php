@@ -87,6 +87,8 @@ class Session implements \PHPCR\SessionInterface
         try {
             $midgard_object = \midgard_object_class::get_object_by_guid ($pv->objectguid);
             $midgard_path = \Midgard2CR\Node::getMidgardPath($midgard_object);
+            /* Convert to JCR path */
+            $midgard_path = str_replace('/jackalope', '', $midgard_path);
             $node = $this->getNode($midgard_path);
             return $node;
         }
