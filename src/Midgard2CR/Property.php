@@ -107,7 +107,6 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
         case \PHPCR\PropertyType::PATH:
         case \PHPCR\PropertyType::REFERENCE:
-        case \PHPCR\PropertyType::WEAKREFERENCE:
             return $this->getNode();
 
         default:
