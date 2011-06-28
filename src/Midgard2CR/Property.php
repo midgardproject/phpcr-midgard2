@@ -80,7 +80,31 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return;
         }
 
-        $property = $this->manager->factory($this->propertyName, $this->propertyPrefix, $type, $value);
+        /*
+         * The type detection follows PropertyType::determineType. 
+         * Thus, passing a Node object without an explicit type (REFERENCE or WEAKREFERENCE) will create a REFERENCE property. 
+         * If the specified node is not referenceable, a ValueFormatException is thrown.
+         */ 
+        if (is_a($value, '\Midgard2CR\Node'))
+        {
+            if (!$value->hasProperty('jcr:uuid'))
+            {
+                throw new \PHPCR\ValueFormatException("Can not set reference value from node without 'uuid' property"); 
+            }
+
+            if ($type == null)
+            {
+                $type = 'Reference';
+            }
+
+            $new_value = $value->getProperty('jcr:uuid');
+        }
+        else 
+        {
+            $new_value = $value;
+        }
+
+        $property = $this->manager->factory($this->propertyName, $this->propertyPrefix, $type, $new_value);
         if ($this->type != $type) 
         {
             $this->type = $type;
