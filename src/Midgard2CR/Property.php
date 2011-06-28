@@ -105,7 +105,6 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         case \PHPCR\PropertyType::BINARY:
             return $this->getBinary();
 
-        case \PHPCR\PropertyType::PATH:
         case \PHPCR\PropertyType::REFERENCE:
             return $this->getNode();
 
