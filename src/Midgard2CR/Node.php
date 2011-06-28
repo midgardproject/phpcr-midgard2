@@ -159,14 +159,26 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $childTypes = $this->getChildTypes();
         foreach ($childTypes as $childType)
         {
+            $children = array();
             if ($childType == get_class($this->object))
             {
-                $children = $this->object->list();
+                $_children = $this->object->list();
             }
             else
             {
-                $children = $this->object->list_children($childType);
+                $_children = $this->object->list_children($childType);
             }
+
+            /* sort children so they are returned in the FILO order */
+            foreach ($_children as $child)
+            {
+                $children[$child->id] = $child;
+            }
+            if (!empty($children))
+            {
+                krsort($children);
+            }
+
             foreach ($children as $child)
             {
                 $this->children[$child->name] = new Node($child, $this, $this->getSession());
@@ -256,9 +268,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                     $prefixMatch = true;
                 }
             }
-            else if ($prefix == '*')
+            else if ($prefix == '*'
+                || $prefix == '')
             {
-                /* Prefix wildcard, everything matches */
+                /* Empty prefix or wildcard, everything matches */
                 $prefixMatch = true;
             }
 
