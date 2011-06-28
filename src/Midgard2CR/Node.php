@@ -9,7 +9,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     protected $properties = null;
     protected $propertyManager = null;
 
-    public function addNode($relPath, $primaryNodeTypeName = NULL)
+    private function appendNode($relPath, $primaryNodeTypeName = NULL)
     {
         $parent_node = $this;
         $object_name = $relPath;
@@ -59,6 +59,35 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         // RepositoryException
         // Unspecified yet.
         throw new \PHPCR\RepositoryException("Not supported");
+    }
+
+    public function addNode($relPath, $primaryNodeTypeName = NULL)
+    {
+        $pos = strpos('/', $relPath);
+        if ($pos === 0)
+        {
+            throw new \InvalidArgumentException("Can not add Node at absolute path"); 
+        }
+
+        $parts = explode('/', $relPath);
+        if (count($parts) == 1)
+        {
+            return $this->appendNode($relPath, $primaryNodeTypeName);
+        }
+
+        $node = $this;
+        foreach ($parts as $name)
+        {
+            if ($node->hasNode($name))
+            {
+                $node = $node->getNode($name);
+            }
+            else 
+            {
+                $node = $node->appendNode($name, $primaryNodeTypeName);
+            }
+        }
+        return $node;
     }
 
     public function getPropertyManager()
@@ -159,24 +188,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $childTypes = $this->getChildTypes();
         foreach ($childTypes as $childType)
         {
-            $children = array();
             if ($childType == get_class($this->object))
             {
-                $_children = $this->object->list();
+                $children = $this->object->list();
             }
             else
             {
-                $_children = $this->object->list_children($childType);
-            }
-
-            /* sort children so they are returned in the FILO order */
-            foreach ($_children as $child)
-            {
-                $children[$child->id] = $child;
-            }
-            if (!empty($children))
-            {
-                krsort($children);
+                $children = $this->object->list_children($childType);
             }
 
             foreach ($children as $child)
