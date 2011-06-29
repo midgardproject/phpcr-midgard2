@@ -201,7 +201,19 @@ class Session implements \PHPCR\SessionInterface
         if ($node->isNew() === true)
         {
             $mobject = $node->getMidgard2Object();
-            $mobject->up = $parent->getMidgard2Object()->id;
+            /* TODO:
+             * This should be supported by tree manager, so objects are independent
+             * and tree is built on demand */
+            /* mvc node case */
+            if (property_exists($mobject, 'up'))
+            {
+                $mobject->up = $parent->getMidgard2Object()->id;
+            }
+            /* attachment case */
+            if (property_exists($mobject, 'parentguid'))
+            {
+                $mobject->parentguid = $parent->getMidgard2Object()->guid;
+            }
             if ($mobject->create() === true)
             {
                 $node->getPropertyManager()->save();
@@ -257,11 +269,11 @@ class Session implements \PHPCR\SessionInterface
         {
             if ($this->_node_save ($child, $root_node) === false)
             {
-                $midgard_errcode = midgard_connection::get_instance()->get_error();
-                $midgard_errstr = midgard_connection::get_instance()->get_error_string();
+                $midgard_errcode = \midgard_connection::get_instance()->get_error();
+                $midgard_errstr = \midgard_connection::get_instance()->get_error_string();
                 switch ($midgard_errcode) 
                 {
-                case MGD_ERR_NAME_EXISTS:
+                case MGD_ERR_OBJECT_NAME_EXISTS:
                     throw new \PHPCR\ItemExistsException($midgard_errstr);
                     break;
                 case MGD_ERR_INVALID_NAME:
