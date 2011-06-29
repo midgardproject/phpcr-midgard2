@@ -18,7 +18,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         // Node at given path exists.
         try 
         {
-            $parent_node = $this->getNode ($relPath);
+            $node_exists = $this->getNode ($relPath);
             throw new \PHPCR\ItemExistsException("Node at given path {$relPath} exists");
         } 
         catch (\PHPCR\PathNotFoundException $e) 
@@ -262,10 +262,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             }
         }
 
-        if ($remainingPath)
+        if ($remainingPath != '') 
         {
             return $this->children[$relPath]->getNode($remainingPath);
         }
+
         return $this->children[$relPath];        
     }
 
