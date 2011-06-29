@@ -908,4 +908,42 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         return '/' . implode("/", $elements);
     }
+
+    public function save()
+    {
+        /* Create */
+        if ($this->isNew() === true)
+        {
+            $mobject = $this->getMidgard2Object();
+            /* TODO:
+             * This should be supported by tree manager, so objects are independent
+             * and tree is built on demand */
+            /* mvc node case */
+            if (property_exists($mobject, 'up'))
+            {
+                $mobject->up = $this->getParent()->getMidgard2Object()->id;
+            }
+            /* attachment case */
+            if (property_exists($mobject, 'parentguid'))
+            {
+                $mobject->parentguid = $this->getParent()->getMidgard2Object()->guid;
+            }
+            if ($mobject->create() === true)
+            {
+                $this->getPropertyManager()->save();
+            }
+        }
+
+        if ($this->isModified() === true)
+        {
+            $mobject = $this->getMidgard2Object();
+            if ($mobject->update() === true)
+            {
+                $this->getPropertyManager()->save();
+            }
+        }
+
+        $this->is_modified = true;
+        $this->is_new = false;
+    }
 }

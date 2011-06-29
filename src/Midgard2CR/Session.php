@@ -195,45 +195,13 @@ class Session implements \PHPCR\SessionInterface
         throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
 
-    private function _node_save (Node $node, Node $parent)
+    private function _node_save (Node $node)
     {
-        // Create 
-        if ($node->isNew() === true)
-        {
-            $mobject = $node->getMidgard2Object();
-            /* TODO:
-             * This should be supported by tree manager, so objects are independent
-             * and tree is built on demand */
-            /* mvc node case */
-            if (property_exists($mobject, 'up'))
-            {
-                $mobject->up = $parent->getMidgard2Object()->id;
-            }
-            /* attachment case */
-            if (property_exists($mobject, 'parentguid'))
-            {
-                $mobject->parentguid = $parent->getMidgard2Object()->guid;
-            }
-            if ($mobject->create() === true)
-            {
-                $node->getPropertyManager()->save();
-            }
-        }
-
-        // Update
-        if ($node->isModified() === true)
-        {
-            $mobject = $node->getMidgard2Object();
-            if ($mobject->update() === true)
-            {
-                $node->getPropertyManager()->save();
-            }
-        }
-
+        $node->save();
         $children = $node->getNodes();
         foreach ($children as $name => $child) 
         {
-            $this->_node_save ($child, $node);
+            $this->_node_save($child);
         }
     }
 
@@ -255,6 +223,7 @@ class Session implements \PHPCR\SessionInterface
         $children = $root_node->getNodes();
         foreach ($children as $name => $child) 
         {
+            /* FIXME DO NOT EXPECT BOOLEAN, CATCH EXCEPTION */
             if ($this->_node_save ($child, $root_node) === false)
             {
                 $midgard_errcode = \midgard_connection::get_instance()->get_error();
