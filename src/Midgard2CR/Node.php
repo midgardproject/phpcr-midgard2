@@ -47,12 +47,19 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         // VersionException 
         // TODO
 
-        $mobject = \midgard_object_class::factory (get_class($this->getMidgard2Object()));
+        $typename = get_class($this->getMidgard2Object());
+        /* TODO, factory is probably needed.
+         * Get namespace and prefix from namespace manager */
+        if ($primaryNodeTypeName == 'nt:file')
+        {
+            $typename = 'midgard_attachment';
+        }
+        $mobject = \midgard_object_class::factory ($typename);
         $mobject->name = $object_name;
         $new_node = new Node($mobject, $parent_node, $parent_node->getSession());
         $new_node->is_new = true; 
         $parent_node->children[$object_name] = $new_node;
-        
+
         // FIXME, Catch exception before returning new node
         return $new_node;
 
