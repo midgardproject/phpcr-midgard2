@@ -24,6 +24,51 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
         }
     }
 
+    private function cleanup()
+    {
+        $re = new ReflectionExtension('midgard2');
+        $classes = $re->getClasses();
+        $t = new \midgard_transaction();
+        $t->begin();
+        foreach ($classes as $refclass)
+        {
+            $parent_class = $refclass->getParentClass();
+            if (!$parent_class)
+            {
+                continue;
+            }
+            if ($parent_class->getName() != 'midgard_object')
+            {
+                continue;
+            }
+
+            $type = $refclass->getName();
+
+            $storage = new \midgard_query_storage($type);
+            $qs = new \midgard_query_select($storage);
+            $qs->toggle_readonly(true);
+            
+            $qs->execute();
+            if ($qs->resultscount == 0)
+            {
+                continue;
+            }
+            
+            $ret = $qs->list_objects();
+            foreach ($ret as $object)
+            {
+                if (is_a($object, 'midgardmvc_core_node')
+                    && property_exists($object, 'name')
+                    && $object->name == 'jackalope')
+                {
+                    continue;
+                }
+                $object->purge(false);
+            }        
+        }
+        $t->commit();
+    }
+
     /**
      * import the jcr dump into jackrabbit
      * @param string $fixture path to the fixture file, relative to fixturePath
@@ -36,6 +81,8 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
         if (!is_readable($fixture)) {
             throw new Exception('Fixture not readable at: ' . $fixture);
         }
+
+        self::cleanup();
 
         $importer = new Midgard2XMLImporter($fixture);
         $importer->execute();
