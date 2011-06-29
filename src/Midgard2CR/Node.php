@@ -52,9 +52,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
          * Get namespace and prefix from namespace manager */
         if ($primaryNodeTypeName == 'nt:file')
         {
-            $typename = 'midgard_attachment';
+            $mobject = new \midgard_attachment();
+            $mobject->mimetype = 'nt:file';
         }
-        $mobject = \midgard_object_class::factory ($typename);
+        else 
+        {
+            $mobject = \midgard_object_class::factory ($typename);
+        }
         $mobject->name = $object_name;
         $new_node = new Node($mobject, $parent_node, $parent_node->getSession());
         $new_node->is_new = true; 
@@ -258,7 +262,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                     } 
                     return $this->parent;
                 }
-                throw new \PHPCR\PathNotFoundException("Node at path '{$relPath}' not found. {$remainingPath}");
+                $absPath = $this->getPath();
+                $guid = $this->getMidgard2Object()->guid;
+                throw new \PHPCR\PathNotFoundException("Node at path '{$relPath}' not found. ({$remainingPath}). Requested at node {$absPath} with possible guid identifier '{$guid}'." . print_r(array_keys($this->children), true));
             }
         }
 
