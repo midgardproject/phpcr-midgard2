@@ -217,10 +217,7 @@ class Session implements \PHPCR\SessionInterface
             if ($mobject->create() === true)
             {
                 $node->getPropertyManager()->save();
-                return true;
             }
-
-            return false;
         }
 
         // Update
@@ -230,23 +227,14 @@ class Session implements \PHPCR\SessionInterface
             if ($mobject->update() === true)
             {
                 $node->getPropertyManager()->save();
-                return true;
             }
-
-            return false;
         }
 
         $children = $node->getNodes();
         foreach ($children as $name => $child) 
         {
-            if ($this->_node_save ($child, $node) === false)
-            {
-                return false;
-            }
+            $this->_node_save ($child, $node);
         }
-
-        // Nothing to do, return success
-        return true;
     }
 
     public function save()
