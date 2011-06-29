@@ -57,12 +57,13 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
             $ret = $qs->list_objects();
             foreach ($ret as $object)
             {
-                if (!is_a($object, 'midgardmvc_core_node')
+                if (is_a($object, 'midgardmvc_core_node')
                     && property_exists($object, 'name')
-                    && $object->name != 'jackalope')
+                    && $object->name == 'jackalope')
                 {
-                    $object->purge(false);
+                    continue;
                 }
+                $object->purge(false);
             }        
         }
         $t->commit();
