@@ -9,7 +9,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     protected $properties = null;
     protected $propertyManager = null;
 
-    public function addNode($relPath, $primaryNodeTypeName = NULL)
+    private function appendNode($relPath, $primaryNodeTypeName = NULL)
     {
         $parent_node = $this;
         $object_name = $relPath;
@@ -18,7 +18,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         // Node at given path exists.
         try 
         {
-            $parent_node = $this->getNode ($relPath);
+            $node_exists = $this->getNode ($relPath);
             throw new \PHPCR\ItemExistsException("Node at given path {$relPath} exists");
         } 
         catch (\PHPCR\PathNotFoundException $e) 
@@ -47,18 +47,58 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         // VersionException 
         // TODO
 
-        $mobject = \midgard_object_class::factory (get_class($this->getMidgard2Object()));
+        $typename = get_class($this->getMidgard2Object());
+        /* TODO, factory is probably needed.
+         * Get namespace and prefix from namespace manager */
+        if ($primaryNodeTypeName == 'nt:file')
+        {
+            $mobject = new \midgard_attachment();
+            $mobject->mimetype = 'nt:file';
+        }
+        else 
+        {
+            $mobject = \midgard_object_class::factory ($typename);
+        }
         $mobject->name = $object_name;
         $new_node = new Node($mobject, $parent_node, $parent_node->getSession());
-        $new_new->is_new = true; 
+        $new_node->is_new = true; 
         $parent_node->children[$object_name] = $new_node;
-        
+
         // FIXME, Catch exception before returning new node
         return $new_node;
 
         // RepositoryException
         // Unspecified yet.
         throw new \PHPCR\RepositoryException("Not supported");
+    }
+
+    public function addNode($relPath, $primaryNodeTypeName = NULL)
+    {
+        $pos = strpos('/', $relPath);
+        if ($pos === 0)
+        {
+            throw new \InvalidArgumentException("Can not add Node at absolute path"); 
+        }
+
+        $parts = explode('/', $relPath);
+        if (count($parts) == 1)
+        {
+            return $this->appendNode($relPath, $primaryNodeTypeName);
+        }
+
+        $node = $this;
+        foreach ($parts as $name)
+        {
+            if ($node->hasNode($name))
+            {
+                $node = $node->getNode($name);
+            }
+            else 
+            {
+                $node = $node->appendNode($name, $primaryNodeTypeName);
+            }
+        }
+        return $node;
     }
 
     public function getPropertyManager()
@@ -167,6 +207,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 $children = $this->object->list_children($childType);
             }
+
             foreach ($children as $child)
             {
                 $this->children[$child->name] = new Node($child, $this, $this->getSession());
@@ -221,14 +262,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                     } 
                     return $this->parent;
                 }
-                throw new \PHPCR\PathNotFoundException("Node at path '{$relPath}' not found. {$remainingPath}");
+                $absPath = $this->getPath();
+                $guid = $this->getMidgard2Object()->guid;
+                throw new \PHPCR\PathNotFoundException("Node at path '{$relPath}' not found. ({$remainingPath}). Requested at node {$absPath} with possible guid identifier '{$guid}'." . print_r(array_keys($this->children), true));
             }
         }
 
-        if ($remainingPath)
+        if ($remainingPath != '') 
         {
             return $this->children[$relPath]->getNode($remainingPath);
         }
+
         return $this->children[$relPath];        
     }
 
@@ -256,9 +300,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                     $prefixMatch = true;
                 }
             }
-            else if ($prefix == '*')
+            else if ($prefix == '*'
+                || $prefix == '')
             {
-                /* Prefix wildcard, everything matches */
+                /* Empty prefix or wildcard, everything matches */
                 $prefixMatch = true;
             }
 
@@ -868,5 +913,43 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         } while (!empty($objects));
 
         return '/' . implode("/", $elements);
+    }
+
+    public function save()
+    {
+        /* Create */
+        if ($this->isNew() === true)
+        {
+            $mobject = $this->getMidgard2Object();
+            /* TODO:
+             * This should be supported by tree manager, so objects are independent
+             * and tree is built on demand */
+            /* mvc node case */
+            if (property_exists($mobject, 'up'))
+            {
+                $mobject->up = $this->getParent()->getMidgard2Object()->id;
+            }
+            /* attachment case */
+            if (property_exists($mobject, 'parentguid'))
+            {
+                $mobject->parentguid = $this->getParent()->getMidgard2Object()->guid;
+            }
+            if ($mobject->create() === true)
+            {
+                $this->getPropertyManager()->save();
+            }
+        }
+
+        if ($this->isModified() === true)
+        {
+            $mobject = $this->getMidgard2Object();
+            if ($mobject->update() === true)
+            {
+                $this->getPropertyManager()->save();
+            }
+        }
+
+        $this->is_modified = true;
+        $this->is_new = false;
     }
 }

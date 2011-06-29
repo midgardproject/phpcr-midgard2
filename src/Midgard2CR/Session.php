@@ -195,46 +195,14 @@ class Session implements \PHPCR\SessionInterface
         throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
 
-    private function _node_save (Node $node, Node $parent)
+    private function _node_save (Node $node)
     {
-        // Create 
-        if ($node->isNew() === true)
-        {
-            $mobject = $node->getMidgard2Object();
-            $mobject->up = $parent->getMidgard2Object()->id;
-            if ($mobject->create() === true)
-            {
-                $node->getPropertyManager()->save();
-                return true;
-            }
-
-            return false;
-        }
-
-        // Update
-        if ($node->isModified() === true)
-        {
-            $mobject = $node->getMidgard2Object();
-            if ($mobject->update() === true)
-            {
-                $node->getPropertyManager()->save();
-                return true;
-            }
-
-            return false;
-        }
-
+        $node->save();
         $children = $node->getNodes();
         foreach ($children as $name => $child) 
         {
-            if ($this->_node_save ($child, $node) === false)
-            {
-                return false;
-            }
+            $this->_node_save($child);
         }
-
-        // Nothing to do, return success
-        return true;
     }
 
     public function save()
@@ -255,13 +223,14 @@ class Session implements \PHPCR\SessionInterface
         $children = $root_node->getNodes();
         foreach ($children as $name => $child) 
         {
+            /* FIXME DO NOT EXPECT BOOLEAN, CATCH EXCEPTION */
             if ($this->_node_save ($child, $root_node) === false)
             {
-                $midgard_errcode = midgard_connection::get_instance()->get_error();
-                $midgard_errstr = midgard_connection::get_instance()->get_error_string();
+                $midgard_errcode = \midgard_connection::get_instance()->get_error();
+                $midgard_errstr = \midgard_connection::get_instance()->get_error_string();
                 switch ($midgard_errcode) 
                 {
-                case MGD_ERR_NAME_EXISTS:
+                case MGD_ERR_OBJECT_NAME_EXISTS:
                     throw new \PHPCR\ItemExistsException($midgard_errstr);
                     break;
                 case MGD_ERR_INVALID_NAME:
