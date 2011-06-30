@@ -24,6 +24,34 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
         }
     }
 
+    private function cleanupChildren($object)
+    {
+        $mgd = \midgard_connection::get_instance();
+
+        $children = $object->list();
+        if (empty($children))
+        {
+            $object->purge(false);
+            return;
+        }
+
+        foreach ($children as $child)
+        {
+            self::cleanupChildren($child);
+            $child->purge_attachments(true);
+            if (!$child->purge(false))
+            {
+                //echo "Failed to purge child " . get_class($child) . " " . $child->guid . " " . $mgd->get_error_string() . "\n";
+            }
+        }
+
+        $object->purge_attachments(true);
+        if (!$object->purge(false))
+        {
+            //echo "Failed to purge object " . get_class($object) . " " . $object->guid . " " . $mgd->get_error_string() . "\n";
+        }
+    }
+
     private function cleanup()
     {
         $re = new ReflectionExtension('midgard2');
@@ -53,7 +81,7 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
             {
                 continue;
             }
-            
+
             $ret = $qs->list_objects();
             foreach ($ret as $object)
             {
@@ -63,7 +91,14 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
                 {
                     continue;
                 }
-                $object->purge(false);
+                $object->purge_attachments(true);
+                if (!$object->purge(false))
+                {
+                    if (\midgard_connection::get_instance()->get_error() == MGD_ERR_HAS_DEPENDANTS)
+                    {
+                        self::cleanupChildren($object);
+                    } 
+                }
             }        
         }
         $t->commit();
@@ -82,7 +117,7 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
             throw new Exception('Fixture not readable at: ' . $fixture);
         }
 
-        self::cleanup();
+        self::cleanup(); 
 
         $importer = new Midgard2XMLImporter($fixture);
         $importer->execute();
