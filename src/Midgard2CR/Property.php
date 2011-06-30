@@ -97,14 +97,37 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
                 $type = 'Reference';
             }
 
-            $new_value = $value->getProperty('jcr:uuid');
+            $new_value = $value->getProperty('jcr:uuid')->getString();
+        }
+        else if (is_a($value, '\DateTime'))
+        {
+            $new_value = $value->format("c");
+        }
+        else if (is_a($value, '\Midgard2CR\Property'))
+        {
+            $new_value = $value->getString();
+            var_dump ($new_value);
         }
         else 
         {
             $new_value = $value;
         }
 
-        $property = $this->manager->factory($this->propertyName, $this->propertyPrefix, $type, $new_value);
+        if ($type == null)
+        {
+            $type = 'String';
+        }
+        
+        $property = $this->manager->factory($this->propertyName, $this->propertyPrefix, $type, false, is_array($new_value) ? null : $new_value);
+
+        if (is_array($new_value))
+        {
+            foreach ($new_value as $v)
+            {
+                $property->addLiteral($v, 0);
+            }
+        }
+       
         if ($this->type != $type) 
         {
             $this->type = $type;

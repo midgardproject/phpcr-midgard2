@@ -9,7 +9,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     protected $properties = null;
     protected $propertyManager = null;
 
-    private function appendNode($relPath, $primaryNodeTypeName = NULL)
+    private function appendNode($relPath, $primaryNodeTypeName = null)
     {
         $parent_node = $this;
         $object_name = $relPath;
@@ -61,6 +61,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
         $mobject->name = $object_name;
         $new_node = new Node($mobject, $parent_node, $parent_node->getSession());
+        if ($primaryNodeTypeName != null)
+        {
+            /* mandatory, auto created */
+            /* FIXME, move this to node factory */
+            $new_node->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::nameFromValue(\PHPCR\PropertyType::NAME));
+        }
         $new_node->is_new = true; 
         $parent_node->children[$object_name] = $new_node;
 
@@ -124,6 +130,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $this->properties[$name] = $property;
         }
         $property->setValue ($value, $type);
+        
+        /* TODO, for performance reason, we could check if property's value has been changed.
+         * By default, it's modified */
+        $this->is_modified = true;
+
         return $property;
     }
 
@@ -495,7 +506,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $this->populateProperties();
             if (!isset($this->properties[$relPath]))
             {
-                throw new \PHPCR\PathNotFoundException("Property at path '{$relPath}' not found");
+                throw new \PHPCR\PathNotFoundException("Property at path '{$relPath}' not found at node " . $this->getName() . " at path " . $this->getPath());
             }
         }
 
@@ -732,6 +743,16 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getPrimaryNodeType()
     {
+        $primaryType = $this->getPropertyValue('jcr:primaryType');
+        $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+        $nt = $ntm->getNodeType($primaryType);
+
+        if (!$nt)
+        {
+            $name = $this->getName();
+            throw new \PHPCR\RepositoryException("Failed to get NodeType from current '{$name}' node ({$primaryType})");
+        }
+        return $nt;
     }
     
     public function getMixinNodeTypes()
@@ -934,6 +955,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 $mobject->parentguid = $this->getParent()->getMidgard2Object()->guid;
             }
+
             if ($mobject->create() === true)
             {
                 $this->getPropertyManager()->save();
