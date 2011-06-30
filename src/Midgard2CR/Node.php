@@ -130,6 +130,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $this->properties[$name] = $property;
         }
         $property->setValue ($value, $type);
+        
+        /* TODO, for performance reason, we could check if property's value has been changed.
+         * By default, it's modified */
+        $this->is_modified = true;
+
         return $property;
     }
 
