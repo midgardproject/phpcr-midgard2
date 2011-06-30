@@ -61,6 +61,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
         $mobject->name = $object_name;
         $new_node = new Node($mobject, $parent_node, $parent_node->getSession());
+        if ($primaryNodeTypeName != null)
+        {
+            /* mandatory, auto created */
+            /* FIXME, move this to node factory */
+            $new_node->setProperty('jcr:primaryType', $primaryNodeTypeName);
+        }
         $new_node->is_new = true; 
         $parent_node->children[$object_name] = $new_node;
 
@@ -732,6 +738,16 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getPrimaryNodeType()
     {
+        $primaryType = $this->getPropertyValue('jcr:primaryType');
+        $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+        $nt = $ntm->getNodeType($primaryType);
+
+        if (!$nt)
+        {
+            $name = $this->getName();
+            throw new \PHPCR\RepositoryException("Failed to get NodeType from current '{$name}' node ({$primaryType})");
+        }
+        return $nt;
     }
     
     public function getMixinNodeTypes()
