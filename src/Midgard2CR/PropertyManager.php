@@ -291,7 +291,13 @@ class PropertyManager
                 $model = $property->model;
                 $model->create(); 
             } 
-    
+
+            if ($this->object->guid == ''
+                || $this->object->guid == null)
+            {
+                throw new Exception ("Can not store property " . $property->name . " " . get_class($this->object) . " " . $this->object->name . " has empty guid value \n");
+            }
+
             /* associate property model with object */
             $node_property = new \midgard_property();
             $node_property->modelid = $model->id;
