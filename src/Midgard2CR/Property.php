@@ -99,12 +99,16 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
             $new_value = $value->getProperty('jcr:uuid');
         }
+        else if (is_a($value, '\DateTime'))
+        {
+            $new_value = $value->format("c");
+        }
         else 
         {
             $new_value = $value;
         }
 
-        $property = $this->manager->factory($this->propertyName, $this->propertyPrefix, $type, $new_value);
+        $property = $this->manager->factory($this->propertyName, $this->propertyPrefix, $type, false, $new_value);
         if ($this->type != $type) 
         {
             $this->type = $type;
