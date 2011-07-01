@@ -11,6 +11,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     private function appendNode($relPath, $primaryNodeTypeName = null)
     {
+        $nt = null;
+        if ($primaryNodeTypeName != null)
+        {
+            $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+            $nt = $ntm->getNodeType($primaryNodeTypeName);
+        }
+
         $parent_node = $this;
         $object_name = $relPath;
 
@@ -87,22 +94,16 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
 
         $parts = explode('/', $relPath);
-        if (count($parts) == 1)
+        $pathElements = count($parts);
+        if ($pathElements == 1)
         {
             return $this->appendNode($relPath, $primaryNodeTypeName);
         }
 
-        $node = $this;
-        foreach ($parts as $name)
+        $node = $this->getNode($parts[0]);
+        for ($i = 1; $i < $pathElements; $i++)
         {
-            if ($node->hasNode($name))
-            {
-                $node = $node->getNode($name);
-            }
-            else 
-            {
-                $node = $node->appendNode($name, $primaryNodeTypeName);
-            }
+            $node = $node->appendNode($parts[$i], $primaryNodeTypeName);
         }
         return $node;
     }
