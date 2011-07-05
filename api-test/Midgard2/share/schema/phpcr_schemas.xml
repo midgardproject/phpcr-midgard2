@@ -16,12 +16,27 @@
 		<!-- JCR properties of nt:folder Node -->
 		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:folder">
 			<description>The type of a node</description>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<isAutoCreated>true</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
 		</property>
 		<property name="jcr-created" type="datetime" field="jcr_created">
 			<description>Creation date</description>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<isAutoCreated>true</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
 		</property>
 		<property name="jcr-createdBy" type="string" field="jcr_createdby">
 			<description>Name of a person who created node</description>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<isAutoCreated>true</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
 		</property>
 
 		<!-- Node and NodeType definitions -->
