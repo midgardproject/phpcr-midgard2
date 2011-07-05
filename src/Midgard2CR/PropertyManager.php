@@ -277,7 +277,7 @@ class PropertyManager
         $mgd = \midgard_connection::get_instance();
 
         try {
-
+            
             /* Disable replication, we do not need to replicate properties */
             /*if ($mgd->is_enabled_replication())
             {
