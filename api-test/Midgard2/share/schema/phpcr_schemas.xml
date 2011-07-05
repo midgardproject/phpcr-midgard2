@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Schema xmlns="http://www.midgard-project.org/repligard/1.4">
+
+	<!-- nt:folder -->
+	<type name="nt_folder" table="phpcr_nt_folder" metadata="false">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+		<property name="name" type="string">
+			<description>The name of a node</description>
+		</property>
+		<property name="up" type="unsigned integer" link="nt_folder:id" upfield="up">
+			<description>ID of a parent node</description>
+		</property>
+
+		<!-- JCR properties of nt:folder Node -->
+		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:folder">
+			<description>The type of a node</description>
+		</property>
+		<property name="jcr-created" type="datetime" field="jcr_created">
+			<description>Creation date</description>
+		</property>
+		<property name="jcr-createdBy" type="string" field="jcr_createdby">
+			<description>Name of a person who created node</description>
+		</property>
+
+		<!-- Node and NodeType definitions -->
+		<user_values>
+			<Supertypes>nt:hierarchyNode</Supertypes>
+			<isMixin>false</isMixin>
+			<PrimaryItemName></PrimaryItemName>
+			<RequiredPrimaryTypes>nt:hierarchyNode</RequiredPrimaryTypes>
+			<DefaultPrimaryType></DefaultPrimaryType>
+			<AutoCreated>false</AutoCreated>
+			<Mandatory>false</Mandatory>
+			<OnParentVersion>VERSION</OnParentVersion>
+			<Protected>false</Protected>
+			<SameNameSiblings>false</SameNameSiblings> 
+		</user_values>
+	</type>
+
+	<!-- nt:file -->
+	<type name="nt_file" table="phpcr_nt_file" metadata="false">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+		<property name="name" type="string">
+			<description>The name of a node</description>
+		</property>
+		<property name="folder" type="unsigned integer" link="nt_folder:id" parentfield="folder">
+			<description>ID of a parent node</description>
+		</property>
+
+		<!-- JCR properties of nt:file Node -->
+		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:file">
+			<description>The type of a node</description>
+		</property>
+		<property name="jcr-created" type="datetime" field="jcr_created">
+			<description>Creation date</description>
+		</property>
+		<property name="jcr-createdBy" type="string" field="jcr_createdby">
+			<description>Name of a person who created node</description>
+		</property>
+
+		<!-- Node and NodeType definitions -->
+		<user_values>
+			<Supertypes>nt:hierarchyNode</Supertypes>
+			<isMixin>false</isMixin>
+			<HasOrderableChildNodes>false</HasOrderableChildNodes>	
+			<PrimaryItemName>jcr:content</PrimaryItemName>
+			<ChildNodeDefinition>jcr:content</ChildNodeDefinition>	
+			<RequiredPrimaryTypes>nt:base</RequiredPrimaryTypes>
+			<DefaultPrimaryType></DefaultPrimaryType>
+			<AutoCreated>false</AutoCreated>
+			<Mandatory>true</Mandatory>
+			<OnParentVersion>COPY</OnParentVersion>
+			<Protected>false</Protected>
+			<SameNameSiblings>false</SameNameSiblings> 
+		</user_values>
+	</type>
+
+	<!-- nt:unstructured -->
+	<type name="nt_unstructured" table="phpcr_nt_unstructured" metadata="false">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+		<property name="name" type="string">
+			<description>The name of a node</description>
+		</property>
+		<property name="parent" type="unsigned integer">
+			<description>ID of a parent (unspecified type) node</description>
+		</property>
+
+		<!-- JCR properties of nt:unstructured Node -->
+		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:unstructured">
+			<description>The type of a node</description>
+		</property>
+
+		<!-- Node and NodeType definitions -->
+		<user_values>
+			<Supertypes>nt:base</Supertypes>
+			<isMixin>false</isMixin>
+			<HasOrderableChildNodes>true</HasOrderableChildNodes>	
+			<PrimaryItemName></PrimaryItemName>
+			<ChildNodeDefinition>*</ChildNodeDefinition>	
+			<RequiredPrimaryTypes>nt:base</RequiredPrimaryTypes>
+			<DefaultPrimaryType>nt:unstructured</DefaultPrimaryType>
+			<AutoCreated>false</AutoCreated>
+			<Mandatory>false</Mandatory>
+			<OnParentVersion>VERSION</OnParentVersion>
+			<Protected>false</Protected>
+			<SameNameSiblings>true</SameNameSiblings> 
+		</user_values>
+	</type>
+
+</Schema>
