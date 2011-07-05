@@ -6,10 +6,10 @@
 		<property name="id" type="unsigned integer" primaryfield="id">
 			<description>Local non-replication-safe database identifier</description>
 		</property>
-		<property name="name" type="string">
+		<property name="name" type="string" unique="yes">
 			<description>The name of a node</description>
 		</property>
-		<property name="up" type="unsigned integer" link="nt_folder:id" upfield="up">
+		<property name="parent" type="unsigned integer" link="nt_folder:id" upfield="parent">
 			<description>ID of a parent node</description>
 		</property>
 
@@ -40,14 +40,14 @@
 	</type>
 
 	<!-- nt:file -->
-	<type name="nt_file" table="phpcr_nt_file" metadata="false">
+	<type name="nt_file" table="phpcr_nt_file" metadata="false" parent="nt_folder">
 		<property name="id" type="unsigned integer" primaryfield="id">
 			<description>Local non-replication-safe database identifier</description>
 		</property>
-		<property name="name" type="string">
+		<property name="name" type="string" unique="yes">
 			<description>The name of a node</description>
 		</property>
-		<property name="folder" type="unsigned integer" link="nt_folder:id" parentfield="folder">
+		<property name="parent" type="unsigned integer" link="nt_folder:id" parentfield="parent">
 			<description>ID of a parent node</description>
 		</property>
 
@@ -89,6 +89,9 @@
 		</property>
 		<property name="parent" type="unsigned integer">
 			<description>ID of a parent (unspecified type) node</description>
+		</property>
+		<property name="parentname" type="string">
+			<description>Type name of parent node</description>
 		</property>
 
 		<!-- JCR properties of nt:unstructured Node -->

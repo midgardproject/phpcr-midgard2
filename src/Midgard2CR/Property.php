@@ -35,6 +35,15 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             $this->midgardPropertyName = $tokens[1];
         }
 
+        /* Check namespace by convention.
+         * ns:name is represented as ns-name in Midgard2 */
+        $GNsProperty = str_replace(':', '-', $propertyName);
+        if (property_exists($this->midgardObject, $GNsProperty))
+        {
+            $this->isMidgardProperty = true;
+            $this->midgardPropertyName = $GNsProperty;
+        }
+
         if ($tokens[1] != null)
         {
             $this->propertyPrefix = $tokens[0];

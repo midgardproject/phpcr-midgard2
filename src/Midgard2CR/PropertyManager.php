@@ -295,7 +295,7 @@ class PropertyManager
             if ($this->object->guid == ''
                 || $this->object->guid == null)
             {
-                throw new Exception ("Can not store property " . $property->name . " " . get_class($this->object) . " " . $this->object->name . " has empty guid value \n");
+                throw new \Exception ("Can not store property " . $property->name . " " . get_class($this->object) . " " . $this->object->name . " has empty guid value \n");
             }
 
             /* associate property model with object */

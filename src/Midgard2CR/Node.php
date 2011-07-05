@@ -209,21 +209,42 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         $this->children = array();
         $childTypes = $this->getChildTypes();
+
         foreach ($childTypes as $childType)
         {
-            if ($childType == get_class($this->object))
-            {
-                $children = $this->object->list();
-            }
-            else
-            {
-                $children = $this->object->list_children($childType);
-            }
+            $children = $this->object->list();
+            $children = array_merge($children, $this->object->list_children($childType)); 
 
             foreach ($children as $child)
             {
                 $this->children[$child->name] = new Node($child, $this, $this->getSession());
             }
+        }
+
+        /* Try unstructured */
+        $storage = new \midgard_query_storage('nt_unstructured');
+        $qs = new \midgard_query_select($storage);
+        $group = new \midgard_query_constraint_group('AND');
+        $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('parent'),
+                '=',
+                new \midgard_query_value($this->object->id)
+            )
+        );
+        $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('parentname'),
+                '=',
+                new \midgard_query_value(get_class($this->object))
+            )
+        );
+        $qs->set_constraint($group);
+        $qs->execute();
+
+        foreach ($qs->list_objects() as $child)
+        {
+            $this->children[$child->name] = new Node($child, $this, $this->getSession());
         }
 
         /* Add attachments */
@@ -857,26 +878,20 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return false;
     }
 
-    private function getMidgardRelativePath($object, $typename = null)
+    private function getMidgardRelativePath($object, $typename = null, $joined = null, array $params = null)
     {
         $storage = new \midgard_query_storage($typename ? $typename : get_class($object));
 
-        /* By default we prepare to join core node and blob.
-         * SELECT t1.id, ... FROM midgardmvc_core_node AS t1 JOIN blobs AS t2 ON t1.guid = t2.parent_guid WHERE t2.name='NAME';
-         */ 
-        $joined_storage = new \midgard_query_storage('midgard_attachment');
-        $left_property_join = new \midgard_query_property('guid');
-        $right_property_join = new \midgard_query_property('parentguid', $joined_storage);    
+        $joined_storage = new \midgard_query_storage($joined ? $joined : 'nt_folder');
+        $left_property_join = new \midgard_query_property('id');
+        $right_property_join = new \midgard_query_property('parent', $joined_storage);    
 
-        if (is_a($object, 'midgardmvc_core_node'))
+        /*if (is_a($object, 'nt_file'))
         {
-            /* Join nodes 
-             * SELECT t1.id, ... FROM midgardmvc_core_node AS t1 JOIN midgardmvc_core_node AS t2 ON t1.id = t2.up WHERE t2.name='NAME'
-             */ 
-            $joined_storage = new \midgard_query_storage('midgardmvc_core_node');
+            $joined_storage = new \midgard_query_storage('nt_folder');
             $left_property_join = new \midgard_query_property('id');
-            $right_property_join = new \midgard_query_property('up', $joined_storage);    
-        }
+            $right_property_join = new \midgard_query_property('parent', $joined_storage);    
+        }*/
 
         $q = new \midgard_query_select($storage);
         $q->add_join("INNER", $left_property_join, $right_property_join);
@@ -892,22 +907,38 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         );
         $group->add_constraint(
             new \midgard_query_constraint(
-                new \midgard_query_property('guid', $joined_storage), 
+                new \midgard_query_property('id', $joined_storage), 
                 '=', 
-                new \midgard_query_value($object->guid)
+                new \midgard_query_value($object->id)
             )
         );
+
+        if (is_a($object, 'nt_unstructured'))
+        {
+            $group->add_constraint(
+                new \midgard_query_constraint(
+                    new \midgard_query_property('parentname', $joined_storage), 
+                    '=', 
+                    new \midgard_query_value($typename)
+                )
+            );       
+        }
 
         $q->set_constraint($group);
         
         $q->execute();
 
-        /* Force mvc node, path can be /mvcnode/mvcnode/attachment/attachment */
+        /* Path case: /nt_folder/nt_folder/nt_file/nt_unstructured/nt_unstructured */
         if ($q->resultscount == 0)
         {
-            if (is_a($object, 'midgard_attachment'))
+            if (is_a($object, 'nt_unstructured'))
             {
-                return self::getMidgardRelativePath($object, 'midgardmvc_core_node');
+                $objects = self::getMidgardRelativePath($object, 'nt_file', 'nt_unstructured');
+                if (empty($objects))
+                {
+                    return self::getMidgardRelativePath($object, 'nt_folder', 'nt_unstructured');
+                }
+                return $objects;
             }
         }
 
@@ -925,7 +956,18 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         do 
         {
             array_unshift($elements, $object->name);
-            $objects = self::getMidgardRelativePath($object, null);
+            if (is_a($object, 'nt_unstructured'))
+            {
+                $objects = self::getMidgardRelativePath($object, 'nt_unstructured', 'nt_unstructured');
+            }
+            else if (is_a($object, 'nt_file'))
+            {
+                $objects = self::getMidgardRelativePath($object, 'nt_folder', 'nt_file');
+            }
+            else 
+            {
+                $objects = self::getMidgardRelativePath($object, null);
+            }
             if (empty($objects))
             {
                 break;

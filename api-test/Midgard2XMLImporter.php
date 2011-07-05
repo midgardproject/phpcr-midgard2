@@ -149,22 +149,15 @@ class Midgard2XMLImporter extends \DomDocument
     {
         if ($type == 'nt:folder')
         {
-            return 'midgardmvc_core_node';
+            return 'nt_folder';
         }
         if ($type == 'nt:file')
         {
-            return 'midgard_attachment';
+            return 'nt_file';
         }
         if ($type == 'nt:unstructured')
         {
-            if (get_class($parent) == 'midgardmvc_core_node')
-            {
-                return 'midgardmvc_core_node';
-            }
-            if (get_class($parent) == 'midgard_attachment')
-            {
-                return 'midgard_attachment';
-            }
+            return 'nt_unstructured';
         }
         return null;
     }
@@ -218,7 +211,11 @@ class Midgard2XMLImporter extends \DomDocument
             }
             else
             {
-                $object->up = $parent->id;
+                if (is_a($object, 'nt_unstructured'))
+                {   
+                    $object->parentname = get_class($parent);
+                }
+                $object->parent = $parent->id;
             }
         }
 
@@ -229,6 +226,11 @@ class Midgard2XMLImporter extends \DomDocument
         else
         {
             $object->update();
+        }
+
+        if (\midgard_connection::get_instance()->get_error() != MGD_ERR_OK)
+        {
+            throw new \Exception(\midgard_connection::get_instance()->get_error_string());
         }
 
         $propertyManager = new \Midgard2CR\PropertyManager($object);
@@ -282,13 +284,13 @@ class Midgard2XMLImporter extends \DomDocument
 
     public function execute()
     {
-        $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
-        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('up'), '=', new \midgard_query_value(0)));
+        $q = new \midgard_query_select(new \midgard_query_storage('nt_folder'));
+        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
         $q->execute();
         $root_object = current($q->list_objects());
         if ($q->get_results_count() == 0)
         {
-            $root_object = new \midgardmvc_core_node();
+            $root_object = new \nt_folder();
             $root_object->name = "jackalope";
             $root_object->create();
         }
