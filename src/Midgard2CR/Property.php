@@ -162,6 +162,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return $this->getBinary();
 
         case \PHPCR\PropertyType::REFERENCE:
+        case \PHPCR\PropertyType::WEAKREFERENCE:
             return $this->getNode();
 
         default:
