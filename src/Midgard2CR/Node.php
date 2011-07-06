@@ -577,17 +577,23 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $ret = array();
         foreach ($properties as $name => $o)
         {
-            $ret[$name] = $this->properties[$name]->getValue(); 
-            /* FIXME, optimize this */
-            if ($dereference == true)
+            $type = $this->properties[$name]->getType();
+            if ($type == \PHPCR\PropertyType::WEAKREFERENCE
+                || $type == \PHPCR\PropertyType::REFERENCE
+                || $type == \PHPCR\PropertyType::PATH)
             {
-                $type = $this->properties[$name]->getType();
-                if ($type == \PHPCR\PropertyType::WEAKREFERENCE
-                    || $type == \PHPCR\PropertyType::REFERENCE
-                    || $type == \PHPCR\PropertyType::PATH)
+                if ($dereference == true)
                 {
                     $ret[$name] = $this->properties[$name]->getNode();
                 }
+                else
+                {
+                    $ret[$name] = $this->properties[$name]->getString();
+                }
+            }
+            else 
+            {
+                $ret[$name] = $this->properties[$name]->getValue(); 
             }
         }
         return $ret;
