@@ -9,17 +9,17 @@ mgd = new Midgard.Connection();
 mgd.open_config(config);
 
 /* Get object by specified path */
-nt_folder = Midgard.SchemaObjectFactory.get_object_by_path(mgd, 'nt_folder', '/jackalope/tests_general_base');
+ntFolder = Midgard.SchemaObjectFactory.get_object_by_path(mgd, 'ntFolder', '/jackalope/tests_general_base');
 
 /* Read jcr:primaryType */
 let type = "";
-nt_folder.get_property('jcr-primaryType', type);
+ntFolder.get_property('jcr-primaryType', type);
 print (type);
 
 ref = new Midgard.ReflectorProperty({dbclass:"nt_folder"});
 print(ref.get_user_value('jcr-created', 'isAutoCreated'));
 
-print (nt_folder.valueOf());
+print (ntFolder.valueOf());
 
 Midgard.close();
 
