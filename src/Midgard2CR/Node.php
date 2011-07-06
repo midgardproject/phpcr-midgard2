@@ -306,8 +306,19 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                     } 
                     return $this->parent;
                 }
+
+                /* ConstraintViolationException:
+                 * "if a node type or implementation-specific constraint is violated or 
+                 * if an attempt is made to add a node as the child of a property and 
+                 * this implementation performs this validation immediately." */
+                if ($this->hasProperty($relPath))
+                {
+                    throw new \PHPCR\NodeType\ConstraintViolationException("Can not add node to '{$relPath}' Item which is a Property");
+                }
+
                 $absPath = $this->getPath();
                 $guid = $this->getMidgard2Object()->guid;
+
                 throw new \PHPCR\PathNotFoundException("Node at path '{$relPath}' not found. ({$remainingPath}). Requested at node {$absPath} with possible guid identifier '{$guid}'." . print_r(array_keys($this->children), true));
             }
         }
