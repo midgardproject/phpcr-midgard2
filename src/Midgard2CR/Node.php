@@ -1018,6 +1018,19 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 $mobject->up = $this->getParent()->getMidgard2Object()->id;
             }
+
+            /* nt_folder, nt_file and nt_unstructured case */
+            if (property_exists($mobject, 'parent'))
+            {
+                $mobject->parent = $this->getParent()->getMidgard2Object()->id;
+            }
+
+            /* nt_unstructured case */
+            if (property_exists($mobject, 'parentname'))
+            {
+                $mobject->parentname = get_class($this->getParent()->getMidgard2Object());
+            }
+
             /* attachment case */
             if (property_exists($mobject, 'parentguid'))
             {
