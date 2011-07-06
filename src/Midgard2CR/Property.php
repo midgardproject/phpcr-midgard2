@@ -187,9 +187,6 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             switch ($this->propertyName)
             {
-            case 'created':
-                return $this->object->metadata->created;
-
             case 'mimeType':
                 if (!is_a($this->object, 'midgard_attachment'))
                 {
@@ -197,7 +194,6 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
                 }
                 return $this->object->mimetype;
             }
-
         }
 
         $property = $this->manager->getProperty($this->propertyName, $this->propertyPrefix);
