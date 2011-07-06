@@ -99,7 +99,12 @@ class Session implements \PHPCR\SessionInterface
 
         throw new \PHPCR\RepositoryException("Answer the question three and the node you will see");
     }
-    
+
+    public function getNodesByIdentifier($ids)
+    {
+        return array();
+    }
+
     public function getItem($absPath)
     {
         if (substr($absPath, 0, 1) != '/') 
@@ -143,7 +148,12 @@ class Session implements \PHPCR\SessionInterface
         $this->validatePath($absPath);
         return $this->getRootNode()->getNode(substr($absPath, 1));
     }
-    
+
+    public function getNodes($absPaths)
+    {
+        return null;
+    }
+
     public function getProperty($absPath)
     {
         $this->validatePath($absPath);
