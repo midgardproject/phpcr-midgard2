@@ -10,12 +10,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     protected $propertyManager = null;
 
     /* TODO, move this to NodeFactory */
-    private function nodeFactory(midgard_object $mobject, Node $parent_node, $primaryNodeTypeName = null)
+    private function nodeFactory(\midgard_object $mobject, Node $parent_node, $primaryNodeTypeName = null)
     {
         $node = new Node($mobject, $parent_node, $parent_node->getSession());
         if ($primaryNodeTypeName != null)
         {
-            $new_node->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::nameFromValue(\PHPCR\PropertyType::NAME));
+            $node->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::nameFromValue(\PHPCR\PropertyType::NAME));
         }
 
         if ($node->hasProperty('jcr:created'))
