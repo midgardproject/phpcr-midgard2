@@ -89,6 +89,18 @@ class Midgard2XMLImporter extends \DomDocument
         }
 
         $parts = explode(':', $propertyName);
+
+        if (count($parts) == 2)
+        {
+            $GnsName = str_replace(':', '-', $propertyName);
+            if (property_exists($object, $GnsName))
+            {
+                $vnode = $property->getElementsByTagName('value')->item(0);
+                $object->GnsName = $vnode->nodeValue;
+                return;
+            }
+        }
+
         if (count($parts) != 2)
         {
             $parts[1] = $parts[0];
