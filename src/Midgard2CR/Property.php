@@ -63,7 +63,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         return $this->node;
     }
 
-    private function getMidgard2PropertyName()
+    public function getMidgard2PropertyName()
     {
         if ($this->isMidgardProperty == false)
         {
@@ -456,8 +456,13 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     {
         throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
-    
+
     private function getMGDType ()
+    {
+        return $this->getMidgard2ValueType();
+    }
+
+    public function getMidgard2ValueType()
     {
         if (!class_exists('\midgard_reflector_property'))
         {
