@@ -9,6 +9,23 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     protected $properties = null;
     protected $propertyManager = null;
 
+    /* TODO, move this to NodeFactory */
+    private function nodeFactory(midgard_object $mobject, Node $parent_node, $primaryNodeTypeName = null)
+    {
+        $node = new Node($mobject, $parent_node, $parent_node->getSession());
+        if ($primaryNodeTypeName != null)
+        {
+            $new_node->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::nameFromValue(\PHPCR\PropertyType::NAME));
+        }
+
+        if ($node->hasProperty('jcr:created'))
+        {
+            $node->setProperty('jcr:created',  new DateTime('now'), \PHPCR\PropertyType::nameFromValue(\PHPCR\PropertyType::DATE));
+        }
+
+        return $node;
+    }
+
     private function appendNode($relPath, $primaryNodeTypeName = null)
     {
         $nt = null;
@@ -67,13 +84,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $mobject = \midgard_object_class::factory ($typename);
         }
         $mobject->name = $object_name;
-        $new_node = new Node($mobject, $parent_node, $parent_node->getSession());
-        if ($primaryNodeTypeName != null)
-        {
-            /* mandatory, auto created */
-            /* FIXME, move this to node factory */
-            $new_node->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::nameFromValue(\PHPCR\PropertyType::NAME));
-        }
+        $new_node = self::nodeFactory($mobject, $parent_node, $primaryNodeTypeName);
         $new_node->is_new = true; 
         $parent_node->children[$object_name] = $new_node;
 
@@ -497,7 +508,15 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         foreach ($this->object as $property => $value)
         {
-            $this->properties["mgd:{$property}"] = new Property($this, "mgd:{$property}", null);
+            if (strpos($property, '-') === false)
+            {
+                $this->properties["mgd:{$property}"] = new Property($this, "mgd:{$property}", null);
+            }
+            else 
+            {
+                $parts = explode('-', $property);
+                $this->properties["{$parts[0]}:{$parts[1]}"] = new Property($this, "{$parts[0]}:{$parts[1]}", null);
+            }
         }
 
         $this->propertyManager = new \Midgard2CR\PropertyManager($this->object);
