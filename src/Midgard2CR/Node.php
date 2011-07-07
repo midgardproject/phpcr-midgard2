@@ -84,10 +84,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         // VersionException 
         // TODO
 
-        $typename = get_class($this->getMidgard2Object());
+        //$typename = get_class($this->getMidgard2ContentObject());
         /* TODO, factory is probably needed.
          * Get namespace and prefix from namespace manager */
-        if ($primaryNodeTypeName == 'nt:file')
+        /*if ($primaryNodeTypeName == 'nt:file')
         {
             $mobject = new \midgard_attachment();
             $mobject->mimetype = 'nt:file';
@@ -96,14 +96,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         {
             $mobject = \midgard_object_class::factory ($typename);
         }
-        $mobject->name = $object_name;
+        $mobject->name = $object_name;*/
         $midgardNode = new \midgard_tree_node();
         $midgardNode->typename = str_replace(':', '_', $primaryNodeTypeName);
         $midgardNode->name = $object_name;
-        $new_node = new \Midgard2CR\Node($midgardNode, $parentNode, $this->getSession());
+
+        $new_node = new \Midgard2CR\Node($midgardNode, $this, $this->getSession());
         $new_node->is_new = true; 
-        $parentNode->children[$object_name] = $new_node;
         $new_node->primaryNodeTypeName = $primaryNodeTypeName;
+        $new_node->parent = $this;
+
+        $this->children[$object_name] = $new_node;
 
         // FIXME, Catch exception before returning new node
         return $new_node;
@@ -135,7 +138,14 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return $this->appendNode($relPath, $primaryNodeTypeName);
         }
 
-        $node = $this->getNode($parts[0]);
+        if ($this->hasNode($parts[0]))
+        {
+            $node = $this->getNode($parts[0]);
+        }
+        else 
+        {
+            $node = $this->appendNode($parts[0]);
+        }
         for ($i = 1; $i < $pathElements; $i++)
         {
             $node = $node->appendNode($parts[$i], $primaryNodeTypeName);
@@ -262,7 +272,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 //$guid = $this->getMidgard2Object()->guid;
                 $guid = '';
 
-                throw new \PHPCR\PathNotFoundException("Node at path '{$relPath}' not found. ({$remainingPath}). Requested at node {$absPath} with possible guid identifier '{$guid}'." . print_r(array_keys($this->children), true));
+                throw new \PHPCR\PathNotFoundException("Node at path '{$relPath}' not found. ({$remainingPath}). Requested at node {$absPath} with possible guid identifier '{$guid}'." . print_r($this->children ? array_keys($this->children) : array(), true));
             }
         }
 
@@ -704,6 +714,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function hasNode($relPath)
     {
+        /* FIXME, optimize this.
+         * Do not get node, check children array instead */
         $pos = strpos($relPath, '/');
         if ($pos === 0)
         {
@@ -943,40 +955,22 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function save()
     {
+        $mobject = $this->getMidgard2ContentObject();
+        $midgardNode = $this->getMidgard2Node();
         /* Create */
         if ($this->isNew() === true)
         {
-            $mobject = $this->getMidgard2Object();
-            /* TODO:
-             * This should be supported by tree manager, so objects are independent
-             * and tree is built on demand */
-            /* mvc node case */
-            if (property_exists($mobject, 'up'))
-            {
-                $mobject->up = $this->getParent()->getMidgard2Object()->id;
-            }
-
-            /* nt_folder, nt_file and nt_unstructured case */
-            if (property_exists($mobject, 'parent'))
-            {
-                $mobject->parent = $this->getParent()->getMidgard2Object()->id;
-            }
-
-            /* nt_unstructured case */
-            if (property_exists($mobject, 'parentname'))
-            {
-                $mobject->parentname = get_class($this->getParent()->getMidgard2Object());
-            }
-
-            /* attachment case */
-            if (property_exists($mobject, 'parentguid'))
-            {
-                $mobject->parentguid = $this->getParent()->getMidgard2Object()->guid;
-            }
 
             if ($mobject->create() === true)
             {
                 $this->getPropertyManager()->save();
+                $midgardNode->typename = get_class($mobject);
+                $midgardNode->objectguid = $mobject->guid;
+
+                $parent = $this->parent->getMidgard2Node();
+                $midgardNode->parentguid = $parent->guid;
+                $midgardNode->parent = $mobject->id;
+                $midgardNode->create();
             }
         }
 
@@ -986,6 +980,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             if ($mobject->update() === true)
             {
                 $this->getPropertyManager()->save();
+                $midgardNode->update();
             }
         }
 
