@@ -84,9 +84,23 @@ class Session implements \PHPCR\SessionInterface
 
         $pv = current($q->list_objects());
 
-        try {
-            $midgard_object = \midgard_object_class::get_object_by_guid ($pv->objectguid);
-            $midgard_path = \Midgard2CR\Node::getMidgardPath($midgard_object);
+        /* FIXME
+         * Make one query with join */
+        try 
+        {
+            $q = new \midgard_query_select(new \midgard_query_storage('midgard_tree_node'));
+            $q->set_constraint(
+                new \midgard_query_constraint(
+                    new \midgard_query_property('objectguid'), 
+                    '=', 
+                    new \midgard_query_value($pv->objectguid)
+                )
+            ); 
+            $q->execute();
+            $nodes = $q->list_objects();
+
+            //$midgard_object = \midgard_object_class::get_object_by_guid ($pv->objectguid);
+            $midgard_path = \Midgard2CR\Node::getMidgardPath($nodes[0]);
             /* Convert to JCR path */
             $midgard_path = str_replace('/jackalope', '', $midgard_path);
             $node = $this->getNode($midgard_path);

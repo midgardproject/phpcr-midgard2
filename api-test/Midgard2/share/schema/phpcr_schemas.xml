@@ -9,7 +9,7 @@
 		<property name="name" type="string" unique="yes">
 			<description>The name of a node</description>
 		</property>
-		<property name="parent" type="unsigned integer" link="nt_folder:id" upfield="parent">
+		<property name="parent" type="unsigned integer">
 			<description>ID of a parent node</description>
 		</property>
 
@@ -55,14 +55,14 @@
 	</type>
 
 	<!-- nt:file -->
-	<type name="nt_file" table="phpcr_nt_file" metadata="false" parent="nt_folder">
+	<type name="nt_file" table="phpcr_nt_file" metadata="false">
 		<property name="id" type="unsigned integer" primaryfield="id">
 			<description>Local non-replication-safe database identifier</description>
 		</property>
 		<property name="name" type="string" unique="yes">
 			<description>The name of a node</description>
 		</property>
-		<property name="parent" type="unsigned integer" link="nt_folder:id" parentfield="parent">
+		<property name="parent" type="unsigned integer">
 			<description>ID of a parent node</description>
 		</property>
 

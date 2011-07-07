@@ -7,25 +7,22 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     protected $propertyFullName = null;
     protected $propertyName = null;
     protected $propertyPrefix = null;
-    protected $node = null;
     protected $type = 0;
     protected $isMidgardProperty;
     protected $midgardPropertyName = null; 
-    protected $manager = null;
     protected $isMultiple = false;
-    protected $midgardObject = null;
 
     public function __construct(Node $node, $propertyName, \Midgard2CR\PropertyManager $manager = null)
     {
         $this->propertyFullName = $propertyName;
-        $this->node = $node;
+        $this->propertyManager = $manager ? $manager : $node->getPropertyManager();
+        $this->midgardNode = $node->getMidgard2Node(); 
         $this->parent = $node;
-        $this->midgardObject = $node->getMidgard2Object();
-        $this->manager = $manager;
-        $this->isMidgardProperty = false;
+        $this->contentObject = $node->getMidgard2ContentObject();
+        $this->isMidgardProperty = false; 
 
         /* Check if we get MidgardObject property */
-        $nsregistry = $this->node->getSession()->getWorkspace()->getNamespaceRegistry();
+        $nsregistry = $this->parent->getSession()->getWorkspace()->getNamespaceRegistry();
         $nsmanager = $nsregistry->getNamespaceManager();
         $tokens = $nsmanager->getPrefixTokens($propertyName);
         if ($tokens[0] == $nsregistry::MGD_PREFIX_MGD
@@ -38,7 +35,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         /* Check namespace by convention.
          * ns:name is represented as ns-name in Midgard2 */
         $GNsProperty = str_replace(':', '-', $propertyName);
-        if (property_exists($this->midgardObject, $GNsProperty))
+        if (property_exists($this->contentObject, $GNsProperty))
         {
             $this->isMidgardProperty = true;
             $this->midgardPropertyName = $GNsProperty;
@@ -54,13 +51,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             $this->propertyPrefix = 'phpcr:undefined';
             $this->propertyName = $propertyName;
         }
-
-        parent::__construct($this->midgardObject, $node, $node->getSession());
     }
 
     public function getParentNode()
     {
-        return $this->node;
+        return $this->parent;
     }
 
     public function getMidgard2PropertyName()
@@ -85,7 +80,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         $propertyName = $this->getMidgard2PropertyName();
         if ($propertyName) 
         {
-            $this->object->$propertyName = $value;
+            $this->contentObject->$propertyName = $value;
             return;
         }
 
@@ -126,8 +121,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             $type = 'String';
         }
-        
-        $property = $this->manager->factory($this->propertyName, $this->propertyPrefix, $type, false, is_array($new_value) ? null : $new_value);
+
+        $property = $this->propertyManager->factory($this->propertyName, $this->propertyPrefix, $type, false, is_array($new_value) ? null : $new_value);
 
         if (is_array($new_value))
         {
@@ -140,7 +135,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         if ($this->type != $type) 
         {
             $this->type = $type;
-            $this->manager->setModelType($this->propertyName, $this->propertyPrefix, $type);
+            $this->propertyManager->setModelType($this->propertyName, $this->propertyPrefix, $type);
         }
     }
     
@@ -180,7 +175,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         $propertyName = $this->getMidgard2PropertyName();
         if ($propertyName)
         {
-            return $this->object->$propertyName;
+            return $this->contentObject->$propertyName;
         }
 
         /* Get mgdschema object property if we can map such */
@@ -189,15 +184,15 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             switch ($this->propertyName)
             {
             case 'mimeType':
-                if (!is_a($this->object, 'midgard_attachment'))
+                if (!is_a($this->contentObject, 'midgard_attachment'))
                 {
-                    throw new \PHPCR\RepositoryException ("Expected underlying midgard_attachment object. Given is " . get_class($this->object));
+                    throw new \PHPCR\RepositoryException ("Expected underlying midgard_attachment object. Given is " . get_class($this->contentObject));
                 }
-                return $this->object->mimetype;
+                return $this->contentObject->mimetype;
             }
         }
 
-        $property = $this->manager->getProperty($this->propertyName, $this->propertyPrefix);
+        $property = $this->propertyManager->getProperty($this->propertyName, $this->propertyPrefix);
         $ret = $property->getLiterals();
 
         /* Empty value */
@@ -232,7 +227,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         }
 
         $ret = array();
-        $attachments = $this->midgardObject->list_attachments();
+        $attachments = $this->contentObject->list_attachments();
         if (empty($attachments))
         {
             return null;
@@ -352,7 +347,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             {
                 try 
                 {
-                    $node = $this->node->getNode($path);
+                    $node = $this->parent->getNode($path);
                     return $node;
                 }
                 catch (\PHPCR\PathNotFoundException $e)
@@ -388,7 +383,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
    
         throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to Node type."); 
 
-        return $this->node;
+        return $this->parent;
     }
     
     public function getProperty()
@@ -404,12 +399,12 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             foreach ($path as $v)
             {
-                $ret[] = $this->node->getProperty($v);
+                $ret[] = $this->parent->getProperty($v);
             }
             return $ret;
         }
 
-        return $this->node->getProperty($path);
+        return $this->parent->getProperty($path);
     }
     
     public function getLength()
@@ -465,7 +460,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             return null;
         }
-        $mrp = new \midgard_reflector_property (get_class($this->object));
+        $mrp = new \midgard_reflector_property (get_class($this->contentObject));
         $type = $mrp->get_midgard_type ($this->midgardPropertyName);
 
         $type_id = 0;
@@ -511,7 +506,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return $this->getMGDType();
         }
 
-        $property = $this->manager->getProperty($this->propertyName, $this->propertyPrefix);
+        $property = $this->propertyManager->getProperty($this->propertyName, $this->propertyPrefix);
         $this->type = \PHPCR\PropertyType::valueFromName($property->model->type);
 
         return $this->type;
@@ -524,7 +519,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return false;
         }
 
-        $model = $this->manager->getModel($this->propertyName, $this->propertyPrefix);
+        $model = $this->propertyManager->getModel($this->propertyName, $this->propertyPrefix);
         return $model->multiple;
     }
 

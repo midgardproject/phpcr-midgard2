@@ -165,7 +165,7 @@ class Midgard2XMLImporter extends \DomDocument
         return true;
     }
 
-    private function mapNodeType(\midgard_object $parent, $type)
+    private function mapNodeType($type)
     {
         if ($type == 'nt:folder')
         {
@@ -182,72 +182,49 @@ class Midgard2XMLImporter extends \DomDocument
         return null;
     }
 
-    private function writeNode(\midgard_object $parent, \DOMElement $node)
+    private function writeNode(\midgard_object $midgardParentNode, \DOMElement $node)
     {
         $name = $node->getAttributeNS($this->ns_sv, 'name');
         $propertyElements = $node->getElementsByTagNameNS($this->ns_sv, 'property');
 
         $type = $this->getNodeType($node);
-        $class = $this->mapNodeType($parent, $type);
+        $class = $this->mapNodeType($type);
         if (!$class)
         {
             return;
         }
+
+        $object = new $class();
+        $object->name = $name;
+        if ($class == 'midgard_attachment')
+        {
+            /* Try to get attachment if it exists already */
+            $atts = $parent->find_attachments(array("name" => $name));
+            if (!empty($atts))
+            {
+                $object = $atts[0];
+            } 
+            else 
+            {
+                $object->mimetype = 'nt:file';
+            }
+        }
+
+        $object->create();
+
+        if (\midgard_connection::get_instance()->get_error() != MGD_ERR_OK)
+        {
+            throw new \Exception(\midgard_connection::get_instance()->get_error_string());
+        }
+
+        $midgardNode = new \midgard_tree_node();
+        $midgardNode->name = $name;
+        $midgardNode->typename = get_class($object);
+        $midgardNode->objectguid = $object->guid;
+        $midgardNode->parentguid = $midgardParentNode->guid;
+        $midgardNode->parent = $midgardParentNode->id;
+        $midgardNode->create();
         
-        $object = null;
-        if ($class == get_class($parent))
-        {
-            $siblings = $parent->list();
-        }
-        else
-        {
-            $siblings = $parent->list_children($class);
-        }
-        foreach ($siblings as $sibling)
-        {
-            if ($sibling->name == $name)
-            {
-                $object = $sibling;
-            }
-        }
-
-        if (!$object)
-        {
-            $object = new $class();
-            $object->name = $name;
-            if ($class == 'midgard_attachment')
-            {
-                /* Try to get attachment if it exists already */
-                $atts = $parent->find_attachments(array("name" => $name));
-                if (!empty($atts))
-                {
-                    $object = $atts[0];
-                } 
-                else 
-                {
-                    $object->parentguid = $parent->guid;
-                    $object->mimetype = 'nt:file';
-                }
-            }
-            else
-            {
-                if (is_a($object, 'nt_unstructured'))
-                {   
-                    $object->parentname = get_class($parent);
-                }
-                $object->parent = $parent->id;
-            }
-        }
-
-        if (!$object->guid)
-        {
-            $object->create();
-        }
-        else
-        {
-            $object->update();
-        }
-
         if (\midgard_connection::get_instance()->get_error() != MGD_ERR_OK)
         {
             throw new \Exception(\midgard_connection::get_instance()->get_error_string());
@@ -272,7 +249,7 @@ class Midgard2XMLImporter extends \DomDocument
         {
             if ($nodeElement->parentNode->getAttributeNS($this->ns_sv, 'name') == $name) 
             {           
-                $this->writeNode($object, $nodeElement);
+                $this->writeNode($midgardNode, $nodeElement);
             }
         }
     }
@@ -304,13 +281,14 @@ class Midgard2XMLImporter extends \DomDocument
 
     public function execute()
     {
-        $q = new \midgard_query_select(new \midgard_query_storage('nt_folder'));
+        $q = new \midgard_query_select(new \midgard_query_storage('midgard_tree_node'));
         $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
         $q->execute();
         $root_object = current($q->list_objects());
         if ($q->get_results_count() == 0)
         {
-            $root_object = new \nt_folder();
+            $root_object = new \midgard_tree_node();
+            $root_object->parent = 0;
             $root_object->name = "jackalope";
             $root_object->create();
         }

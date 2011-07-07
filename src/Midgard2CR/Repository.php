@@ -93,7 +93,7 @@ class Repository implements \PHPCR\RepositoryInterface
     
     private function getRootNodes()
     {
-        $q = new \midgard_query_select(new \midgard_query_storage('nt_folder'));
+        $q = new \midgard_query_select(new \midgard_query_storage('midgard_tree_node'));
         $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
         $q->execute();
         return $q->list_objects();

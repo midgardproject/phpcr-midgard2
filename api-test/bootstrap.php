@@ -95,13 +95,14 @@ function prepareMidgardStorage()
     midgard_storage::create_class_storage("midgard_namespace_registry");
 
     /* Create required root node */
-    $q = new \midgard_query_select(new \midgard_query_storage('nt_folder'));
+    $q = new \midgard_query_select(new \midgard_query_storage('midgard_tree_node'));
     $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
     $q->execute();
     if ($q->get_results_count() == 0)
     {
-        $root_object = new \nt_folder();
+        $root_object = new \midgard_tree_node();
         $root_object->name = "jackalope";
+        $root_object->parent = 0;
         $root_object->create();
     }
 }

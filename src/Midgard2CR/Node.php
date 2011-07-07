@@ -8,22 +8,35 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     protected $children = null;
     protected $properties = null;
     protected $propertyManager = null;
+    protected $primaryNodeTypeName = null;
 
-    /* TODO, move this to NodeFactory */
-    private function nodeFactory(\midgard_object $mobject, Node $parent_node, $primaryNodeTypeName = null)
+    public function __construct(\midgard_tree_node $midgardNode = null, Node $parent = null, Session $session)
     {
-        $node = new Node($mobject, $parent_node, $parent_node->getSession());
+          $this->parent = $parent;
+          $this->midgardNode = $midgardNode;
+          $this->session = $session;
+    }
+
+    /* TODO, move this to ContentObjectFactory */
+    private function contentObjectFactory(\midgard_tree_node $midgardNode,  $primaryNodeTypeName = null)
+    {
+        $guid = $midgardNode->objectguid;
+        /* FIXME, set proper type name */
+        if ($midgardNode->typename == null
+            || $midgardNode->typename == '')
+        {
+            $midgardNode->typename = 'nt_folder';
+        }
+        $this->contentObject = \midgard_object_class::factory($midgardNode->typename, $guid ? $guid : null);
         if ($primaryNodeTypeName != null)
         {
-            $node->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::nameFromValue(\PHPCR\PropertyType::NAME));
+            $this->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::nameFromValue(\PHPCR\PropertyType::NAME));
         }
 
-        if ($node->hasProperty('jcr:created'))
+        if ($this->hasProperty('jcr:created'))
         {
-            $node->setProperty('jcr:created',  new DateTime('now'), \PHPCR\PropertyType::nameFromValue(\PHPCR\PropertyType::DATE));
+            $this->setProperty('jcr:created',  new \DateTime('now'), \PHPCR\PropertyType::nameFromValue(\PHPCR\PropertyType::DATE));
         }
-
-        return $node;
     }
 
     private function appendNode($relPath, $primaryNodeTypeName = null)
@@ -84,9 +97,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $mobject = \midgard_object_class::factory ($typename);
         }
         $mobject->name = $object_name;
-        $new_node = self::nodeFactory($mobject, $parent_node, $primaryNodeTypeName);
+        $midgardNode = new \midgard_tree_node();
+        $midgardNode->typename = str_replace(':', '_', $primaryNodeTypeName);
+        $midgardNode->name = $object_name;
+        $new_node = new \Midgard2CR\Node($midgardNode, $parentNode, $this->getSession());
         $new_node->is_new = true; 
-        $parent_node->children[$object_name] = $new_node;
+        $parentNode->children[$object_name] = $new_node;
+        $new_node->primaryNodeTypeName = $primaryNodeTypeName;
 
         // FIXME, Catch exception before returning new node
         return $new_node;
@@ -102,6 +119,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         if ($pos === 0)
         {
             throw new \InvalidArgumentException("Can not add Node at absolute path"); 
+        }
+
+        /* TODO */
+        /* Determine node type if possible */
+        if ($primaryNodeTypeName == null)
+        {
+            $primaryNodeTypeName = 'nt:unstructured';
         }
 
         $parts = explode('/', $relPath);
@@ -121,7 +145,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function getPropertyManager()
     {
-        $this->populateProperties();
+        if (!$this->propertyManager)
+        {
+            $this->populateProperties();
+        }
         return $this->propertyManager;
     }
 
@@ -172,43 +199,6 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $mgdschemas;
     }
 
-    private function getChildTypes()
-    {
-        $mgdschemas = $this->getMgdSchemas();
-        $child_types = array();
-        foreach ($mgdschemas as $mgdschema)
-        {
-            if ($mgdschema == 'midgard_parameter')
-            {
-                continue;
-            }
-
-            $link_properties = array
-            (
-                'parent' => \midgard_object_class::get_property_parent($mgdschema),
-                'up' => \midgard_object_class::get_property_up($mgdschema),
-            );
-
-            $ref = new \midgard_reflection_property($mgdschema);
-            foreach ($link_properties as $type => $property)
-            {
-                $link_class = $ref->get_link_name($property);
-                if (   empty($link_class)
-                    && $ref->get_midgard_type($property) === MGD_TYPE_GUID)
-                {
-                    $child_types[] = $mgdschema;
-                    continue;
-                }
-
-                if ($link_class == get_class($this->object))
-                {
-                    $child_types[] = $mgdschema;
-                }
-            }
-        }
-        return $child_types;
-    }
-
     private function populateChildren()
     {
         if (!is_null($this->children))
@@ -216,58 +206,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return;
         }
 
-        //\midgard_connection::get_instance()->set_loglevel("debug");
-
-        $this->children = array();
-        $childTypes = $this->getChildTypes();
-
-        foreach ($childTypes as $childType)
-        {
-            $children = $this->object->list();
-            $children = array_merge($children, $this->object->list_children($childType)); 
-
-            foreach ($children as $child)
-            {
-                $this->children[$child->name] = new Node($child, $this, $this->getSession());
-            }
-        }
-
-        /* Try unstructured */
-        $storage = new \midgard_query_storage('nt_unstructured');
-        $qs = new \midgard_query_select($storage);
-        $group = new \midgard_query_constraint_group('AND');
-        $group->add_constraint(
-            new \midgard_query_constraint(
-                new \midgard_query_property('parent'),
-                '=',
-                new \midgard_query_value($this->object->id)
-            )
-        );
-        $group->add_constraint(
-            new \midgard_query_constraint(
-                new \midgard_query_property('parentname'),
-                '=',
-                new \midgard_query_value(get_class($this->object))
-            )
-        );
-        $qs->set_constraint($group);
-        $qs->execute();
-
-        foreach ($qs->list_objects() as $child)
+        $children = $this->midgardNode->list();
+        foreach ($children as $child)
         {
             $this->children[$child->name] = new Node($child, $this, $this->getSession());
-        }
-
-        /* Add attachments */
-        $attachments = $this->object->list_attachments();
-        foreach ($attachments as $child)
-        {
-            /* If this is not nt:file, then it's either custom 
-             * attachment or binary property */
-            if ($child->mimetype == 'nt:file')
-            {
-                $this->children[$child->name] = new Node($child, $this, $this->getSession());
-            }
         }
     }
 
@@ -317,7 +259,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 }
 
                 $absPath = $this->getPath();
-                $guid = $this->getMidgard2Object()->guid;
+                //$guid = $this->getMidgard2Object()->guid;
+                $guid = '';
 
                 throw new \PHPCR\PathNotFoundException("Node at path '{$relPath}' not found. ({$remainingPath}). Requested at node {$absPath} with possible guid identifier '{$guid}'." . print_r(array_keys($this->children), true));
             }
@@ -512,12 +455,19 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     private function populateProperties()
     {
+        if ($this->contentObject == null)
+        {
+            $this->contentObjectFactory($this->midgardNode, $this->primaryNodeTypeName);
+        }
+
         if (!is_null($this->properties))
         {
             return;
         }
 
-        foreach ($this->object as $property => $value)
+        $this->propertyManager = new \Midgard2CR\PropertyManager($this->contentObject);
+
+        foreach ($this->contentObject as $property => $value)
         {
             if (strpos($property, '-') === false)
             {
@@ -530,7 +480,6 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             }
         }
 
-        $this->propertyManager = new \Midgard2CR\PropertyManager($this->object);
         foreach ($this->propertyManager->listModels() as $name => $model)
         {
             if ($model->prefix == 'phpcr:undefined')
@@ -648,7 +597,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
 
         /* Return guid if uuid is not found */
-        return $this->object->guid;
+        return $this->contentObject->guid;
     }
     
     public function getIndex()
@@ -675,6 +624,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             throw new \PHPCR\RepositoryException("Invalid empty uuid value");
         }
 
+        /* FIXME
+         * Generalize this routine and move it to session 
+         * see Session.getNodeByIdentifier
+         */ 
         /*  query properties with such value, which are declared as reference property model */
         $storage = new \midgard_query_storage('midgard_property_view');
         $qs = new \midgard_query_select($storage);
@@ -718,8 +671,18 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         /* query references */
         foreach ($properties as $property)
         {
-            $midgard_object = \midgard_object_class::get_object_by_guid($property->objectguid);
-            $path = self::getMidgardPath($midgard_object);
+            $q = new \midgard_query_select(new \midgard_query_storage('midgard_tree_node'));        
+            $q->set_constraint(
+                new \midgard_query_constraint(
+                    new \midgard_query_property('objectguid'), 
+                    '=', 
+                    new \midgard_query_value($property->objectguid)
+                )
+            );         
+            $q->execute();
+            $nodes = $q->list_objects();
+
+            $path = self::getMidgardPath($nodes[0]);
             /* Convert to JCR path */
             $path = str_replace ('/jackalope', '', $path);
             $node = $this->session->getNode($path);
@@ -765,6 +728,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         if ($pos === 0)
         {
             throw new \InvalidArgumentException("Expected relative path. Absolute given");
+        }
+
+        /* Try native property first */
+        if (property_exists($this->midgardNode->typename, str_replace(':', '-', $relPath)))
+        {
+            return true;
         }
 
         try {
@@ -906,7 +875,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         /* TODO */
         /* Check session */
 
-        if ($this->object->guid == $item->object->guid)
+        if ($this->contentObject->guid == $item->contentObject->guid)
         {
             return true;
         }
@@ -914,20 +883,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return false;
     }
 
-    private function getMidgardRelativePath($object, $typename = null, $joined = null, array $params = null)
+    private function getMidgardRelativePath($object)
     {
-        $storage = new \midgard_query_storage($typename ? $typename : get_class($object));
+        $storage = new \midgard_query_storage('midgard_tree_node');
 
-        $joined_storage = new \midgard_query_storage($joined ? $joined : 'nt_folder');
+        $joined_storage = new \midgard_query_storage('midgard_tree_node');
         $left_property_join = new \midgard_query_property('id');
         $right_property_join = new \midgard_query_property('parent', $joined_storage);    
-
-        /*if (is_a($object, 'nt_file'))
-        {
-            $joined_storage = new \midgard_query_storage('nt_folder');
-            $left_property_join = new \midgard_query_property('id');
-            $right_property_join = new \midgard_query_property('parent', $joined_storage);    
-        }*/
 
         $q = new \midgard_query_select($storage);
         $q->add_join("INNER", $left_property_join, $right_property_join);
@@ -949,34 +911,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             )
         );
 
-        if (is_a($object, 'nt_unstructured'))
-        {
-            $group->add_constraint(
-                new \midgard_query_constraint(
-                    new \midgard_query_property('parentname', $joined_storage), 
-                    '=', 
-                    new \midgard_query_value($typename)
-                )
-            );       
-        }
-
         $q->set_constraint($group);
         
         $q->execute();
-
-        /* Path case: /nt_folder/nt_folder/nt_file/nt_unstructured/nt_unstructured */
-        if ($q->resultscount == 0)
-        {
-            if (is_a($object, 'nt_unstructured'))
-            {
-                $objects = self::getMidgardRelativePath($object, 'nt_file', 'nt_unstructured');
-                if (empty($objects))
-                {
-                    return self::getMidgardRelativePath($object, 'nt_folder', 'nt_unstructured');
-                }
-                return $objects;
-            }
-        }
 
         /* Relative path is : $returnedobjects[0]->name / $object->name */
 
@@ -992,18 +929,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         do 
         {
             array_unshift($elements, $object->name);
-            if (is_a($object, 'nt_unstructured'))
-            {
-                $objects = self::getMidgardRelativePath($object, 'nt_unstructured', 'nt_unstructured');
-            }
-            else if (is_a($object, 'nt_file'))
-            {
-                $objects = self::getMidgardRelativePath($object, 'nt_folder', 'nt_file');
-            }
-            else 
-            {
-                $objects = self::getMidgardRelativePath($object, null);
-            }
+            $objects = self::getMidgardRelativePath($object, null);
             if (empty($objects))
             {
                 break;
