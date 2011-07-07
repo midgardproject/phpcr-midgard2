@@ -185,7 +185,7 @@
 			<ValueConstraints></ValueConstraints>
 			<DefaultValues></DefaultValues>
 		</property>
-		<property name="jcr-lastModified" type="string" field="jcr_lastmodified">
+		<property name="jcr-lastModified" type="datetime" field="jcr_lastmodified">
 			<description>Last modified datetime</description>
 			<RequiredType>DATE</RequiredType>
 			<getOnParentVersion>IGNORE</getOnParentVersion>
