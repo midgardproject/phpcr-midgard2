@@ -25,11 +25,6 @@ abstract class Item implements \PHPCR\ItemInterface
         return $this->midgardNode;
     }
 
-    public function getMidgard2Object()
-    {
-        return $this->object;
-    }
-
     public function getPath()
     {
         if (!$this->parent)
