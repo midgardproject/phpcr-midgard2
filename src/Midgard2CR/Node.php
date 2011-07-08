@@ -48,11 +48,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $nt = $ntm->getNodeType($primaryNodeTypeName);
         }
 
-        $parent_node = $this;
-        $object_name = $relPath;
-
-        // ItemExistsException
-        // Node at given path exists.
+        /* ItemExistsException, Node at given path exists.*/
         try 
         {
             $node_exists = $this->getNode ($relPath);
@@ -61,16 +57,6 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         catch (\PHPCR\PathNotFoundException $e) 
         {
             // Do nothing 
-        }
-        
-        // PathNotFoundException
-        // At least one (not last) node at given path doesn't exist
-        if (strpos($relPath, '/') !== false)
-        {
-            $parts = explode ('/', $relPath);
-            $object_name = end($parts);
-            $parent_path = array_pop ($parts);
-            $parent_node = $this->getNode ($parent_path);
         }
 
         // ConstraintViolationException
@@ -99,14 +85,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $mobject->name = $object_name;*/
         $midgardNode = new \midgard_tree_node();
         $midgardNode->typename = str_replace(':', '_', $primaryNodeTypeName);
-        $midgardNode->name = $object_name;
+        $midgardNode->name = $relPath;
 
         $new_node = new \Midgard2CR\Node($midgardNode, $this, $this->getSession());
         $new_node->is_new = true; 
         $new_node->primaryNodeTypeName = $primaryNodeTypeName;
-        $new_node->parent = $this;
-
-        $this->children[$object_name] = $new_node;
+        $this->children[$relPath] = $new_node;
 
         // FIXME, Catch exception before returning new node
         return $new_node;
@@ -138,14 +122,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return $this->appendNode($relPath, $primaryNodeTypeName);
         }
 
-        if ($this->hasNode($parts[0]))
-        {
-            $node = $this->getNode($parts[0]);
-        }
-        else 
-        {
-            $node = $this->appendNode($parts[0]);
-        }
+        $node = $this->getNode($parts[0]);
         for ($i = 1; $i < $pathElements; $i++)
         {
             $node = $node->appendNode($parts[$i], $primaryNodeTypeName);
@@ -212,6 +189,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     private function populateChildren()
     {
         if (!is_null($this->children))
+        {
+            return;
+        }
+
+        /* Node is not saved, so DO NOT list children of the same type */
+        if (!$this->midgardNode->guid)
         {
             return;
         }
@@ -457,10 +440,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         if ($filter == null) 
         {
-            return new \ArrayIterator($this->children);
+            return new \ArrayIterator($this->children ? $this->children : array());
         }
 
-        return $this->getItemsFiltered($this->children, $filter); 
+        return $this->getItemsFiltered($this->children ? $this->children : array(), $filter); 
     }
 
     private function populateProperties()
@@ -960,23 +943,25 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         /* Create */
         if ($this->isNew() === true)
         {
-
             if ($mobject->create() === true)
             {
                 $this->getPropertyManager()->save();
                 $midgardNode->typename = get_class($mobject);
                 $midgardNode->objectguid = $mobject->guid;
 
-                $parent = $this->parent->getMidgard2Node();
-                $midgardNode->parentguid = $parent->guid;
-                $midgardNode->parent = $mobject->id;
+                $parentNode = $this->parent->getMidgard2Node();
+                $midgardNode->parentguid = $parentNode->guid;
+                $midgardNode->parent = $parentNode->id;
                 $midgardNode->create();
+            }
+            else 
+            {
+                die (\midgard_connection::get_instance()->get_error_string());
             }
         }
 
         if ($this->isModified() === true)
-        {
-            $mobject = $this->getMidgard2Object();
+        { 
             if ($mobject->update() === true)
             {
                 $this->getPropertyManager()->save();

@@ -246,9 +246,9 @@ class Session implements \PHPCR\SessionInterface
         $root_node = $this->getRootNode();
         $children = $root_node->getNodes();
         foreach ($children as $name => $child) 
-        {
+        { 
             /* FIXME DO NOT EXPECT BOOLEAN, CATCH EXCEPTION */
-            if ($this->_node_save ($child, $root_node) === false)
+            if ($this->_node_save ($child) === false)
             {
                 $midgard_errcode = \midgard_connection::get_instance()->get_error();
                 $midgard_errstr = \midgard_connection::get_instance()->get_error_string();
