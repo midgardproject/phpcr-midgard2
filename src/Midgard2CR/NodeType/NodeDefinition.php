@@ -7,7 +7,7 @@ class NodeDefinition implements \PHPCR\NodeType\NodeDefinitionInterface
     protected $midgardNode = null;
     protected $typename = null;
 
-    public function __construct(Node $node)
+    public function __construct(\Midgard2CR\Node $node)
     {
         $this->node = $node;
         $this->midgardNode = $node->getMidgard2Node();
