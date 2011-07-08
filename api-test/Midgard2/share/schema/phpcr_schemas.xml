@@ -46,10 +46,10 @@
 			<PrimaryItemName></PrimaryItemName>
 			<RequiredPrimaryTypes>nt:hierarchyNode</RequiredPrimaryTypes>
 			<DefaultPrimaryType></DefaultPrimaryType>
-			<AutoCreated>false</AutoCreated>
-			<Mandatory>false</Mandatory>
+			<isAutoCreated>false</AutoCreated>
+			<isMandatory>false</Mandatory>
 			<OnParentVersion>VERSION</OnParentVersion>
-			<Protected>false</Protected>
+			<isProtected>false</Protected>
 			<SameNameSiblings>false</SameNameSiblings> 
 		</user_values>
 	</type>
@@ -86,10 +86,10 @@
 			<ChildNodeDefinition>jcr:content</ChildNodeDefinition>	
 			<RequiredPrimaryTypes>nt:base</RequiredPrimaryTypes>
 			<DefaultPrimaryType></DefaultPrimaryType>
-			<AutoCreated>false</AutoCreated>
-			<Mandatory>true</Mandatory>
+			<isAutoCreated>false</AutoCreated>
+			<isMandatory>true</Mandatory>
 			<OnParentVersion>COPY</OnParentVersion>
-			<Protected>false</Protected>
+			<isProtected>false</Protected>
 			<SameNameSiblings>false</SameNameSiblings> 
 		</user_values>
 	</type>
@@ -123,10 +123,10 @@
 			<ChildNodeDefinition>*</ChildNodeDefinition>	
 			<RequiredPrimaryTypes>nt:base</RequiredPrimaryTypes>
 			<DefaultPrimaryType>nt:unstructured</DefaultPrimaryType>
-			<AutoCreated>false</AutoCreated>
-			<Mandatory>false</Mandatory>
+			<isAutoCreated>false</AutoCreated>
+			<isMandatory>false</Mandatory>
 			<OnParentVersion>VERSION</OnParentVersion>
-			<Protected>false</Protected>
+			<isProtected>false</Protected>
 			<SameNameSiblings>true</SameNameSiblings> 
 		</user_values>
 	</type>
@@ -205,10 +205,10 @@
 			<PrimaryItemName>jcr:data</PrimaryItemName>
 			<RequiredPrimaryTypes>nt:hierarchyNode</RequiredPrimaryTypes>
 			<DefaultPrimaryType></DefaultPrimaryType>
-			<AutoCreated>false</AutoCreated>
-			<Mandatory>false</Mandatory>
+			<isAutoCreated>false</AutoCreated>
+			<isMandatory>false</Mandatory>
 			<OnParentVersion>VERSION</OnParentVersion>
-			<Protected>false</Protected>
+			<isProtected>false</Protected>
 			<SameNameSiblings>false</SameNameSiblings> 
 		</user_values>
 	</type>
