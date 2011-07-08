@@ -41,13 +41,6 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     private function appendNode($relPath, $primaryNodeTypeName = null)
     {
-        $nt = null;
-        if ($primaryNodeTypeName != null)
-        {
-            $ntm = $this->session->getWorkspace()->getNodeTypeManager();
-            $nt = $ntm->getNodeType($primaryNodeTypeName);
-        }
-
         /* ItemExistsException, Node at given path exists.*/
         try 
         {
@@ -108,11 +101,22 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             throw new \InvalidArgumentException("Can not add Node at absolute path"); 
         }
 
-        /* TODO */
-        /* Determine node type if possible */
         if ($primaryNodeTypeName == null)
         {
-            $primaryNodeTypeName = 'nt:unstructured';
+            $def = $this->getDefinition();
+            $primaryNodeTypeName = $def->getDefaultPrimaryTypeName();
+            if ($primaryNodeTypeName == null)
+            {
+                /* ConstraintViolationException - if a node type or implementation-specific constraint 
+                 * is violated or if an attempt is made to add a node as the child of a property and 
+                 * this implementation performs this validation immediately.*/ 
+                throw new \PHPCR\NodeType\ConstraintViolationException("Can not determine default node type name for " . $this->getName());
+            }
+        }
+        else
+        {
+            $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+            $nt = $ntm->getNodeType($primaryNodeTypeName);
         }
 
         $parts = explode('/', $relPath);
@@ -164,27 +168,6 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $property;
     }
 
-    private function getMgdSchemas()
-    {
-        $mgdschemas = array();
-        $re = new \ReflectionExtension('midgard2');
-        $classes = $re->getClasses();
-        foreach ($classes as $refclass)
-        {
-            $parent_class = $refclass->getParentClass();
-            if (!$parent_class)
-            {
-                continue;
-            }
-
-            if ($parent_class->getName() != 'midgard_object')
-            {
-                continue;
-            }
-            $mgdschemas[] = $refclass->getName();
-        }
-        return $mgdschemas;
-    }
 
     private function populateChildren()
     {
@@ -807,7 +790,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getDefinition()
     {
-        return null;
+        return new NodeType\NodeDefinition($this);
     }
     
     public function update($srcWorkspace)
