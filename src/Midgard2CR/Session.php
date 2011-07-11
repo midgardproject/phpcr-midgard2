@@ -216,7 +216,8 @@ class Session implements \PHPCR\SessionInterface
     
     public function removeItem($absPath)
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        $node = $this->getNode($absPath);
+        $node->remove();
     }
 
     private function _node_save (Node $node)
