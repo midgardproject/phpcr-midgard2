@@ -16,6 +16,7 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
     public function __construct(\Midgard2CR\Node $node, $name)
     {
         $midgardObject = $node->getMidgard2ContentObject();
+        $this->node = $node;
         $this->property = $name;
         $this->availableQueryOperators = array();
         $this->reflector = new \midgard_reflection_property(get_class($midgardObject));
@@ -32,10 +33,8 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
             $this->isUnstructured = true;
         }
 
-        $nsregistry = $node->getSession()->getWorkspace()->getNamespaceRegistry();
-        $nsmanager = $nsregistry->getNamespaceManager();
-        $tokens = $nsmanager->getPrefixTokens($name);
-        if ($tokens[0] == $nsregistry::MGD_PREFIX_MGD
+        $tokens = $this->getPropertyTokens();
+        if ($tokens[0] == 'mgd'
             && $tokens[1] != null)
         {
             $this->midgardPropertyName = $tokens[1];
@@ -46,6 +45,13 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
         {
             $this->midgardPropertyName = $GNsProperty;
         }
+    }
+
+    private function getPropertyTokens()
+    {
+        $nsregistry = $this->node->getSession()->getWorkspace()->getNamespaceRegistry();
+        $nsmanager = $nsregistry->getNamespaceManager();
+        return $nsmanager->getPrefixTokens($this->property);
     }
 
     private function isUnstructured()
@@ -100,13 +106,15 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
         /* Try user defined type */
         $type = $this->getStringSchemaValue('RequiredType');
 
-        if ($type != null)
+        if ($type != null
+            || $type != '')
         {
             return \PHPCR\PropertyType::valueFromName($type);
         }
 
         /* Fallback to native type */
         $type = $this->reflector->get_midgard_type($this->midgardPropertyName);
+        $type_id = -1;
         switch ($type)
         {
         case \MGD_TYPE_STRING:
@@ -131,11 +139,18 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
             $type_id = \PHPCR\PropertyType::DATE;
             break;
         }
-        if ($type == 64)
+
+        /* Try model from PropertyManager */
+        if ($type_id == -1)
         {
-            die ("64 : " . $this->midgardPropertyName);
+            $pm = $this->node->getPropertyManager();
+            $tokens = $this->getPropertyTokens();
+            $model = $pm->getModel($tokens[1], $tokens[0]);
+
+            $type_id = \PHPCR\PropertyType::valueFromName($model->type);
         }
-        return $type;
+
+        return $type_id;
     }
 
     public function getValueConstraints()
