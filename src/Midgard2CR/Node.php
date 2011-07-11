@@ -30,12 +30,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $this->contentObject = \midgard_object_class::factory($midgardNode->typename, $guid ? $guid : null);
         if ($primaryNodeTypeName != null)
         {
-            $this->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::nameFromValue(\PHPCR\PropertyType::NAME));
+            $this->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::NAME);
         }
 
         if ($this->hasProperty('jcr:created'))
         {
-            $this->setProperty('jcr:created',  new \DateTime('now'), \PHPCR\PropertyType::nameFromValue(\PHPCR\PropertyType::DATE));
+            $this->setProperty('jcr:created',  new \DateTime('now'), \PHPCR\PropertyType::DATE);
         }
     }
 
@@ -148,8 +148,20 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
     
-    public function setProperty($name, $value, $type = NULL)
+    public function setProperty($name, $value, $type = null)
     {
+        if ($type != null)
+        {
+            $pDef = new \Midgard2CR\NodeType\PropertyDefinition($this, $name);
+            $requiredType = $pDef->getRequiredType();
+
+            if ($requiredType != null
+                && $requiredType != $type)
+            {
+                throw new \PHPCR\NodeType\ConstraintViolationException("Wrong type for {$name} property");
+            }
+        }
+
         try 
         {
             $property = $this->getProperty($name);
