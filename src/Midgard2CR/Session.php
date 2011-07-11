@@ -216,8 +216,17 @@ class Session implements \PHPCR\SessionInterface
     
     public function removeItem($absPath)
     {
-        $node = $this->getNode($absPath);
-        $node->remove();
+        /* Try property first */
+        try 
+        {
+            $property = $this->getProperty($absPath);
+            $property->remove();
+        }
+        catch (\PHPCR\PathNotFoundException $e) 
+        {
+            $node = $this->getNode($absPath);
+            $node->remove();
+        }
     }
 
     private function _node_save (Node $node)
