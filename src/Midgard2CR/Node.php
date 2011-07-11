@@ -164,7 +164,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             if ($requiredType != null
                 && $requiredType != $type)
             {
-                throw new \PHPCR\NodeType\ConstraintViolationException("Wrong type for {$name} property");
+                throw new \PHPCR\NodeType\ConstraintViolationException("Wrong type for {$name} property. " . \PHPCR\PropertyType::nameFromValue($type) . " given. Expected " . \PHPCR\PropertyType::nameFromValue($requiredType));
             }
         }
 
@@ -972,5 +972,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         $this->is_modified = true;
         $this->is_new = false;
+    }
+
+    public function remove()
+    {
+        $mobject = $this->getMidgard2ContentObject();
+        $midgardNode = $this->getMidgard2Node();
+
+        if ($mobject->purge() == true)
+        {
+            $midgardNode->purge();
+            /* TODO, FIXME, Remove properties from Propertymanager */
+        }
     }
 }
