@@ -9,6 +9,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     protected $properties = null;
     protected $propertyManager = null;
     protected $primaryNodeTypeName = null;
+    protected $remove = false;
 
     public function __construct(\midgard_tree_node $midgardNode = null, Node $parent = null, Session $session)
     {
@@ -156,13 +157,22 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function setProperty($name, $value, $type = null)
     {
+        if ($value == null)
+        {
+            if (isset($this->properties[$name]))
+            {
+                /* TODO, FIXME, remove property from Propertymanager */
+                unset($this->properties[$name]);
+            }
+        }
+
         if ($type != null)
         {
             $pDef = new \Midgard2CR\NodeType\PropertyDefinition($this, $name);
             $requiredType = $pDef->getRequiredType();
 
-            if ($requiredType != null
-                && $requiredType != $type)
+            if ($requiredType != 0
+                && ($requiredType != null && $requiredType != $type))
             {
                 throw new \PHPCR\NodeType\ConstraintViolationException("Wrong type for {$name} property. " . \PHPCR\PropertyType::nameFromValue($type) . " given. Expected " . \PHPCR\PropertyType::nameFromValue($requiredType));
             }
@@ -941,6 +951,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         $mobject = $this->getMidgard2ContentObject();
         $midgardNode = $this->getMidgard2Node();
+
+        if ($this->remove == true)
+        {
+            $self::removeFromStorage($this);
+            return;
+        }
+
         /* Create */
         if ($this->isNew() === true)
         {
@@ -976,13 +993,24 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function remove()
     {
-        $mobject = $this->getMidgard2ContentObject();
-        $midgardNode = $this->getMidgard2Node();
+        $this->remove = true;
+    }
+
+    private function removeFromStorage($node)
+    { 
+        $mobject = $node->getMidgard2ContentObject();
+        $midgardNode = $node->getMidgard2Node();
 
         if ($mobject->purge() == true)
         {
             $midgardNode->purge();
             /* TODO, FIXME, Remove properties from Propertymanager */
+        }
+
+        $children = $node->getNodes();
+        foreach ($children as $child)
+        {
+            self::removeFromStorage($child);
         }
     }
 }
