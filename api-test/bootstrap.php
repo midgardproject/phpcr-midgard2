@@ -157,7 +157,7 @@ function getSimpleCredentials($user, $password) {
  * @param credentials The credentials to log into the repository. If omitted, $config['user'] and $config['pass'] is used with getSimpleCredentials
  * @return A session resulting from logging into the repository found at the $config path
  */
-function getJCRSession($config, $credentials = null) {
+function getPHPCRSession($config, $credentials = null) {
     $repository = getRepository($config);
     if (isset($config['pass']) || isset($credentials)) {
         if (empty($config['workspace'])) {
