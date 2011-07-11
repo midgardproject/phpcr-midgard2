@@ -9,11 +9,11 @@
          syntaxCheck="false"
          bootstrap="bootstrap.php">
     <php>
-        <var name="jcr.url" value="http://localhost:8080/server" />
-        <var name="jcr.user" value="admin" />
-        <var name="jcr.pass" value="password" />
-        <var name="jcr.workspace" value="test" />
-        <var name="jcr.transport" value="davex" />
+        <var name="phpcr.url" value="http://localhost:8080/server" />
+        <var name="phpcr.user" value="admin" />
+        <var name="phpcr.pass" value="password" />
+        <var name="phpcr.workspace" value="test" />
+        <var name="phpcr.transport" value="davex" />
     </php>
 
     <testsuites>
