@@ -17,6 +17,7 @@
 		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:folder">
 			<description>The type of a node</description>
 			<getOnParentVersion>VERSION</getOnParentVersion>
+			<RequiredType>NAME</RequiredType>
 			<isAutoCreated>true</isAutoCreated>
 			<isMandatory>true</isMandatory>
 			<isProtected>true</isProtected>
@@ -24,6 +25,7 @@
 		</property>
 		<property name="jcr-created" type="datetime" field="jcr_created">
 			<description>Creation date</description>
+	  	<RequiredType>DATE</RequiredType>
 			<getOnParentVersion>VERSION</getOnParentVersion>
 			<isAutoCreated>true</isAutoCreated>
 			<isMandatory>true</isMandatory>
@@ -69,9 +71,11 @@
 		<!-- JCR properties of nt:file Node -->
 		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:file">
 			<description>The type of a node</description>
+			<RequiredType>NAME</RequiredType>
 		</property>
 		<property name="jcr-created" type="datetime" field="jcr_created">
 			<description>Creation date</description>
+	  	<RequiredType>DATE</RequiredType>
 		</property>
 		<property name="jcr-createdBy" type="string" field="jcr_createdby">
 			<description>Name of a person who created node</description>
@@ -112,6 +116,7 @@
 		<!-- JCR properties of nt:unstructured Node -->
 		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:unstructured">
 			<description>The type of a node</description>
+			<RequiredType>NAME</RequiredType>
 		</property>
 
 		<!-- Node and NodeType definitions -->
@@ -146,6 +151,7 @@
 		<!-- JCR properties of nt:resource Node -->
 		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:resource">
 			<description>The type of a node</description>
+			<RequiredType>NAME</RequiredType>
 			<getOnParentVersion>VERSION</getOnParentVersion>
 			<isAutoCreated>true</isAutoCreated>
 			<isMandatory>true</isMandatory>
