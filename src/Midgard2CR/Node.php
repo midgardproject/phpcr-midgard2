@@ -101,6 +101,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             throw new \InvalidArgumentException("Can not add Node at absolute path"); 
         }
 
+        /* RepositoryException - If the last element of relPath has an index or if another error occurs. */
+        if (strpos($relPath, '[') !== false)
+        {
+            throw new \PHPCR\RepositoryException("Index not allowed");
+        }
+
         if ($primaryNodeTypeName == null)
         {
             $def = $this->getDefinition();
