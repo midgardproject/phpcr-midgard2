@@ -11,13 +11,14 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
     protected $valueConstraints = null;
     private $isUnstructured = false;
     protected $typename = null;
+    protected $midgardPropertyName = null;
 
-    public function __construct(Node $node, $name)
+    public function __construct(\Midgard2CR\Node $node, $name)
     {
         $midgardObject = $node->getMidgard2ContentObject();
         $this->property = $name;
         $this->availableQueryOperators = array();
-        $this->reflector = new \midgard_reflection_property($midgardObject);
+        $this->reflector = new \midgard_reflection_property(get_class($midgardObject));
 
         /* FIXME, once reflector property is in PHP bindings */
         $this->defaultValues = array();
@@ -30,6 +31,21 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
         {
             $this->isUnstructured = true;
         }
+
+        $nsregistry = $node->getSession()->getWorkspace()->getNamespaceRegistry();
+        $nsmanager = $nsregistry->getNamespaceManager();
+        $tokens = $nsmanager->getPrefixTokens($name);
+        if ($tokens[0] == $nsregistry::MGD_PREFIX_MGD
+            && $tokens[1] != null)
+        {
+            $this->midgardPropertyName = $tokens[1];
+        }
+
+        $GNsProperty = str_replace(':', '-', $name);
+        if (property_exists($midgardObject, $GNsProperty))
+        {
+            $this->midgardPropertyName = $GNsProperty;
+        }
     }
 
     private function isUnstructured()
@@ -39,7 +55,7 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
 
     private function getBooleanSchemaValue($value)
     {
-        $name = $this->property->getMidgard2PropertyName();
+        $name = $this->midgardPropertyName;
         if ($name == null)
         {
             return false;
@@ -55,7 +71,7 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
 
     private function getStringSchemaValue($value)
     {
-        $name = $this->property->getMidgard2PropertyName();
+        $name = $this->midgardPropertyName;
         if ($name == null)
         {
             return null;
@@ -90,7 +106,35 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
         }
 
         /* Fallback to native type */
-        $type = $this->property->getMidgard2ValueType();
+        $type = $this->reflector->get_midgard_type($this->midgardPropertyName);
+        switch ($type)
+        {
+        case \MGD_TYPE_STRING:
+        case \MGD_TYPE_LONGTEXT:
+            $type_id = \PHPCR\PropertyType::STRING;
+            break;
+
+        case \MGD_TYPE_UINT:
+        case \MGD_TYPE_INT:
+            $type_id = \PHPCR\PropertyType::LONG;
+            break;
+
+        case \MGD_TYPE_FLOAT:
+            $type_id = \PHPCR\PropertyType::DOUBLE;
+            break;
+
+        case \MGD_TYPE_BOOLEAN:
+            $type_id = \PHPCR\PropertyType::BOOLEAN;
+            break;
+
+        case \MGD_TYPE_TIMESTAMP:
+            $type_id = \PHPCR\PropertyType::DATE;
+            break;
+        }
+        if ($type == 64)
+        {
+            die ("64 : " . $this->midgardPropertyName);
+        }
         return $type;
     }
 
@@ -122,7 +166,7 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
     public function getDeclaringNodeType()
     {
         $ntm = $this->node->getSession()->getWorkspace()->getNodeTypeManager();
-        return $ntm->getNodeType($this->node->getProperty('jcr:primaryType');
+        return $ntm->getNodeType($this->node->getProperty('jcr:primaryType'));
     }
 
     public function getName()
