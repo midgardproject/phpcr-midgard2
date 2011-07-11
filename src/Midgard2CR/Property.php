@@ -551,4 +551,9 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
         return false;
     }
+
+    public function remove()
+    {
+        $this->parent->setProperty($this->getName(), null);
+    }
 }
