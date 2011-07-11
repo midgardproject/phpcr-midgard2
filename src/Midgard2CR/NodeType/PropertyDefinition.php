@@ -114,7 +114,7 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
 
         /* Fallback to native type */
         $type = $this->reflector->get_midgard_type($this->midgardPropertyName);
-        $type_id = -1;
+        $type_id = 0;
         switch ($type)
         {
         case \MGD_TYPE_STRING:
@@ -141,13 +141,15 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
         }
 
         /* Try model from PropertyManager */
-        if ($type_id == -1)
+        if ($type_id == 0)
         {
             $pm = $this->node->getPropertyManager();
             $tokens = $this->getPropertyTokens();
             $model = $pm->getModel($tokens[1], $tokens[0]);
-
-            $type_id = \PHPCR\PropertyType::valueFromName($model->type);
+            if ($model)
+            {
+                $type_id = \PHPCR\PropertyType::valueFromName($model->type);
+            }
         }
 
         return $type_id;
