@@ -163,6 +163,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 /* TODO, FIXME, remove property from Propertymanager */
                 unset($this->properties[$name]);
+                return;
             }
         }
 
