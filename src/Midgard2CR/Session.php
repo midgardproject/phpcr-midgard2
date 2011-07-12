@@ -9,6 +9,7 @@ class Session implements \PHPCR\SessionInterface
     protected $rootObject = null;
     protected $rootNode = null;
     protected $workspace = null;
+    protected $removeNodes = array();
 
     public function __construct(\midgard_connection $connection, Repository $repository, \midgard_user $user = null, \midgard_object $rootObject)
     {
@@ -211,7 +212,8 @@ class Session implements \PHPCR\SessionInterface
     
     public function move($srcAbsPath, $destAbsPath)
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        $node = $this->getNode($srcAbsPath);
+        $this->getRootNode()->addNode($destAbsPath);
     }
     
     public function removeItem($absPath)
@@ -226,6 +228,7 @@ class Session implements \PHPCR\SessionInterface
         {
             $node = $this->getNode($absPath);
             $node->remove();
+            $this->removedNodes[] = $node;
         }
     }
 
@@ -252,6 +255,12 @@ class Session implements \PHPCR\SessionInterface
          
         // VersionException
         // TODO
+
+        /* Remove nodes marked as removed */
+        foreach ($this->removedNodes as $node)
+        {
+            $node->removeMidgard2Node();
+        }
 
         $root_node = $this->getRootNode();
         $children = $root_node->getNodes();

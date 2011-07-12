@@ -36,7 +36,7 @@ class NodeDefinition implements \PHPCR\NodeType\NodeDefinitionInterface
     }
 
     public function getDefaultPrimaryTypeName() 
-    {
+    { 
         $primaryType = \midgard_object_class::get_schema_value($this->typename, 'DefaultPrimaryType'); 
         if ($primaryType == '')
         {

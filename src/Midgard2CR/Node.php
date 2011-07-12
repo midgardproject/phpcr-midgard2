@@ -995,6 +995,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function remove()
     {
         $this->remove = true;
+        unset($this->parent->children[$this->getName()]);
+    }
+
+    public function removeMidgard2Node()
+    {
+        $this->removeFromStorage();
     }
 
     private function removeFromStorage($node)
