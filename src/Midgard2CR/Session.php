@@ -212,8 +212,30 @@ class Session implements \PHPCR\SessionInterface
     
     public function move($srcAbsPath, $destAbsPath)
     {
+        /* RepositoryException - If the last element of destAbsPath has an index or if another error occurs. */
+        if (strpos($destAbsPath, '[') !== false)
+        {
+            throw new \PHPCR\RepositoryException("Index not allowed in destination path");
+        }
+
         $node = $this->getNode($srcAbsPath);
-        $this->getRootNode()->addNode($destAbsPath);
+
+        /* No need to check destination node, source one exists and path is invalid */
+        if ($srcAbsPath == $destAbsPath)
+        {
+            throw new \PHPCR\ItemExistsException("Source and destination paths are equal");
+        }
+
+        /* If paths are different, check if destination exists */
+        if ($this->nodeExists($destAbsPath))
+        {
+            throw new \PHPCR\ItemExistsException("Node at destination path {$destAbsPath} exists");
+        }
+
+        $dest = mb_substr($destAbsPath,0,-mb_strlen(strrchr($destAbsPath,'/')));
+        $destName = substr(strrchr($destAbsPath, '/'), 1); 
+        $destNode = $this->getNode($dest);
+        $node->move($destNode, $destName);
     }
     
     public function removeItem($absPath)
@@ -228,7 +250,7 @@ class Session implements \PHPCR\SessionInterface
         {
             $node = $this->getNode($absPath);
             $node->remove();
-            $this->removedNodes[] = $node;
+            $this->removeNodes[] = $node;
         }
     }
 
@@ -257,7 +279,7 @@ class Session implements \PHPCR\SessionInterface
         // TODO
 
         /* Remove nodes marked as removed */
-        foreach ($this->removedNodes as $node)
+        foreach ($this->removeNodes as $node)
         {
             $node->removeMidgard2Node();
         }

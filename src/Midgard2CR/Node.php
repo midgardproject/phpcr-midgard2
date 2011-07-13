@@ -948,6 +948,35 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return '/' . implode("/", $elements);
     }
 
+    public function move($dstNode, $dstName)
+    {
+        /* Unset parent's child */
+        unset($this->parent->children[$this->getName()]);
+
+        /* Set new parent */
+        $this->parent = $dstNode;
+
+        /* Update Midgard2 Node's properties, so it points to valid parent object */
+        $this->midgardNode->parent = $dstNode->midgardNode->id;
+        $this->midgardNode->parentguid = $dstNode->midgardNode->guid;
+        $this->midgardNode->name = $dstName;
+
+        /* Update parent's children */
+        $dstNode->children[$dstName] = $this;
+
+        /* Update node's state */
+        if (!$this->midgardNode->guid)
+        {
+            $this->is_new = true;
+            $this->is_modified = false;
+        }
+        else
+        {
+            $this->is_modified = true;
+            $this->is_new = false;
+        } 
+    }
+
     public function save()
     {
         $mobject = $this->getMidgard2ContentObject();
@@ -975,7 +1004,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             }
             else 
             {
-                die (\midgard_connection::get_instance()->get_error_string());
+                throw new \Exception(\midgard_connection::get_instance()->get_error_string());
             }
         }
 
@@ -985,6 +1014,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 $this->getPropertyManager()->save();
                 $midgardNode->update();
+            }
+            else 
+            {
+                throw new \Exception(\midgard_connection::get_instance()->get_error_string());
             }
         }
 
