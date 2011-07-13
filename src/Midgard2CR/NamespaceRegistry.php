@@ -5,6 +5,7 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
 {
     protected $session = null;
     protected $registry = null;
+    protected $namespaceObjects = null;
 
     const MGD_PREFIX_MGD = 'mgd';
     const MGD_NAMESPACE_MGD = 'http://www.midgard-project.org/repligard/1.4';
@@ -32,6 +33,7 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
             {
                 try 
                 {
+                    $this->namespaceObjects[$ns->prefix] = $ns;
                     $this->registerNamespace($ns->prefix, $ns->uri);
                 }
                 catch (\PHPCR\NamespaceException $e)
@@ -49,6 +51,23 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
             throw new \PHPCR\NamespaceException("Cannot register builtin namespaces");
         }
 
+        /* Assigning a new prefix to a URI that already exists in the namespace registry erases the old prefix */
+        if (in_array($uri, $this->registry))
+        {
+            $registeredPrefix = $this->getPrefix($uri);
+            if ($prefix == $registeredPrefix)
+            {
+                return;
+            }
+            $this->unregisterNamespace($registeredPrefix);
+        }
+
+        /* Invalid prefix */
+        if (strpos($prefix, ':') != false)
+        {
+            throw new \PHPCR\RepositoryException("Given prefix contains invalid ':' character");
+        }
+
         $lowprefix = strtolower($prefix);
         if (strpos($lowprefix, "xml") !== false
             || strpos($lowprefix, "mgd") !== false)
@@ -57,6 +76,17 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
         }
 
         $this->registry[$prefix] = $uri;
+
+        /* API doesn't clarify if it's session save, so create namespace on demand */ 
+        if (!isset($this->namespaceObjects[$prefix]))
+        {
+            $ns = new \midgard_namespace_registry();
+            $ns->prefix = $prefix;
+            $ns->uri = $uri;
+
+            $ns->create();
+            $this->namespaceObjects[$prefix] = $ns;
+        }
     }
 
     public function unregisterNamespace($prefix)
@@ -65,7 +95,16 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
         {
             throw new \PHPCR\NamespaceException("Cannot unregister builtin namespaces");
         }
+        if (!isset($this->registry[$prefix]))
+        {
+            throw new \PHPCR\NamespaceException("Can not unregister '{$prefix}' which is not registered");
+        }
         unset($this->registry[$prefix]);
+
+        /* On demand remove namespace from storage */
+        $ns = $this->namespaceObjects[$prefix];
+        $ns->purge();
+        unset($this->namespaceObjects[$prefix]);
     }
 
     public function getPrefixes()
