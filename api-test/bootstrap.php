@@ -84,7 +84,7 @@ function prepareMidgardStorage()
 
         if (!midgard_storage::create_class_storage($type))
         {
-            throw new Exception('Could not create ' . $type . ' tables in test database');
+            throw new Exception('Could not create ' . $type . ' tables in test database.' . midgard_connection::get_instance()->get_error_string());
         }
     }
 
