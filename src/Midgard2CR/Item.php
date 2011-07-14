@@ -20,7 +20,8 @@ abstract class Item implements \PHPCR\ItemInterface
             {
                 $guid = null;
             }
-            $this->contentObject = \midgard_object_class::factory($this->midgardNode->typename, $guid);
+            $typename = $this->midgardNode->typename ? $this->midgardNode->typename : 'nt_folder';
+            $this->contentObject = \midgard_object_class::factory($typename, $guid);
         }
         return $this->contentObject;
     }
