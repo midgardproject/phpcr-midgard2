@@ -59,7 +59,7 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
         $t = new \midgard_transaction();
         $t->begin();
         foreach ($classes as $refclass)
-        {
+        {           
             $parent_class = $refclass->getParentClass();
             if (!$parent_class)
             {
@@ -69,8 +69,15 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
             {
                 continue;
             }
-
+            
             $type = $refclass->getName();
+
+            /* There's no table and nothing to purge if the type is mixin */
+            $isMixin = \midgard_object_class::get_schema_value($type, 'isMixin');
+            if ($isMixin == 'true')
+            {
+                continue;
+            } 
 
             $storage = new \midgard_query_storage($type);
             $qs = new \midgard_query_select($storage);
