@@ -738,7 +738,30 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
 
         /* Try native property first */
-        if (property_exists($this->midgardNode->typename, str_replace(':', '-', $relPath)))
+        $nativeProperty = $relPath;
+        if (strpos($relPath, ':') !== false)
+        {
+            $parts = explode(':', $relPath);
+            if ($parts[0] == 'mgd')
+            {
+                $nativeProperty = $parts[1];
+            }
+            else 
+            {
+                $nativeProperty = str_replace(':', '-', $relPath);
+            }
+        }
+
+        if (strpos($relPath, '-') !== false)
+        {
+            $parts = explode('-', $relPath);
+            if ($parts[0] == 'mgd')
+            {
+                $nativeProperty = $parts[1];
+            }
+        }
+
+        if (property_exists($this->midgardNode->typename, $nativeProperty))
         {
             return true;
         }
@@ -806,6 +829,58 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function addMixin($mixinName)
     {
+        $midgardMixinName = str_replace(':', '_', $mixinName);
+        $isMixin = \midgard_object_class::get_schema_value($midgardMixinName, 'isMixin');
+        if ($isMixin != 'true')
+        {
+            throw new \PHPCR\NoSuchNodeTypeException("{$mixinName} is not registered type"); 
+        }
+
+        $hasMixin = false;
+        try 
+        {
+            /* Check if node has such mixin */
+            $mixinProperty = $this->getProperty('jcr:mixinTypes');
+            foreach ($mixinProperty->getValues() as $mixin)
+            {
+                if ($mixin == $mixinName)
+                {
+                    $hasMixin = true;
+                }
+            }
+
+            if ($hasMixin == false)
+            {
+                $this->setProperty('jcr:mixinTypes', $mixinName);
+            }
+            else 
+            {
+                /* If this node is already of type mixinName (either due to a previously 
+                 * added mixin or due to its primary type, through inheritance) then this method has no effect.*/
+                return;
+            }
+        }
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+            $this->setProperty('jcr:mixinTypes', $mixinName);
+        }
+
+        /* FIXME, better reflection needed, instance is created because 
+         * get_class_vars returns only static properties */
+        $midgardMixin = \midgard_object_class::factory($midgardMixinName);
+
+        foreach (get_object_vars($midgardMixin) as $name => $thisPHPFunctionIsAnnoying)
+        {
+            $jcrName = str_replace('-', ':', $name);
+            if($this->hasProperty($jcrName))
+            {
+                continue;
+            }
+
+            /* FIXME, determine default value */
+            $this->setProperty($jcrName, ' ');
+        }
+        //print_r(array_keys($this->properties)); die ("D");
     }
     
     public function removeMixin($mixinName)
