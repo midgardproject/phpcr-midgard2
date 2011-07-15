@@ -122,7 +122,19 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             $type = 'String';
         }
 
-        $property = $this->propertyManager->factory($this->propertyName, $this->propertyPrefix, $type, false, is_array($new_value) ? null : $new_value);
+        if (!$this->isMultiple)
+        {
+            $property = $this->propertyManager->getProperty($this->propertyName, $this->propertyPrefix, $type);
+            if (!$property)
+            {
+                $property = $this->propertyManager->factory($this->propertyName, $this->propertyPrefix, $type, false, is_array($new_value) ? null : $new_value);
+            }
+            $property->setValue($new_value);
+        } 
+        else 
+        {
+            $property = $this->propertyManager->factory($this->propertyName, $this->propertyPrefix, $type, false, is_array($new_value) ? null : $new_value);
+        }
 
         if (is_array($new_value))
         {
