@@ -91,9 +91,9 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
          */ 
         if (is_a($value, '\Midgard2CR\Node'))
         {
-            if (!$value->hasProperty('jcr:uuid'))
+            if (!$value->isReferenceable())
             {
-                throw new \PHPCR\ValueFormatException("Can not set reference value from node without 'uuid' property"); 
+                throw new \PHPCR\ValueFormatException("Node " . $value->getPath() . " is not referencable"); 
             }
 
             if ($type == null)
