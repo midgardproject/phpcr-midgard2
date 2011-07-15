@@ -521,7 +521,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getPropertyValue($name, $type=null)
     {
-        return $this->getProperty($name)->getNativeValue();
+        return $this->getProperty($name)->getValue();
     }
     
     public function getProperties($filter = null)
