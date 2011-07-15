@@ -79,6 +79,13 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
                 continue;
             } 
 
+            /* There's no table and nothing to purge if the type is abstract */
+            $isAbstract = \midgard_object_class::get_schema_value($type, 'isAbstract');
+            if ($isAbstract == 'true')
+            {
+                continue;
+            } 
+
             $storage = new \midgard_query_storage($type);
             $qs = new \midgard_query_select($storage);
             $qs->toggle_readonly(true);
