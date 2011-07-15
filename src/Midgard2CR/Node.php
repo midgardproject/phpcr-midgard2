@@ -1128,4 +1128,37 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             self::removeFromStorage($child);
         }
     }
+
+    /**
+     * Shortcut to check if mix:referenceable is value of jcr:mixinTypes
+     */
+    public function isReferenceable()
+    {
+        try
+        {
+            $p = $this->getProperty('jcr:mixinTypes');
+            /* FIXME, we should get array as this property is multiple */
+            $values = $p->getValue();
+            if (!is_array($values))
+            {
+                if ($values == 'mix:referenceable')
+                {
+                    return true;
+                }
+                return false;
+            }
+            foreach ($values as $mixin)
+            {
+                if ($mixin == 'mix:referencable')
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+            return false;
+        }
+    } 
 }
