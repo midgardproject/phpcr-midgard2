@@ -1,6 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Schema xmlns="http://www.midgard-project.org/repligard/1.4">
 
+	<!-- nt:base -->
+	<type name="nt_base" metadata="false">
+		<!-- JCR properties of nt:base Node -->
+		<property name="jcr-primaryType" type="string">
+			<description>The type of a node</description>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<RequiredType>NAME</RequiredType>
+			<isAutoCreated>true</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
+		</property>
+		<property name="jcr-mixinTypes">
+			<description>Mixin types multivalue</description>
+	  	<RequiredType>NAME</RequiredType>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>true</isMultiple>
+		</property>
+
+		<!-- Node and NodeType definitions -->
+		<user_values>
+			<Supertypes></Supertypes>
+			<isMixin>false</isMixin>
+			<PrimaryItemName></PrimaryItemName>
+			<RequiredPrimaryTypes></RequiredPrimaryTypes>
+			<DefaultPrimaryType></DefaultPrimaryType>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<OnParentVersion>VERSION</OnParentVersion>
+			<isProtected>false</isProtected>
+			<SameNameSiblings>false</SameNameSiblings>
+		 	<isAbstract>true</isAbstract>	
+		</user_values>
+	</type>
+
+	<!-- nt:hierarchyNode -->
+	<type name="nt_hierarchynode" metadata="false">
+		<property name="dummy" />
+		<!-- Node and NodeType definitions -->
+		<user_values>
+			<Supertypes>mix:created</Supertypes>
+			<isMixin>false</isMixin>
+			<PrimaryItemName></PrimaryItemName>
+			<RequiredPrimaryTypes></RequiredPrimaryTypes>
+			<DefaultPrimaryType></DefaultPrimaryType>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<OnParentVersion>VERSION</OnParentVersion>
+			<isProtected>false</isProtected>
+			<SameNameSiblings>false</SameNameSiblings>
+		 	<isAbstract>true</isAbstract>	
+		</user_values>
+	</type>
+
 	<!-- nt:folder -->
 	<type name="nt_folder" table="phpcr_nt_folder" metadata="false">
 		<property name="id" type="unsigned integer" primaryfield="id">
