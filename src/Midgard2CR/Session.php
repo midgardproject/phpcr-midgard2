@@ -89,7 +89,7 @@ class Session implements \PHPCR\SessionInterface
          * Make one query with join */
         try 
         {
-            $q = new \midgard_query_select(new \midgard_query_storage('midgard_tree_node'));
+            $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
             $q->set_constraint(
                 new \midgard_query_constraint(
                     new \midgard_query_property('objectguid'), 

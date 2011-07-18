@@ -11,7 +11,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     protected $primaryNodeTypeName = null;
     protected $remove = false;
 
-    public function __construct(\midgard_tree_node $midgardNode = null, Node $parent = null, Session $session)
+    public function __construct(\midgard_node $midgardNode = null, Node $parent = null, Session $session)
     {
           $this->parent = $parent;
           $this->midgardNode = $midgardNode;
@@ -19,7 +19,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     }
 
     /* TODO, move this to ContentObjectFactory */
-    private function contentObjectFactory(\midgard_tree_node $midgardNode,  $primaryNodeTypeName = null)
+    private function contentObjectFactory(\midgard_node $midgardNode,  $primaryNodeTypeName = null)
     {
         $guid = $midgardNode->objectguid;
         /* FIXME, set proper type name */
@@ -77,7 +77,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $mobject = \midgard_object_class::factory ($typename);
         }
         $mobject->name = $object_name;*/
-        $midgardNode = new \midgard_tree_node();
+        $midgardNode = new \midgard_node();
         $midgardNode->typename = str_replace(':', '_', $primaryNodeTypeName);
         $midgardNode->name = $relPath;
 
@@ -676,7 +676,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         /* query references */
         foreach ($properties as $property)
         {
-            $q = new \midgard_query_select(new \midgard_query_storage('midgard_tree_node'));        
+            $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));        
             $q->set_constraint(
                 new \midgard_query_constraint(
                     new \midgard_query_property('objectguid'), 
@@ -967,9 +967,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     private function getMidgardRelativePath($object)
     {
-        $storage = new \midgard_query_storage('midgard_tree_node');
+        $storage = new \midgard_query_storage('midgard_node');
 
-        $joined_storage = new \midgard_query_storage('midgard_tree_node');
+        $joined_storage = new \midgard_query_storage('midgard_node');
         $left_property_join = new \midgard_query_property('id');
         $right_property_join = new \midgard_query_property('parent', $joined_storage);    
 
