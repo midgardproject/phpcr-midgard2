@@ -29,11 +29,6 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
         $mgd = \midgard_connection::get_instance();
 
         $children = $object->list();
-        if (empty($children))
-        {
-            $object->purge(false);
-            return;
-        }
 
         foreach ($children as $child)
         {
@@ -42,6 +37,20 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
             if (!$child->purge(false))
             {
                 //echo "Failed to purge child " . get_class($child) . " " . $child->guid . " " . $mgd->get_error_string() . "\n";
+            }
+        }
+
+        if (is_a($object, 'midgard_node'))
+        {
+            $children = $object->list_children('midgard_node_property');
+            foreach ($children as $child)
+            {
+                self::cleanupChildren($child);
+                $child->purge_attachments(true);
+                if (!$child->purge(false))
+                {
+                    //echo "Failed to purge child " . get_class($child) . " " . $child->guid . " " . $mgd->get_error_string() . "\n";
+                }
             }
         }
 
@@ -99,7 +108,7 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
             $ret = $qs->list_objects();
             foreach ($ret as $object)
             {
-                if (is_a($object, 'midgard_tree_node')
+                if (is_a($object, 'midgard_node')
                     && property_exists($object, 'name')
                     && $object->name == 'jackalope')
                 {
