@@ -256,8 +256,13 @@ class Session implements \PHPCR\SessionInterface
         {
             $node = $this->getNode($absPath);
             $node->remove();
-            $this->removeNodes[] = $node;
+            $this->removeNode($node);
         }
+    }
+
+    public function removeNode($node)
+    {
+        $this->removeNodes[] = $node;
     }
 
     private function _node_save (Node $node)
@@ -291,6 +296,7 @@ class Session implements \PHPCR\SessionInterface
         }
 
         $root_node = $this->getRootNode();
+        $root_node->save();
         $children = $root_node->getNodes();
         foreach ($children as $name => $child) 
         { 

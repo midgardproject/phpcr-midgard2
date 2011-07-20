@@ -10,12 +10,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     protected $midgardPropertyNodes = null;
     protected $primaryNodeTypeName = null;
     protected $remove = false;
+    protected $isRoot = false;
 
     public function __construct(\midgard_node $midgardNode = null, Node $parent = null, Session $session)
     {
-          $this->parent = $parent;
-          $this->midgardNode = $midgardNode;
-          $this->session = $session;
+        $this->parent = $parent;
+        if ($parent == null)
+        {
+            $this->isRoot = true;
+        }
+        $this->midgardNode = $midgardNode;
+        $this->session = $session;
     }
 
     /* TODO, move this to ContentObjectFactory */
@@ -77,6 +82,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $new_node->is_new = true; 
         $new_node->primaryNodeTypeName = $primaryNodeTypeName;
         $this->children[$relPath] = $new_node;
+
+        $this->is_modified = true;
 
         // FIXME, Catch exception before returning new node
         return $new_node;
@@ -153,8 +160,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         {
             if (isset($this->properties[$name]))
             {
-                /* TODO, FIXME, remove property from Propertymanager */
+                /* TODO, FIXME, remove property from midgard_node_property */
                 unset($this->properties[$name]);
+                $this->is_modified = true;
                 return;
             }
         }
@@ -1057,18 +1065,21 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
 
         if ($this->isModified() === true)
-        { 
-            if ($mobject->update() === true)
-            { 
-                $midgardNode->update();
-            }
-            else 
+        {
+            if (!$this->isRoot)
             {
-                throw new \Exception(\midgard_connection::get_instance()->get_error_string());
+                if ($$mobject->update() === true)
+                {    
+                    $midgardNode->update();
+                }
+                if (\midgard_connection::get_instance()->get_error() != MGD_ERR_OK)
+                {
+                    throw new \PHPCR\RepositoryException(\midgard_connection::get_instance()->get_error_string());
+                }
             }
         }
 
-        $this->is_modified = true;
+        $this->is_modified = false;
         $this->is_new = false;
 
         if (empty($this->properties))
@@ -1087,16 +1098,22 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function remove()
     {
-        $this->remove = true;
+        if ($this->remove == true)
+        {
+            return;
+        }
+
         unset($this->parent->children[$this->getName()]);
+        $this->remove = true;
+        $this->session->removeNode($this);
     }
 
     public function removeMidgard2Node()
     {
-        $this->removeFromStorage();
+        self::removeFromStorage($this);
     }
 
-    private function removeFromStorage($node)
+    private static function removeFromStorage($node)
     { 
         $mobject = $node->getMidgard2ContentObject();
         $midgardNode = $node->getMidgard2Node();
