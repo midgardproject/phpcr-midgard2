@@ -27,7 +27,7 @@
 		</property>
 	</type>
 
-	<type name="midgard_node_property" table="midgard_node_property" metadata="false">
+	<type name="midgard_node_property" table="midgard_node_property" metadata="false" parent="midgard_node">
 		<property name="id" type="unsigned integer" primaryfield="id">
 			<description>Local non-replication-safe database identifier</description>
 		</property>
@@ -43,7 +43,7 @@
 		<property name="objectguid" type="guid">
 			<description>Guid of node's object</description>
 		</property>
-		<property name="parent" type="unsigned integer" link="midgard_node:id" upfield="parent">
+		<property name="parent" type="unsigned integer" link="midgard_node:id" parentfield="parent">
 			<description>Parent node identifier</description>
 		</property>
 		<property name="parentguid" type="guid" link="midgard_node:guid">
