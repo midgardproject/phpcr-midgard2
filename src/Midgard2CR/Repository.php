@@ -95,6 +95,7 @@ class Repository implements \PHPCR\RepositoryInterface
     {
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
         $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
+        $q->toggle_readonly = false;
         $q->execute();
         return $q->list_objects();
     }
