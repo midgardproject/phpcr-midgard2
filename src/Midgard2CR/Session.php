@@ -60,7 +60,6 @@ class Session implements \PHPCR\SessionInterface
         {
             $this->rootNode = new Node($this->rootObject, null, $this);
         }
-
         return $this->rootNode;
     }
     
@@ -74,8 +73,29 @@ class Session implements \PHPCR\SessionInterface
         /* TODO
          * Try to get midgard object by guid if required */
 
-        $q = new \midgard_query_select(new \midgard_query_storage('midgard_property_view'));
-        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('value'), '=', new \midgard_query_value($id))); 
+        $propertyStorage = new \midgard_query_storage('midgard_node_property');
+        $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
+        $q->add_join(
+            'INNER',
+            new \midgard_query_property('id'),
+            new \midgard_query_property('parent', $propertyStorage)
+        );
+        $group = new \midgard_query_constraint_group('AND');
+        $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('value', $propertyStorage), 
+                '=', 
+                new \midgard_query_value($id)
+            )
+        );
+        $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('title', $propertyStorage), 
+                '=', 
+                new \midgard_query_value('jcr:uuid')
+            )
+        ); 
+        $q->set_constraint($group);
         $q->execute();
        
         if ($q->get_results_count() < 1)
@@ -83,25 +103,11 @@ class Session implements \PHPCR\SessionInterface
             throw new \PHPCR\ItemNotFoundException("Node identified by {$id} not found");
         }
 
-        $pv = current($q->list_objects());
+        $midgardNode = current($q->list_objects());
 
-        /* FIXME
-         * Make one query with join */
         try 
-        {
-            $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
-            $q->set_constraint(
-                new \midgard_query_constraint(
-                    new \midgard_query_property('objectguid'), 
-                    '=', 
-                    new \midgard_query_value($pv->objectguid)
-                )
-            ); 
-            $q->execute();
-            $nodes = $q->list_objects();
-
-            //$midgard_object = \midgard_object_class::get_object_by_guid ($pv->objectguid);
-            $midgard_path = \Midgard2CR\Node::getMidgardPath($nodes[0]);
+        { 
+            $midgard_path = \Midgard2CR\Node::getMidgardPath($midgardNode);
             /* Convert to JCR path */
             $midgard_path = str_replace('/jackalope', '', $midgard_path);
             $node = $this->getNode($midgard_path);
