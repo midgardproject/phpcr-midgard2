@@ -1,6 +1,6 @@
 <?php
 
-require_once(dirname(__FILE__) . '/../src/Midgard2CR/PropertyManager.php');
+require_once(dirname(__FILE__) . '/../src/Midgard2CR/MidgardNodeMapper.php');
 
 class Midgard2XMLImporter extends \DomDocument
 {
@@ -77,7 +77,7 @@ class Midgard2XMLImporter extends \DomDocument
         return null;
     }
 
-    private function writeProperty(\midgard_object $object, \DOMElement $property, $propertyManager)
+    private function writeProperty(\midgard_object $object, \DOMElement $property, $midgardNode)
     {
         $propertyName = $property->getAttributeNS($this->ns_sv, 'name'); 
 
@@ -85,7 +85,7 @@ class Midgard2XMLImporter extends \DomDocument
         {
             $propertyName = substr($propertyName, 4);
             $object->$propertyName = $this->getPropertyValue($property);
-            return $object->update();
+            return true;
         }
 
         $parts = explode(':', $propertyName);
@@ -105,7 +105,7 @@ class Midgard2XMLImporter extends \DomDocument
                     $object->$createdProperty = new DateTime('now');
                 }
 
-                return $object->update();
+                return true;
             }
         }
 
@@ -117,6 +117,7 @@ class Midgard2XMLImporter extends \DomDocument
 
         /* Take multivalues into account */
         $isMultiple = false;
+        $isBinary = false;
         $n_values = $property->getElementsByTagName('value')->length;
         $propertyType = $property->getAttributeNS($this->ns_sv, 'type');
         $multiAttr = $property->getAttributeNS($this->ns_sv, 'multiple');
@@ -125,14 +126,26 @@ class Midgard2XMLImporter extends \DomDocument
             $isMultiple = true;
         }
 
-        $isBinary = false;
+        if ($propertyType == 'Binary')
+        {
+            $isBinary = true;
+        }
 
         for ($i = 0; $i < $n_values; $i++)
         {
             $vnode = $property->getElementsByTagName('value')->item($i);
+            $midgardNodeProperty = new \midgard_node_property();
+
+            $midgardNodeProperty->title = $propertyName;
+            $midgardNodeProperty->multiple = $isMultiple;
+            $midgardNodeProperty->type = \PHPCR\PropertyType::valueFromName($propertyType);
+            $midgardNodeProperty->value = $isBinary ? '' : $vnode->nodeValue;
+            $midgardNodeProperty->parent = $midgardNode->id;
+            $midgardNodeProperty->parentguid = $midgardNode->guid;
+            $midgardNodeProperty->create();
 
             /* For every binary value, create attachment and midgard blob to store binary content */
-            if ($propertyType == 'Binary')
+            if ($isBinary)
             {
                 /* Do not attempt to create new attachment or blob if there's already one */
                 if ($isMultiple == false)
@@ -149,7 +162,7 @@ class Midgard2XMLImporter extends \DomDocument
                 }
                 $att = new midgard_attachment();
                 $att->name = $propertyName;
-                $att->parentguid = $object->guid;
+                $att->parentguid = $midgardNodeProperty->guid;
 
                 $blob = new midgard_blob($att);
                 if ($blob->write_content(base64_decode($vnode->nodeValue)))
@@ -157,29 +170,9 @@ class Midgard2XMLImporter extends \DomDocument
 
                 $isBinary = true;
             }
-
-            /* Create property models and values */
-            $propertyManager->factory($parts[1], $parts[0], $propertyType, $isMultiple, $isBinary == true ? " " : $vnode->nodeValue); 
         }    
 
         return true;
-    }
-
-    private function mapNodeType($type)
-    {
-        if ($type == 'nt:folder')
-        {
-            return 'nt_folder';
-        }
-        if ($type == 'nt:file')
-        {
-            return 'nt_file';
-        }
-        if ($type == 'nt:unstructured')
-        {
-            return 'nt_unstructured';
-        }
-        return null;
     }
 
     private function writeNode(\midgard_object $midgardParentNode, \DOMElement $node)
@@ -188,7 +181,7 @@ class Midgard2XMLImporter extends \DomDocument
         $propertyElements = $node->getElementsByTagNameNS($this->ns_sv, 'property');
 
         $type = $this->getNodeType($node);
-        $class = $this->mapNodeType($type);
+        $class = MidgardNodeMapper::getMidgardName($type);
         if (!$class)
         {
             return;
@@ -196,20 +189,6 @@ class Midgard2XMLImporter extends \DomDocument
 
         $object = new $class();
         $object->name = $name;
-        if ($class == 'midgard_attachment')
-        {
-            /* Try to get attachment if it exists already */
-            $atts = $parent->find_attachments(array("name" => $name));
-            if (!empty($atts))
-            {
-                $object = $atts[0];
-            } 
-            else 
-            {
-                $object->mimetype = 'nt:file';
-            }
-        }
-
         $object->create();
 
         if (\midgard_connection::get_instance()->get_error() != MGD_ERR_OK)
@@ -217,20 +196,23 @@ class Midgard2XMLImporter extends \DomDocument
             throw new \Exception(\midgard_connection::get_instance()->get_error_string());
         }
 
-        $midgardNode = new \midgard_tree_node();
+        $midgardNode = new \midgard_node();
         $midgardNode->name = $name;
         $midgardNode->typename = get_class($object);
         $midgardNode->objectguid = $object->guid;
         $midgardNode->parentguid = $midgardParentNode->guid;
         $midgardNode->parent = $midgardParentNode->id;
         $midgardNode->create();
-        
-        if (\midgard_connection::get_instance()->get_error() != MGD_ERR_OK)
-        {
-            throw new \Exception(\midgard_connection::get_instance()->get_error_string());
-        }
 
-        $propertyManager = new \Midgard2CR\PropertyManager($object);
+        /* FIXME, do we have to check duplicate case here? */
+        $error = \midgard_connection::get_instance()->get_error();
+        if ($error != MGD_ERR_OK)
+        {
+            if ($error != MGD_ERR_DUPLICATE)
+            {
+                throw new \Exception(\midgard_connection::get_instance()->get_error_string());
+            }
+        }
 
         foreach ($propertyElements as $propertyElement)
         {
@@ -238,11 +220,9 @@ class Midgard2XMLImporter extends \DomDocument
              * getElementsByTagNameNS returns all descendants */
             if ($propertyElement->parentNode->getAttributeNS($this->ns_sv, 'name') == $name)
             {
-                $this->writeProperty($object, $propertyElement, $propertyManager);
+                $this->writeProperty($object, $propertyElement, $midgardNode);
             }
         }
-
-        $propertyManager->save();
 
         $nodeElements = $node->getElementsByTagNameNS($this->ns_sv, 'node');
         foreach ($nodeElements as $nodeElement)
@@ -252,6 +232,9 @@ class Midgard2XMLImporter extends \DomDocument
                 $this->writeNode($midgardNode, $nodeElement);
             }
         }
+
+        /* Update object once */
+        $object->update();
     }
 
     private function createNamespaces()
@@ -281,13 +264,13 @@ class Midgard2XMLImporter extends \DomDocument
 
     public function execute()
     {
-        $q = new \midgard_query_select(new \midgard_query_storage('midgard_tree_node'));
+        $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
         $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
         $q->execute();
         $root_object = current($q->list_objects());
         if ($q->get_results_count() == 0)
         {
-            $root_object = new \midgard_tree_node();
+            $root_object = new \midgard_node();
             $root_object->parent = 0;
             $root_object->name = "jackalope";
             $root_object->create();
