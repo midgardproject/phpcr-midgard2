@@ -140,15 +140,18 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
             break;
         }
 
-        /* Try model from PropertyManager */
+        /* Try midgard_node_property */
         if ($type_id == 0)
         {
-            $pm = $this->node->getPropertyManager();
-            $tokens = $this->getPropertyTokens();
-            $model = $pm->getModel($tokens[1], $tokens[0]);
-            if ($model)
+            try 
             {
-                $type_id = \PHPCR\PropertyType::valueFromName($model->type);
+                $property = $this->node->getProperty($this->property);
+                $propertyNode = $property->getMidgard2ContentObject();
+                $type_id = $propertyNode->type;
+            }
+            catch (\PHPCR\PathNotFoundException $e)
+            {
+                /* Do nothing */
             }
         }
 
