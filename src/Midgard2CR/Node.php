@@ -814,7 +814,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $isMixin = \midgard_object_class::get_schema_value($midgardMixinName, 'isMixin');
         if ($isMixin != 'true')
         {
-            throw new \PHPCR\NoSuchNodeTypeException("{$mixinName} is not registered type"); 
+            throw new \PHPCR\NodeType\NoSuchNodeTypeException("{$mixinName} is not registered type"); 
         }
 
         $hasMixin = false;
