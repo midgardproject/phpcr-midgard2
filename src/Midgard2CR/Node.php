@@ -278,6 +278,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         foreach ($items as $n => $o)
         {
+            /* FIXME, remove this condition once it's resolved */
+            if (!is_object($o))
+            {
+                throw new \PHPCR\RepositoryException("Failed to get name. Expected object, " . gettype($o) . "given");
+            }
+
             $prefixMatch = false;
             $nameMatch = false;
             $itemName = $o->getName();
