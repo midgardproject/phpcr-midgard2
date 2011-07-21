@@ -276,4 +276,58 @@
 		</user_values>
 	</type>
 
+	<!-- nt:query -->
+	<type name="nt_query" table="phpcr_nt_query" metadata="false">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+		<!-- JCR properties of nt:query Node -->
+		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:query">
+			<description>The type of a node</description>
+			<RequiredType>NAME</RequiredType>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<isAutoCreated>true</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
+		</property>
+		<property name="jcr-statement" type="string" field="jcr_statement">
+			<description>Binary encoding</description>
+			<RequiredType>STRING</RequiredType>
+			<getOnParentVersion>COPY</getOnParentVersion>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<isProtected>false</isProtected>
+			<isMultiple>false</isMultiple>
+			<ValueConstraints></ValueConstraints>
+			<DefaultValues></DefaultValues>
+		</property>
+		<property name="jcr-language" type="string" field="jcr_language">
+			<description>Binary mimetype</description>
+			<RequiredType>STRING</RequiredType>
+			<getOnParentVersion>COPY</getOnParentVersion>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
+			<ValueConstraints></ValueConstraints>
+			<DefaultValues></DefaultValues>
+		</property>
+
+		<!-- Node and NodeType definitions -->
+		<user_values>
+			<Supertypes>nt:base</Supertypes>
+			<isMixin>false</isMixin>
+			<HasOrderableChildNodes>false</HasOrderableChildNodes>	
+			<PrimaryItemName></PrimaryItemName>
+			<RequiredPrimaryTypes></RequiredPrimaryTypes>
+			<DefaultPrimaryType></DefaultPrimaryType>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<OnParentVersion>VERSION</OnParentVersion>
+			<isProtected>false</isProtected>
+			<SameNameSiblings>false</SameNameSiblings> 
+		</user_values>
+	</type>
+
 </Schema>
