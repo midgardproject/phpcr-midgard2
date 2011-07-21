@@ -810,11 +810,15 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function addMixin($mixinName)
     {
-        $midgardMixinName = str_replace(':', '_', $mixinName);
+        $midgardMixinName = \MidgardNodeMapper::getMidgardName($mixinName);
+        if ($midgardMixinName == null || !is_subclass_of($midgardMixinName, 'midgard_object'))
+        {
+            throw new \PHPCR\NodeType\NoSuchNodeTypeException("{$mixinName} is not registered type"); 
+        }
         $isMixin = \midgard_object_class::get_schema_value($midgardMixinName, 'isMixin');
         if ($isMixin != 'true')
         {
-            throw new \PHPCR\NodeType\NoSuchNodeTypeException("{$mixinName} is not registered type"); 
+            throw new \PHPCR\NodeType\ConstraintViolationException("{$mixinName} is not registered as mixin"); 
         }
 
         $hasMixin = false;
