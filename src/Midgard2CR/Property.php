@@ -638,10 +638,12 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
                 $mpn->parent = $this->parent->getMidgard2Node()->id;
                 $mpn->parentguid = $this->parent->getMidgard2Node()->guid;
                 $mpn->create();
+                Repository::checkMidgard2Exception();
             }
             else if ($this->isModified())
             {
                 $mpn->update();
+                Repository::checkMidgard2Exception();
             }
         }
         $this->is_new = false;
