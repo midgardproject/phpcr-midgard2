@@ -269,7 +269,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $this->children[$relPath];        
     }
 
-    private function getItemsSimilar($items, $nsname)
+    private function getItemsSimilar($items, $nsname, $isNode)
     {
         $ret = array();
 
@@ -277,16 +277,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $nsmanager = $nsregistry->getNamespaceManager();
 
         foreach ($items as $n => $o)
-        {
-            /* FIXME, remove this condition once it's resolved */
-            if (!is_object($o))
-            {
-                throw new \PHPCR\RepositoryException("Failed to get name. Expected object, " . gettype($o) . "given");
-            }
-
+        { 
             $prefixMatch = false;
             $nameMatch = false;
-            $itemName = $o->getName();
+            $itemName = $n;
             $node_prefix = $nsmanager->getPrefix($itemName);
             $prefix = $nsname[0];
             $name = $nsname[1];
@@ -327,7 +321,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
             if ($prefixMatch == true && $nameMatch == true)
             {
-                $ret[$o->getName()] = $o;
+                $ret[$n] = $isNode ? $this->getNode($n) : $this->getProperty($n);
             }
         }
 
@@ -407,7 +401,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $allFilters;
     }
 
-    private function getItemsFiltered($items, $filter)
+    private function getItemsFiltered($items, $filter, $isNode)
     {
         if ($filter == null)
         {
@@ -431,11 +425,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             if (strpos($f[0], '*') !== false 
                 || strpos($f[1], '*') !== false)
             { 
-                $filteredItems = array_merge($filteredItems, $this->getItemsSimilar($items, $f));
+                $filteredItems = array_merge($filteredItems, $this->getItemsSimilar($items, $f, $isNode));
             }
             else 
             { 
-                $filteredItems = array_merge($filteredItems, $this->getItemsEqual($items, $f));
+                $filteredItems = array_merge($filteredItems, $this->getItemsEqual($items, $f, $isNode));
             }
         }
 
@@ -451,7 +445,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return new \ArrayIterator($this->children ? $this->children : array());
         }
 
-        return $this->getItemsFiltered($this->children ? $this->children : array(), $filter); 
+        return $this->getItemsFiltered($this->children ? $this->children : array(), $filter, true); 
     }
 
     private function populateProperties()
@@ -528,16 +522,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function getProperties($filter = null)
     {
         $this->populateProperties();
-        $ret = $this->getItemsFiltered($this->properties, $filter);
-        foreach ($ret as $property)
+        $ret = $this->getItemsFiltered($this->properties, $filter, false);
+        foreach ($ret as $name => $property)
         {
-            /* FIXME, remove this condition once it's resolved */
-            if (!is_object($property))
-            {
-                throw new \PHPCR\RepositoryException("Failed to get name. Expected object, " . gettype($property) . "given");
-            }
-            $name = $property->getName();
-            $ret[$name] = $this->properties[$name]; 
+            $ret[$name] = is_object($this->properties[$name]) ? $this->properties[$name] : $this->getProperty($name); 
         }
         return new \ArrayIterator($ret);
     }
@@ -548,23 +536,23 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $ret = array();
         foreach ($properties as $name => $o)
         {
-            $type = $this->properties[$name]->getType();
+            $type = $this->getProperty($name)->getType();
             if ($type == \PHPCR\PropertyType::WEAKREFERENCE
                 || $type == \PHPCR\PropertyType::REFERENCE
                 || $type == \PHPCR\PropertyType::PATH)
             {
                 if ($dereference == true)
                 {
-                    $ret[$name] = $this->properties[$name]->getNode();
+                    $ret[$name] = $this->getProperty($name)->getNode();
                 }
                 else
                 {
-                    $ret[$name] = $this->properties[$name]->getString();
+                    $ret[$name] = $this->getProperty($name)->getString();
                 }
             }
             else 
             {
-                $ret[$name] = $this->properties[$name]->getValue(); 
+                $ret[$name] = $this->getProperty($name)->getValue(); 
             }
         }
         return $ret;

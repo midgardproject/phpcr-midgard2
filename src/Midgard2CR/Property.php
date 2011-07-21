@@ -245,7 +245,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         $propertyName = $this->getMidgard2PropertyName();
         if ($propertyName)
         {
-            return $this->contentObject->$propertyName;
+            return $this->parent->getMidgard2ContentObject()->$propertyName;
         }
 
         if (!empty($this->midgardPropertyNodes))
