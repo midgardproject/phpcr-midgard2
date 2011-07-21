@@ -382,4 +382,14 @@ class Session implements \PHPCR\SessionInterface
     {
         throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
+
+    public function getNodesByIdentifier($ids)
+    {
+
+    }
+
+    public function getNodes($absPaths)
+    {
+
+    }
 }

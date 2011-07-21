@@ -54,6 +54,7 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
 
     private function cleanup()
     {
+        return;
         $re = new ReflectionExtension('midgard2');
         $classes = $re->getClasses();
         $t = new \midgard_transaction();
