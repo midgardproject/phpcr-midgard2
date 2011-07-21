@@ -114,4 +114,16 @@ class Repository implements \PHPCR\RepositoryInterface
     {
         return '';
     }
+
+    public static function checkMidgard2Exception($object = null)
+    {
+        if (\midgard_connection::get_instance()->get_error() != MGD_ERR_OK)
+        {
+            if ($object != null)
+            {
+                $msg = get_class($object) . "." . $object->name . " : ";
+            }
+            throw new \PHPCR\RepositoryException($msg . \midgard_connection::get_instance()->get_error_string());
+        }
+    }
 }
