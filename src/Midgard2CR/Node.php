@@ -525,6 +525,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $ret = $this->getItemsFiltered($this->properties, $filter);
         foreach ($ret as $property)
         {
+            /* FIXME, remove this condition once it's resolved */
+            if (!is_object($property))
+            {
+                throw new \PHPCR\RepositoryException("Failed to get name. Expected object, " . gettype($property) . "given");
+            }
             $name = $property->getName();
             $ret[$name] = $this->properties[$name]; 
         }
