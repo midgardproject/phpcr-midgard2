@@ -951,8 +951,19 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         /* TODO */
         /* Check session */
+       
+        $thisContentObject = $this->getMidgard2ContentObject();
+        if (!$thisContentObject)
+        {
+            return false;
+        }
+        $itemContentObject = $item->getMidgard2ContentObject();
+        if (!$itemContentObject)
+        {
+            return false;
+        }
 
-        if ($this->contentObject->guid == $item->contentObject->guid)
+        if ($thisContentObject->guid == $itemContentObject->guid)
         {
             return true;
         }
