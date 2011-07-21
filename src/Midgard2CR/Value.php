@@ -111,6 +111,11 @@ class BinaryValue extends Value
     } 
 }
 
+class DoubleValue extends Value
+{
+
+}
+
 class ValueFactory
 {
     public static function transformValue($value, $srcType, $dstType)
