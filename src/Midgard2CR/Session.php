@@ -23,7 +23,12 @@ class Session implements \PHPCR\SessionInterface
     {
         return $this->repository;
     }
-    
+   
+    public function getTransactionManager()
+    {
+        return null;
+    }
+
     public function getUserID()
     {
         if (!$this->user)
