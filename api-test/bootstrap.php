@@ -84,7 +84,7 @@ function prepareMidgardStorage()
 
         if (!midgard_storage::create_class_storage($type))
         {
-            throw new Exception('Could not create ' . $type . ' tables in test database');
+            throw new Exception('Could not create ' . $type . ' tables in test database.' . midgard_connection::get_instance()->get_error_string());
         }
     }
 
@@ -95,13 +95,14 @@ function prepareMidgardStorage()
     midgard_storage::create_class_storage("midgard_namespace_registry");
 
     /* Create required root node */
-    $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
-    $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('up'), '=', new \midgard_query_value(0)));
+    $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
+    $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
     $q->execute();
     if ($q->get_results_count() == 0)
     {
-        $root_object = new \midgardmvc_core_node();
+        $root_object = new \midgard_node();
         $root_object->name = "jackalope";
+        $root_object->parent = 0;
         $root_object->create();
     }
 }
@@ -115,7 +116,7 @@ function prepareMidgardTestDir($dir)
 }
 
 // Make sure we have the necessary config
-$necessaryConfigValues = array('jcr.url', 'jcr.user', 'jcr.pass', 'jcr.workspace', 'jcr.transport');
+$necessaryConfigValues = array('phpcr.url', 'phpcr.user', 'phpcr.pass', 'phpcr.workspace', 'phpcr.transport');
 foreach ($necessaryConfigValues as $val) {
     if (empty($GLOBALS[$val])) {
         die('Please set '.$val.' in your phpunit.xml.' . "\n");
@@ -156,7 +157,7 @@ function getSimpleCredentials($user, $password) {
  * @param credentials The credentials to log into the repository. If omitted, $config['user'] and $config['pass'] is used with getSimpleCredentials
  * @return A session resulting from logging into the repository found at the $config path
  */
-function getJCRSession($config, $credentials = null) {
+function getPHPCRSession($config, $credentials = null) {
     $repository = getRepository($config);
     if (isset($config['pass']) || isset($credentials)) {
         if (empty($config['workspace'])) {

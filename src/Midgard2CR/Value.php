@@ -89,8 +89,12 @@ class DateValue extends Value
         {
             $date = new \DateTime($value);
         }
-        
-        return $date->format("c"); 
+
+        $tmp = $date->format('Y-m-d\TH:i:s.');
+        $tmp .= substr($date->format('u'), 0, 3);
+        $tmp .= $date->format('P');
+
+        return $tmp;
     }
 }
 
@@ -105,6 +109,11 @@ class BinaryValue extends Value
     { 
         return stream_get_contents($value);
     } 
+}
+
+class DoubleValue extends Value
+{
+
 }
 
 class ValueFactory
