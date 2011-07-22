@@ -3,7 +3,7 @@ namespace Midgard2CR;
 
 class Repository implements \PHPCR\RepositoryInterface
 {    
-    public function login($credentials = NULL, $workspaceName = NULL)
+    public function login(\PHPCR\CredentialsInterface $credentials = NULL, $workspaceName = NULL)
     {
         if (   $credentials instanceof \PHPCR\GuestCredentials
             || is_null($credentials))
@@ -93,8 +93,9 @@ class Repository implements \PHPCR\RepositoryInterface
     
     private function getRootNodes()
     {
-        $q = new \midgard_query_select(new \midgard_query_storage('midgardmvc_core_node'));
-        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('up'), '=', new \midgard_query_value(0)));
+        $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
+        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
+        $q->toggle_readonly = false;
         $q->execute();
         return $q->list_objects();
     }
@@ -112,5 +113,17 @@ class Repository implements \PHPCR\RepositoryInterface
     public function getDescriptor($key)
     {
         return '';
+    }
+
+    public static function checkMidgard2Exception($object = null)
+    {
+        if (\midgard_connection::get_instance()->get_error() != MGD_ERR_OK)
+        {
+            if ($object != null)
+            {
+                $msg = get_class($object) . "." . $object->name . " : ";
+            }
+            throw new \PHPCR\RepositoryException($msg . \midgard_connection::get_instance()->get_error_string());
+        }
     }
 }

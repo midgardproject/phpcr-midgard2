@@ -7,25 +7,31 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     protected $propertyFullName = null;
     protected $propertyName = null;
     protected $propertyPrefix = null;
-    protected $node = null;
-    protected $type = 0;
+    protected $type = \PHPCR\PropertyType::UNDEFINED;
     protected $isMidgardProperty;
     protected $midgardPropertyName = null; 
-    protected $manager = null;
     protected $isMultiple = false;
-    protected $midgardObject = null;
+    protected $midgardPropertyNodes = null;
 
-    public function __construct(Node $node, $propertyName, \Midgard2CR\PropertyManager $manager = null)
+    public function __construct(Node $node, $propertyName, array $nodeProperties = null)
     {
-        $this->propertyFullName = $propertyName;
-        $this->node = $node;
+        $this->propertyFullName = $propertyName; 
+        $this->midgardNode = $node->getMidgard2Node(); 
+        $this->midgardPropertyNodes = $nodeProperties;
+        if (!empty($nodeProperties))
+        {
+            if ($nodeProperties[0]->guid)
+            {
+                $this->is_new = false;
+            }
+            $this->contentObject = $nodeProperties[0];
+        }
         $this->parent = $node;
-        $this->midgardObject = $node->getMidgard2Object();
-        $this->manager = $manager;
         $this->isMidgardProperty = false;
+        $this->session = $node->session;
 
         /* Check if we get MidgardObject property */
-        $nsregistry = $this->node->getSession()->getWorkspace()->getNamespaceRegistry();
+        $nsregistry = $this->parent->getSession()->getWorkspace()->getNamespaceRegistry();
         $nsmanager = $nsregistry->getNamespaceManager();
         $tokens = $nsmanager->getPrefixTokens($propertyName);
         if ($tokens[0] == $nsregistry::MGD_PREFIX_MGD
@@ -33,6 +39,15 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             $this->isMidgardProperty = true;
             $this->midgardPropertyName = $tokens[1];
+        }
+
+        /* Check namespace by convention.
+         * ns:name is represented as ns-name in Midgard2 */
+        $GNsProperty = str_replace(':', '-', $propertyName);
+        if (property_exists($this->parent->getMidgard2ContentObject(), $GNsProperty))
+        {
+            $this->isMidgardProperty = true;
+            $this->midgardPropertyName = $GNsProperty;
         }
 
         if ($tokens[1] != null)
@@ -45,16 +60,14 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             $this->propertyPrefix = 'phpcr:undefined';
             $this->propertyName = $propertyName;
         }
-
-        parent::__construct($this->midgardObject, $node, $node->getSession());
     }
 
     public function getParentNode()
     {
-        return $this->node;
+        return $this->parent;
     }
 
-    private function getMidgard2PropertyName()
+    public function getMidgard2PropertyName()
     {
         if ($this->isMidgardProperty == false)
         {
@@ -63,7 +76,54 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         return $this->midgardPropertyName;
     }
 
-    public function setValue($value, $type = NULL, $weak = FALSE)
+    private function determineType(&$value)
+    {
+        if (is_long($value))
+        {
+            return \PHPCR\PropertyType::LONG;
+        }
+
+        if (is_double($value))
+        {
+            return \PHPCR\PropertyType::DOUBLE;
+        }
+
+        if (is_string($value))
+        {
+            return \PHPCR\PropertyType::STRING;
+        }
+
+        if (is_array($value))
+        {
+            return self::determineType($value[0]);
+        }
+    }
+
+    private function setMidgard2NodePropertyValue($propertyNode = null, $value, $type)
+    {
+        if ($propertyNode == null)
+        {
+            $propertyNode = new \midgard_node_property();
+            $propertyNode->title = $this->getName();
+            $propertyNode->parent = $this->parent->getMidgard2Node()->id;
+            $propertyNode->parentguid = $this->parent->getMidgard2Node()->guid;
+            $propertyNode->type = $type;
+            $this->midgardPropertyNodes[] = $propertyNode;
+        }
+
+        $propertyNode->value = ValueFactory::transformValue($value, $type, \PHPCR\PropertyType::STRING);
+
+        $this->is_new = true;
+        $this->is_modified = false;
+
+        if ($propertyNode->guid)
+        { 
+            $this->is_modified = true;
+            $this->is_new = false;
+        }
+    }
+
+    public function setValue($value, $type = null, $weak = FALSE)
     { 
         /* TODO, handle:
          * \PHPCR\ValueFormatException
@@ -76,7 +136,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         $propertyName = $this->getMidgard2PropertyName();
         if ($propertyName) 
         {
-            $this->object->$propertyName = $value;
+            $this->contentObject->$propertyName = $value;
             return;
         }
 
@@ -87,9 +147,9 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
          */ 
         if (is_a($value, '\Midgard2CR\Node'))
         {
-            if (!$value->hasProperty('jcr:uuid'))
+            if (!$value->isReferenceable())
             {
-                throw new \PHPCR\ValueFormatException("Can not set reference value from node without 'uuid' property"); 
+                throw new \PHPCR\ValueFormatException("Node " . $value->getPath() . " is not referencable"); 
             }
 
             if ($type == null)
@@ -105,8 +165,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         }
         else if (is_a($value, '\Midgard2CR\Property'))
         {
-            $new_value = $value->getString();
-            var_dump ($new_value);
+            $new_value = $value->getString(); 
         }
         else 
         {
@@ -115,24 +174,39 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
         if ($type == null)
         {
-            $type = 'String';
+            if ($this->parent->hasProperty($this->getName()))
+            {
+                $type = $this->getType();
+            }
+
+            if ($type == null)
+            {
+                $type = self::determineType($new_value);
+            }
         }
-        
-        $property = $this->manager->factory($this->propertyName, $this->propertyPrefix, $type, false, is_array($new_value) ? null : $new_value);
 
         if (is_array($new_value))
         {
-            foreach ($new_value as $v)
+            $i = 0;
+            foreach($new_value as $v)
             {
-                $property->addLiteral($v, 0);
+                if (isset($this->midgardPropertyNodes[$i]))
+                {
+                    $this->setMidgard2NodePropertyValue($this->midgardPropertyNodes[$i], $v, $type);
+                }
+                else 
+                {
+                    $this->setMidgard2NodePropertyValue(null, $v, $type);
+                }
+                $i++;
             }
         }
-       
-        if ($this->type != $type) 
+        else 
         {
-            $this->type = $type;
-            $this->manager->setModelType($this->propertyName, $this->propertyPrefix, $type);
+            $this->setMidgard2NodePropertyValue(empty($this->midgardPropertyNodes) ? null : $this->midgardPropertyNodes[0], $new_value, $type);
         }
+
+        $this->type = $type;
     }
     
     public function addValue($value)
@@ -153,6 +227,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return $this->getBinary();
 
         case \PHPCR\PropertyType::REFERENCE:
+        case \PHPCR\PropertyType::WEAKREFERENCE:
             return $this->getNode();
 
         default:
@@ -170,29 +245,23 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         $propertyName = $this->getMidgard2PropertyName();
         if ($propertyName)
         {
-            return $this->object->$propertyName;
+            return $this->parent->getMidgard2ContentObject()->$propertyName;
         }
 
-        /* Get mgdschema object property if we can map such */
-        if ($this->propertyPrefix == "jcr")
+        if (!empty($this->midgardPropertyNodes))
         {
-            switch ($this->propertyName)
+            if (count($this->midgardPropertyNodes) == 1)
             {
-            case 'created':
-                return $this->object->metadata->created;
-
-            case 'mimeType':
-                if (!is_a($this->object, 'midgard_attachment'))
+                return $this->midgardPropertyNodes[0]->value;
+            } 
+            else 
+            {
+                foreach ($this->midgardPropertyNodes as $np)
                 {
-                    throw new \PHPCR\RepositoryException ("Expected underlying midgard_attachment object. Given is " . get_class($this->object));
+                    $ret[] = $np->value;
                 }
-                return $this->object->mimetype;
             }
-
         }
-
-        $property = $this->manager->getProperty($this->propertyName, $this->propertyPrefix);
-        $ret = $property->getLiterals();
 
         /* Empty value */
         if (empty($ret))
@@ -201,14 +270,14 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         }
 
         /* Multivalue */
-        if (count($ret) > 1)
+        if (is_array($ret) && count($ret) > 1)
         {
             $this->isMultiple = true;
             return $ret;
         }
 
         /* Single value */
-        return $ret[0];
+        return $ret;
     }
 
     public function getString()
@@ -219,14 +288,14 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function getBinary()
     {
-        if ($this->type != \PHPCR\PropertyType::BINARY)
+        if ($this->getType() != \PHPCR\PropertyType::BINARY)
         {
             $sv = new StringValue();
             return ValueFactory::transformValue($this->getNativeValue(), $this->type, \PHPCR\PropertyType::BINARY);
         }
 
         $ret = array();
-        $attachments = $this->midgardObject->list_attachments();
+        $attachments = $this->midgardPropertyNodes[0]->list_attachments();
         if (empty($attachments))
         {
             return null;
@@ -346,7 +415,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             {
                 try 
                 {
-                    $node = $this->node->getNode($path);
+                    $node = $this->parent->getNode($path);
                     return $node;
                 }
                 catch (\PHPCR\PathNotFoundException $e)
@@ -382,7 +451,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
    
         throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to Node type."); 
 
-        return $this->node;
+        return $this->parent;
     }
     
     public function getProperty()
@@ -398,12 +467,12 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             foreach ($path as $v)
             {
-                $ret[] = $this->node->getProperty($v);
+                $ret[] = $this->parent->getProperty($v);
             }
             return $ret;
         }
 
-        return $this->node->getProperty($path);
+        return $this->parent->getProperty($path);
     }
     
     public function getLength()
@@ -447,14 +516,19 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     {
         throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
-    
+
     private function getMGDType ()
+    {
+        return $this->getMidgard2ValueType();
+    }
+
+    public function getMidgard2ValueType()
     {
         if (!class_exists('\midgard_reflector_property'))
         {
             return null;
         }
-        $mrp = new \midgard_reflector_property (get_class($this->object));
+        $mrp = new \midgard_reflector_property (get_class($this->contentObject));
         $type = $mrp->get_midgard_type ($this->midgardPropertyName);
 
         $type_id = 0;
@@ -500,8 +574,10 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return $this->getMGDType();
         }
 
-        $property = $this->manager->getProperty($this->propertyName, $this->propertyPrefix);
-        $this->type = \PHPCR\PropertyType::valueFromName($property->model->type);
+        if (!empty($this->midgardPropertyNodes))
+        {
+            $this->type = $this->midgardPropertyNodes[0]->type;
+        }
 
         return $this->type;
     }
@@ -513,8 +589,10 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return false;
         }
 
-        $model = $this->manager->getModel($this->propertyName, $this->propertyPrefix);
-        return $model->multiple;
+        if ($this->nodeProperty)
+        {
+            return $this->nodeProperty->multiple;
+        }
     }
 
     public function isNode()
@@ -544,5 +622,36 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         }
 
         return false;
+    }
+
+    public function save()
+    {
+        $pnodes = $this->midgardPropertyNodes;
+        if (empty($pnodes))
+        {
+            return;
+        }
+        foreach ($pnodes as $mpn)
+        {
+            if ($this->isNew())
+            {
+                $mpn->parent = $this->parent->getMidgard2Node()->id;
+                $mpn->parentguid = $this->parent->getMidgard2Node()->guid;
+                $mpn->create();
+                Repository::checkMidgard2Exception();
+            }
+            else if ($this->isModified())
+            {
+                $mpn->update();
+                Repository::checkMidgard2Exception();
+            }
+        }
+        $this->is_new = false;
+        $this->is_modified = false;
+    }
+
+    public function remove()
+    {
+        $this->parent->setProperty($this->getName(), null);
     }
 }

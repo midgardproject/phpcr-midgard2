@@ -73,6 +73,10 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
         /* mix:etag */
         $etag = $this->createNamedNodeTypeTemplate('mix:etag', true);
         $this->registerNodeType($etag, false);
+
+        /* nt:unstructured */
+        $unstructured = $this->createNamedNodeTypeTemplate('nt:unstructured', false);
+        $this->registerNodeType($unstructured, true);
     }
 
     private function registerMidgard2Types()

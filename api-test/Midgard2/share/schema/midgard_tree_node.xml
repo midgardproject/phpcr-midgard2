@@ -1,23 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Schema xmlns="http://www.midgard-project.org/repligard/1.4">
-	<type name="midgard_tree_node" table="midgard_tree_node" metadata="false">
+	<type name="midgard_node" table="midgard_node" metadata="false">
 		<property name="id" type="unsigned integer" primaryfield="id">
 			<description>Local non-replication-safe database identifier</description>
 		</property>
-		<property name="name" type="string">
+		<property name="name" type="string" unique="yes">
 			<description>The name of a node</description>
+		</property>
+		<property name="title" type="string">
+			<description>The title of a node</description>
 		</property>
 		<property name="typename" type="string">
 			<description>The type of node's object</description>
 		</property>
-		<property name="objectguid" type="string">
+		<property name="objectguid" type="guid">
 			<description>Guid of node's object</description>
 		</property>
-		<property name="up" type="unsigned integer">
+		<property name="parent" type="unsigned integer" link="midgard_node:id" upfield="parent">
 			<description>Parent node identifier</description>
 		</property>
-		<property name="parentguid" type="guid">
+		<property name="parentguid" type="guid" link="midgard_node:guid">
 			<description>Parent node guid</description>
 		</property>
+		<property name="level" type="integer">
+			<description>Level in a tree (optional)</description>
+		</property>
 	</type>
+
+	<type name="midgard_node_property" table="midgard_node_property" metadata="false" parent="midgard_node">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+		<property name="name" type="string" unique="yes">
+			<description>The name of a node</description>
+		</property>
+		<property name="title" type="string">
+			<description>The title of a node</description>
+		</property>
+		<property name="type" type="integer">
+			<description>PHPCR type</description>
+		</property>
+		<property name="objectguid" type="guid">
+			<description>Guid of node's object</description>
+		</property>
+		<property name="parent" type="unsigned integer" link="midgard_node:id" parentfield="parent">
+			<description>Parent node identifier</description>
+		</property>
+		<property name="parentguid" type="guid" link="midgard_node:guid">
+			<description>Parent node guid</description>
+		</property>
+		<property name="level" type="integer">
+			<description>Level in a tree (optional)</description>
+		</property>
+		<property name="value" type="text">
+			<description>Value of the property</description>
+		</property>
+		<property name="multiple" type="boolean">
+			<description>Multiple value flag</description>
+		</property>
+	</type>
+
 </Schema>
