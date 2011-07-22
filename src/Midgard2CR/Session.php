@@ -9,6 +9,7 @@ class Session implements \PHPCR\SessionInterface
     protected $rootObject = null;
     protected $rootNode = null;
     protected $workspace = null;
+    protected $removeNodes = array();
 
     public function __construct(\midgard_connection $connection, Repository $repository, \midgard_user $user = null, \midgard_object $rootObject)
     {
@@ -22,7 +23,12 @@ class Session implements \PHPCR\SessionInterface
     {
         return $this->repository;
     }
-    
+   
+    public function getTransactionManager()
+    {
+        return null;
+    }
+
     public function getUserID()
     {
         if (!$this->user)
@@ -59,7 +65,6 @@ class Session implements \PHPCR\SessionInterface
         {
             $this->rootNode = new Node($this->rootObject, null, $this);
         }
-
         return $this->rootNode;
     }
     
@@ -73,8 +78,29 @@ class Session implements \PHPCR\SessionInterface
         /* TODO
          * Try to get midgard object by guid if required */
 
-        $q = new \midgard_query_select(new \midgard_query_storage('midgard_property_view'));
-        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('value'), '=', new \midgard_query_value($id))); 
+        $propertyStorage = new \midgard_query_storage('midgard_node_property');
+        $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
+        $q->add_join(
+            'INNER',
+            new \midgard_query_property('id'),
+            new \midgard_query_property('parent', $propertyStorage)
+        );
+        $group = new \midgard_query_constraint_group('AND');
+        $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('value', $propertyStorage), 
+                '=', 
+                new \midgard_query_value($id)
+            )
+        );
+        $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('title', $propertyStorage), 
+                '=', 
+                new \midgard_query_value('jcr:uuid')
+            )
+        ); 
+        $q->set_constraint($group);
         $q->execute();
        
         if ($q->get_results_count() < 1)
@@ -82,11 +108,11 @@ class Session implements \PHPCR\SessionInterface
             throw new \PHPCR\ItemNotFoundException("Node identified by {$id} not found");
         }
 
-        $pv = current($q->list_objects());
+        $midgardNode = current($q->list_objects());
 
-        try {
-            $midgard_object = \midgard_object_class::get_object_by_guid ($pv->objectguid);
-            $midgard_path = \Midgard2CR\Node::getMidgardPath($midgard_object);
+        try 
+        { 
+            $midgard_path = \Midgard2CR\Node::getMidgardPath($midgardNode);
             /* Convert to JCR path */
             $midgard_path = str_replace('/jackalope', '', $midgard_path);
             $node = $this->getNode($midgard_path);
@@ -99,7 +125,12 @@ class Session implements \PHPCR\SessionInterface
 
         throw new \PHPCR\RepositoryException("Answer the question three and the node you will see");
     }
-    
+
+    public function getNodesByIdentifier($ids)
+    {
+        return array();
+    }
+
     public function getItem($absPath)
     {
         if (substr($absPath, 0, 1) != '/') 
@@ -143,7 +174,12 @@ class Session implements \PHPCR\SessionInterface
         $this->validatePath($absPath);
         return $this->getRootNode()->getNode(substr($absPath, 1));
     }
-    
+
+    public function getNodes($absPaths)
+    {
+        return null;
+    }
+
     public function getProperty($absPath)
     {
         $this->validatePath($absPath);
@@ -187,12 +223,51 @@ class Session implements \PHPCR\SessionInterface
     
     public function move($srcAbsPath, $destAbsPath)
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        /* RepositoryException - If the last element of destAbsPath has an index or if another error occurs. */
+        if (strpos($destAbsPath, '[') !== false)
+        {
+            throw new \PHPCR\RepositoryException("Index not allowed in destination path");
+        }
+
+        $node = $this->getNode($srcAbsPath);
+
+        /* No need to check destination node, source one exists and path is invalid */
+        if ($srcAbsPath == $destAbsPath)
+        {
+            throw new \PHPCR\ItemExistsException("Source and destination paths are equal");
+        }
+
+        /* If paths are different, check if destination exists */
+        if ($this->nodeExists($destAbsPath))
+        {
+            throw new \PHPCR\ItemExistsException("Node at destination path {$destAbsPath} exists");
+        }
+
+        $dest = mb_substr($destAbsPath,0,-mb_strlen(strrchr($destAbsPath,'/')));
+        $destName = substr(strrchr($destAbsPath, '/'), 1); 
+        $destNode = $this->getNode($dest);
+        $node->move($destNode, $destName);
     }
     
     public function removeItem($absPath)
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        /* Try property first */
+        try 
+        {
+            $property = $this->getProperty($absPath);
+            $property->remove();
+        }
+        catch (\PHPCR\PathNotFoundException $e) 
+        {
+            $node = $this->getNode($absPath);
+            $node->remove();
+            $this->removeNode($node);
+        }
+    }
+
+    public function removeNode($node)
+    {
+        $this->removeNodes[] = $node;
     }
 
     private function _node_save (Node $node)
@@ -219,12 +294,19 @@ class Session implements \PHPCR\SessionInterface
         // VersionException
         // TODO
 
+        /* Remove nodes marked as removed */
+        foreach ($this->removeNodes as $node)
+        {
+            $node->removeMidgard2Node();
+        }
+
         $root_node = $this->getRootNode();
+        $root_node->save();
         $children = $root_node->getNodes();
         foreach ($children as $name => $child) 
-        {
+        { 
             /* FIXME DO NOT EXPECT BOOLEAN, CATCH EXCEPTION */
-            if ($this->_node_save ($child, $root_node) === false)
+            if ($this->_node_save ($child) === false)
             {
                 $midgard_errcode = \midgard_connection::get_instance()->get_error();
                 $midgard_errstr = \midgard_connection::get_instance()->get_error_string();

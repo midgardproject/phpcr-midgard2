@@ -3,12 +3,12 @@ namespace Midgard2CR\NodeType;
 
 class ItemDefinition implements \PHPCR\NodeType\ItemDefinitionInterface
 {
-    protected declaringNodeType = null;
-    protected name = null;
-    protected onParentVersion = 0;
-    protected isAutoCreated = false;
-    protected isMandatory = false;
-    protected isProtected = false;
+    protected $declaringNodeType = null;
+    protected $name = null;
+    protected $onParentVersion = 0;
+    protected $isAutoCreated = false;
+    protected $isMandatory = false;
+    protected $isProtected = false;
 
     public function getDeclaringNodeType()
     {

@@ -4,21 +4,31 @@ namespace Midgard2CR;
 abstract class Item implements \PHPCR\ItemInterface
 {
     protected $session = null;
-    protected $object = null;
     protected $parent = null;
     protected $is_new = false;
     protected $is_modified = false;
+    protected $contentObject = null;
+    protected $midgardNode = null;
+    protected $propertyManager = null;
 
-    public function __construct(\midgard_object $object = null, Node $parent = null, Session $session)
+    public function getMidgard2ContentObject()
     {
-        $this->parent = $parent;
-        $this->object = $object;
-        $this->session = $session;
+        if ($this->contentObject == null)
+        {
+            $guid = $this->midgardNode->objectguid;
+            if ($guid == '')
+            {
+                $guid = null;
+            }
+            $typename = $this->midgardNode->typename ? $this->midgardNode->typename : 'nt_folder';
+            $this->contentObject = \midgard_object_class::factory($typename, $guid);
+        }
+        return $this->contentObject;
     }
-    
-    public function getMidgard2Object()
+
+    public function getMidgard2Node()
     {
-        return $this->object;
+        return $this->midgardNode;
     }
 
     public function getPath()
@@ -43,7 +53,7 @@ abstract class Item implements \PHPCR\ItemInterface
             // Root node
             return '';
         }
-        return $this->object->name;
+        return $this->midgardNode->name;
     }
 
     public function getAncestor($depth)

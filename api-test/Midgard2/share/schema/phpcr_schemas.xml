@@ -1,27 +1,101 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Schema xmlns="http://www.midgard-project.org/repligard/1.4">
 
+	<!-- nt:base -->
+	<type name="nt_base" metadata="false">
+		<!-- JCR properties of nt:base Node -->
+		<property name="jcr-primaryType" type="string">
+			<description>The type of a node</description>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<RequiredType>NAME</RequiredType>
+			<isAutoCreated>true</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
+		</property>
+		<property name="jcr-mixinTypes">
+			<description>Mixin types multivalue</description>
+	  	<RequiredType>NAME</RequiredType>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>true</isMultiple>
+		</property>
+
+		<!-- Node and NodeType definitions -->
+		<user_values>
+			<Supertypes></Supertypes>
+			<isMixin>false</isMixin>
+			<PrimaryItemName></PrimaryItemName>
+			<RequiredPrimaryTypes></RequiredPrimaryTypes>
+			<DefaultPrimaryType></DefaultPrimaryType>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<OnParentVersion>VERSION</OnParentVersion>
+			<isProtected>false</isProtected>
+			<SameNameSiblings>false</SameNameSiblings>
+		 	<isAbstract>true</isAbstract>	
+		</user_values>
+	</type>
+
+	<!-- nt:hierarchyNode -->
+	<type name="nt_hierarchynode" metadata="false">
+		<property name="dummy" />
+		<!-- Node and NodeType definitions -->
+		<user_values>
+			<Supertypes>mix:created</Supertypes>
+			<isMixin>false</isMixin>
+			<PrimaryItemName></PrimaryItemName>
+			<RequiredPrimaryTypes></RequiredPrimaryTypes>
+			<DefaultPrimaryType></DefaultPrimaryType>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<OnParentVersion>VERSION</OnParentVersion>
+			<isProtected>false</isProtected>
+			<SameNameSiblings>false</SameNameSiblings>
+		 	<isAbstract>true</isAbstract>	
+		</user_values>
+	</type>
+
 	<!-- nt:folder -->
 	<type name="nt_folder" table="phpcr_nt_folder" metadata="false">
 		<property name="id" type="unsigned integer" primaryfield="id">
 			<description>Local non-replication-safe database identifier</description>
 		</property>
-		<property name="name" type="string">
+		<property name="name" type="string" unique="yes">
 			<description>The name of a node</description>
 		</property>
-		<property name="up" type="unsigned integer" link="nt_folder:id" upfield="up">
+		<property name="parent" type="unsigned integer">
 			<description>ID of a parent node</description>
 		</property>
 
 		<!-- JCR properties of nt:folder Node -->
 		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:folder">
 			<description>The type of a node</description>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<RequiredType>NAME</RequiredType>
+			<isAutoCreated>true</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
 		</property>
 		<property name="jcr-created" type="datetime" field="jcr_created">
 			<description>Creation date</description>
+	  	<RequiredType>DATE</RequiredType>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<isAutoCreated>true</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
 		</property>
 		<property name="jcr-createdBy" type="string" field="jcr_createdby">
 			<description>Name of a person who created node</description>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<isAutoCreated>true</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
 		</property>
 
 		<!-- Node and NodeType definitions -->
@@ -31,10 +105,10 @@
 			<PrimaryItemName></PrimaryItemName>
 			<RequiredPrimaryTypes>nt:hierarchyNode</RequiredPrimaryTypes>
 			<DefaultPrimaryType></DefaultPrimaryType>
-			<AutoCreated>false</AutoCreated>
-			<Mandatory>false</Mandatory>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
 			<OnParentVersion>VERSION</OnParentVersion>
-			<Protected>false</Protected>
+			<isProtected>false</isProtected>
 			<SameNameSiblings>false</SameNameSiblings> 
 		</user_values>
 	</type>
@@ -44,19 +118,21 @@
 		<property name="id" type="unsigned integer" primaryfield="id">
 			<description>Local non-replication-safe database identifier</description>
 		</property>
-		<property name="name" type="string">
+		<property name="name" type="string" unique="yes">
 			<description>The name of a node</description>
 		</property>
-		<property name="folder" type="unsigned integer" link="nt_folder:id" parentfield="folder">
+		<property name="parent" type="unsigned integer">
 			<description>ID of a parent node</description>
 		</property>
 
 		<!-- JCR properties of nt:file Node -->
 		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:file">
 			<description>The type of a node</description>
+			<RequiredType>NAME</RequiredType>
 		</property>
 		<property name="jcr-created" type="datetime" field="jcr_created">
 			<description>Creation date</description>
+	  	<RequiredType>DATE</RequiredType>
 		</property>
 		<property name="jcr-createdBy" type="string" field="jcr_createdby">
 			<description>Name of a person who created node</description>
@@ -71,10 +147,10 @@
 			<ChildNodeDefinition>jcr:content</ChildNodeDefinition>	
 			<RequiredPrimaryTypes>nt:base</RequiredPrimaryTypes>
 			<DefaultPrimaryType></DefaultPrimaryType>
-			<AutoCreated>false</AutoCreated>
-			<Mandatory>true</Mandatory>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>true</isMandatory>
 			<OnParentVersion>COPY</OnParentVersion>
-			<Protected>false</Protected>
+			<isProtected>false</isProtected>
 			<SameNameSiblings>false</SameNameSiblings> 
 		</user_values>
 	</type>
@@ -90,10 +166,14 @@
 		<property name="parent" type="unsigned integer">
 			<description>ID of a parent (unspecified type) node</description>
 		</property>
+		<property name="parentname" type="string">
+			<description>Type name of parent node</description>
+		</property>
 
 		<!-- JCR properties of nt:unstructured Node -->
 		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:unstructured">
 			<description>The type of a node</description>
+			<RequiredType>NAME</RequiredType>
 		</property>
 
 		<!-- Node and NodeType definitions -->
@@ -105,11 +185,148 @@
 			<ChildNodeDefinition>*</ChildNodeDefinition>	
 			<RequiredPrimaryTypes>nt:base</RequiredPrimaryTypes>
 			<DefaultPrimaryType>nt:unstructured</DefaultPrimaryType>
-			<AutoCreated>false</AutoCreated>
-			<Mandatory>false</Mandatory>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
 			<OnParentVersion>VERSION</OnParentVersion>
-			<Protected>false</Protected>
+			<isProtected>false</isProtected>
 			<SameNameSiblings>true</SameNameSiblings> 
+		</user_values>
+	</type>
+
+	<!-- nt:resource -->
+	<type name="nt_resource" table="phpcr_nt_resource" metadata="false">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+		<property name="name" type="string" unique="yes">
+			<description>The name of a node</description>
+		</property>
+		<property name="parent" type="unsigned integer">
+			<description>ID of a parent node</description>
+		</property>
+
+		<!-- JCR properties of nt:resource Node -->
+		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:resource">
+			<description>The type of a node</description>
+			<RequiredType>NAME</RequiredType>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<isAutoCreated>true</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
+		</property>
+		<property name="jcr-encoding" type="string" field="jcr_encoding">
+			<description>Binary encoding</description>
+			<RequiredType>STRING</RequiredType>
+			<getOnParentVersion>COPY</getOnParentVersion>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<isProtected>false</isProtected>
+			<isMultiple>false</isMultiple>
+			<ValueConstraints></ValueConstraints>
+			<DefaultValues></DefaultValues>
+		</property>
+		<property name="jcr-mimeType" type="string" field="jcr_mimetype">
+			<description>Binary mimetype</description>
+			<RequiredType>STRING</RequiredType>
+			<getOnParentVersion>COPY</getOnParentVersion>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
+			<ValueConstraints></ValueConstraints>
+			<DefaultValues></DefaultValues>
+		</property>
+		<property name="jcr-data" type="string" field="jcr_data">
+			<description>Binary data</description>
+			<RequiredType>BINARY</RequiredType>
+			<getOnParentVersion>COPY</getOnParentVersion>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>false</isProtected>
+			<isMultiple>false</isMultiple>
+			<ValueConstraints></ValueConstraints>
+			<DefaultValues></DefaultValues>
+		</property>
+		<property name="jcr-lastModified" type="datetime" field="jcr_lastmodified">
+			<description>Last modified datetime</description>
+			<RequiredType>DATE</RequiredType>
+			<getOnParentVersion>IGNORE</getOnParentVersion>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>false</isProtected>
+			<isMultiple>false</isMultiple>
+			<ValueConstraints></ValueConstraints>
+			<DefaultValues></DefaultValues>
+		</property>
+
+		<!-- Node and NodeType definitions -->
+		<user_values>
+			<Supertypes>nt:base mix:referencable</Supertypes>
+			<isMixin>false</isMixin>
+			<HasOrderableChildNodes>false</HasOrderableChildNodes>	
+			<PrimaryItemName>jcr:data</PrimaryItemName>
+			<RequiredPrimaryTypes>nt:hierarchyNode</RequiredPrimaryTypes>
+			<DefaultPrimaryType></DefaultPrimaryType>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<OnParentVersion>VERSION</OnParentVersion>
+			<isProtected>false</isProtected>
+			<SameNameSiblings>false</SameNameSiblings> 
+		</user_values>
+	</type>
+
+	<!-- nt:query -->
+	<type name="nt_query" table="phpcr_nt_query" metadata="false">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+		<!-- JCR properties of nt:query Node -->
+		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:query">
+			<description>The type of a node</description>
+			<RequiredType>NAME</RequiredType>
+			<getOnParentVersion>VERSION</getOnParentVersion>
+			<isAutoCreated>true</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
+		</property>
+		<property name="jcr-statement" type="string" field="jcr_statement">
+			<description>Binary encoding</description>
+			<RequiredType>STRING</RequiredType>
+			<getOnParentVersion>COPY</getOnParentVersion>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<isProtected>false</isProtected>
+			<isMultiple>false</isMultiple>
+			<ValueConstraints></ValueConstraints>
+			<DefaultValues></DefaultValues>
+		</property>
+		<property name="jcr-language" type="string" field="jcr_language">
+			<description>Binary mimetype</description>
+			<RequiredType>STRING</RequiredType>
+			<getOnParentVersion>COPY</getOnParentVersion>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>true</isProtected>
+			<isMultiple>false</isMultiple>
+			<ValueConstraints></ValueConstraints>
+			<DefaultValues></DefaultValues>
+		</property>
+
+		<!-- Node and NodeType definitions -->
+		<user_values>
+			<Supertypes>nt:base</Supertypes>
+			<isMixin>false</isMixin>
+			<HasOrderableChildNodes>false</HasOrderableChildNodes>	
+			<PrimaryItemName></PrimaryItemName>
+			<RequiredPrimaryTypes></RequiredPrimaryTypes>
+			<DefaultPrimaryType></DefaultPrimaryType>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<OnParentVersion>VERSION</OnParentVersion>
+			<isProtected>false</isProtected>
+			<SameNameSiblings>false</SameNameSiblings> 
 		</user_values>
 	</type>
 

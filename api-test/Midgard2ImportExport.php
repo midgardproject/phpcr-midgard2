@@ -29,11 +29,6 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
         $mgd = \midgard_connection::get_instance();
 
         $children = $object->list();
-        if (empty($children))
-        {
-            $object->purge(false);
-            return;
-        }
 
         foreach ($children as $child)
         {
@@ -45,6 +40,20 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
             }
         }
 
+        if (is_a($object, 'midgard_node'))
+        {
+            $children = $object->list_children('midgard_node_property');
+            foreach ($children as $child)
+            {
+                self::cleanupChildren($child);
+                $child->purge_attachments(true);
+                if (!$child->purge(false))
+                {
+                    //echo "Failed to purge child " . get_class($child) . " " . $child->guid . " " . $mgd->get_error_string() . "\n";
+                }
+            }
+        }
+
         $object->purge_attachments(true);
         if (!$object->purge(false))
         {
@@ -53,14 +62,13 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
     }
 
     private function cleanup()
-    {
-        return;
+    { 
         $re = new ReflectionExtension('midgard2');
         $classes = $re->getClasses();
         $t = new \midgard_transaction();
         $t->begin();
         foreach ($classes as $refclass)
-        {
+        {           
             $parent_class = $refclass->getParentClass();
             if (!$parent_class)
             {
@@ -70,8 +78,22 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
             {
                 continue;
             }
-
+            
             $type = $refclass->getName();
+
+            /* There's no table and nothing to purge if the type is mixin */
+            $isMixin = \midgard_object_class::get_schema_value($type, 'isMixin');
+            if ($isMixin == 'true')
+            {
+                continue;
+            } 
+
+            /* There's no table and nothing to purge if the type is abstract */
+            $isAbstract = \midgard_object_class::get_schema_value($type, 'isAbstract');
+            if ($isAbstract == 'true')
+            {
+                continue;
+            } 
 
             $storage = new \midgard_query_storage($type);
             $qs = new \midgard_query_select($storage);
@@ -86,7 +108,7 @@ class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterf
             $ret = $qs->list_objects();
             foreach ($ret as $object)
             {
-                if (is_a($object, 'midgardmvc_core_node')
+                if (is_a($object, 'midgard_node')
                     && property_exists($object, 'name')
                     && $object->name == 'jackalope')
                 {
