@@ -2,7 +2,7 @@ const Midgard = imports.gi.Midgard;
 Midgard.init ();
 
 config = new Midgard.Config();
-config.read_file_at_path("/tmp/JackalopeMidgard2/midgard2.conf");
+config.read_file_at_path("/tmp/Midgard2CR/midgard2.conf");
 
 /* Establish connection */
 mgd = new Midgard.Connection();
