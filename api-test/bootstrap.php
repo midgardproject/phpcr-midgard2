@@ -14,9 +14,9 @@
  * constants necessary to the JCR 1.0/JSR-170 and JSR-283 specs
  */
 
-if (getenv('MIDGARD_ENV_GLOBAL_SHAREDIR') != '/tmp/JackalopeMidgard2/share')
+if (getenv('MIDGARD_ENV_GLOBAL_SHAREDIR') != '/tmp/Midgard2CR/share')
 {
-    die("\nBefore running these tests you need to run 'export MIDGARD_ENV_GLOBAL_SHAREDIR=/tmp/JackalopeMidgard2/share'\n");
+    die("\nBefore running these tests you need to run 'export MIDGARD_ENV_GLOBAL_SHAREDIR=/tmp/Midgard2CR/share'\n");
 }
 
 function getMidgardConnection() {
@@ -34,11 +34,11 @@ function getMidgardConnection() {
     prepareMidgardTestDir('var');
     prepareMidgardTestDir('cache');
 
-    exec("cp -r Midgard2/share/* /tmp/JackalopeMidgard2/share");
-    exec("cp Midgard2/midgard2.conf /tmp/JackalopeMidgard2/midgard2.conf");
+    exec("cp -r Midgard2/share/* /tmp/Midgard2CR/share");
+    exec("cp Midgard2/midgard2.conf /tmp/Midgard2CR/midgard2.conf");
     
     $config = new \midgard_config();
-    $config->read_file_at_path("/tmp/JackalopeMidgard2/midgard2.conf");
+    $config->read_file_at_path("/tmp/Midgard2CR/midgard2.conf");
     if (!$midgard->open_config($config))
     {
         throw new Exception('Could not open Midgard connection to test database: ' . $midgard->get_error_string());
@@ -109,9 +109,9 @@ function prepareMidgardStorage()
 
 function prepareMidgardTestDir($dir)
 {
-    if (!file_exists("/tmp/JackalopeMidgard2/{$dir}"))
+    if (!file_exists("/tmp/Midgard2CR/{$dir}"))
     {
-        mkdir("/tmp/JackalopeMidgard2/{$dir}", 0777, true);
+        mkdir("/tmp/Midgard2CR/{$dir}", 0777, true);
     }
 }
 
