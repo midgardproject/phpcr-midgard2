@@ -158,6 +158,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function setProperty($name, $value, $type = null)
     {
+        if (strpos($name, '/') !== false)
+        {
+            throw new \InvalidArgumentException("Can not set property name with '/' delimeter");
+        }
+
         $pDef = new \Midgard2CR\NodeType\PropertyDefinition($this, $name);
         if ($value == null)
         {
