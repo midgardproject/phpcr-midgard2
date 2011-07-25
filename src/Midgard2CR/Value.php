@@ -106,7 +106,11 @@ class LongValue extends Value
 class BinaryValue extends Value
 {
     public static function toString($value)
-    { 
+    {
+        if (!is_resource ($value))
+        {
+            return (string) $value;
+        }
         return stream_get_contents($value);
     } 
 }
