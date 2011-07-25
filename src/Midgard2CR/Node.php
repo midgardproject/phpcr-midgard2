@@ -158,15 +158,24 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function setProperty($name, $value, $type = null)
     {
+        $pDef = new \Midgard2CR\NodeType\PropertyDefinition($this, $name);
         if ($value == null)
         {
+            /* Property is mandatory, can not remove */
+            if ($pDef->isMandatory())
+            {
+                throw new \PHPCR\ConstraintViolationException("Can not remove property {$name} which is mandatory");
+            }
+
+            /* Protected */
+            /* TODO */
+
             $this->removeProperty($name);
             return;
         }
 
         if ($type != null)
         {
-            $pDef = new \Midgard2CR\NodeType\PropertyDefinition($this, $name);
             $requiredType = $pDef->getRequiredType();
 
             if ($requiredType != 0
