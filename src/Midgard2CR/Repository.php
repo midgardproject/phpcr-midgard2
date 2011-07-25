@@ -3,7 +3,7 @@ namespace Midgard2CR;
 
 class Repository implements \PHPCR\RepositoryInterface
 {    
-    public function login(\PHPCR\CredentialsInterface $credentials = NULL, $workspaceName = NULL)
+    public function login(\PHPCR\CredentialsInterface $credentials = null, $workspaceName = null)
     {
         if (   $credentials instanceof \PHPCR\GuestCredentials
             || is_null($credentials))

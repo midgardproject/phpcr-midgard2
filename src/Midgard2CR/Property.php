@@ -231,7 +231,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return $this->getNode();
 
         default:
-            return $this->getNativeValue();
+            return ValueFactory::transformValue($this->getNativeValue(), \PHPCR\PropertyType::STRING, $type);
         } 
     }
 
