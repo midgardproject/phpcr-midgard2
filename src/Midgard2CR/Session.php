@@ -10,6 +10,7 @@ class Session implements \PHPCR\SessionInterface
     protected $rootNode = null;
     protected $workspace = null;
     protected $removeNodes = array();
+    private $transaction = null;
 
     public function __construct(\midgard_connection $connection, Repository $repository, \midgard_user $user = null, \midgard_object $rootObject)
     {
@@ -26,7 +27,11 @@ class Session implements \PHPCR\SessionInterface
    
     public function getTransactionManager()
     {
-        return null;
+        if ($this->transaction == null)
+        {
+            $this->transaction = new \Midgard2CR\Transaction\Transaction();
+        }
+        return $this->transaction;
     }
 
     public function getUserID()

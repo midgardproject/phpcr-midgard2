@@ -107,11 +107,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             $propertyNode->title = $this->getName();
             $propertyNode->parent = $this->parent->getMidgard2Node()->id;
             $propertyNode->parentguid = $this->parent->getMidgard2Node()->guid;
-            $propertyNode->type = $type;
             $this->midgardPropertyNodes[] = $propertyNode;
         }
 
         $propertyNode->value = ValueFactory::transformValue($value, $type, \PHPCR\PropertyType::STRING);
+        $propertyNode->type = $type;
 
         $this->is_new = true;
         $this->is_modified = false;

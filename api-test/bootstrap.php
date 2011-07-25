@@ -142,6 +142,16 @@ function getRepository($config) {
     return $factory->getRepository();
 }
 
+function getRepositoryFactoryClass()
+{
+    return 'Midgard2CR\RepositoryFactory';
+}
+
+function getRepositoryFactoryParameters($config)
+{
+    return array('midgard2.midgard_uri' => $config['url']);
+}
+
 /**
  * @param user The user name for the credentials
  * @param password The password for the credentials
