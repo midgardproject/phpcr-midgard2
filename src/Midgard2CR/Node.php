@@ -184,6 +184,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         { 
             $mnp = new \midgard_node_property();
             $mnp->title = $name;
+            $mnp->type = $type;
             $this->midgardPropertyNodes[$name][] = $mnp;
             $property = new Property ($this, $name, $this->midgardPropertyNodes[$name]);
             $this->properties[$name] = $property;
@@ -495,7 +496,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         if (!isset($this->properties[$relPath]))
         {
             $this->populateProperties();
-            if (!isset($this->properties[$relPath]))
+            if (empty($this->properties) || !array_key_exists($relPath, $this->properties))
             {
                 throw new \PHPCR\PathNotFoundException("Property at path '{$relPath}' not found at node " . $this->getName() . " at path " . $this->getPath());
             }

@@ -116,6 +116,11 @@ class DoubleValue extends Value
 
 }
 
+class BooleanValue extends Value
+{
+
+}
+
 class ValueFactory
 {
     public static function transformValue($value, $srcType, $dstType)
@@ -143,6 +148,10 @@ class ValueFactory
 
             case \PHPCR\PropertyType::DATE:
                 $valueClass = 'DateValue';
+                break;
+
+            case \PHPCR\PropertyType::BOOLEAN:
+                $valueClass = 'BooleanValue';
                 break;
 
         }
