@@ -205,6 +205,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
                 }
                 $i++;
             }
+            $this->contentObject->multiple = true;
         }
         else 
         {
@@ -606,9 +607,9 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return false;
         }
 
-        if ($this->nodeProperty)
+        if ($this->contentObject)
         {
-            return $this->nodeProperty->multiple;
+            return $this->contentObject->multiple;
         }
     }
 
