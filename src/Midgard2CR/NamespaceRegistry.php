@@ -6,6 +6,7 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
     protected $session = null;
     protected $registry = null;
     protected $namespaceObjects = null;
+    protected $manager = null;
 
     const MGD_PREFIX_MGD = 'mgd';
     const MGD_NAMESPACE_MGD = 'http://www.midgard-project.org/repligard/1.4';
@@ -143,7 +144,11 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
 
     public function getNamespaceManager()
     {
-        return new \Midgard2CR\NamespaceManager($this);
+        if ($this->manager == null)
+        {
+            $this->manager = new \Midgard2CR\NamespaceManager($this);
+        }
+        return $this->manager;
     }
 }
 
