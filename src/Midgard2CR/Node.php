@@ -155,7 +155,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
-    
+
     public function setProperty($name, $value, $type = null)
     {
         if ($value == null)
@@ -185,8 +185,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $mnp = new \midgard_node_property();
             $mnp->title = $name;
             $mnp->type = $type;
-            $this->midgardPropertyNodes[$name][] = $mnp;
-            $property = new Property ($this, $name, $this->midgardPropertyNodes[$name]);
+            $this->setMidgardPropertyNode($name, $mnp);
+            $property = new Property ($this, $name);
             $this->properties[$name] = $property;
         }
         $property->setValue ($value, $type);
@@ -196,6 +196,21 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $this->is_modified = true;
 
         return $property;
+    }
+
+    public function setMidgardPropertyNode($name, \midgard_node_property $property)
+    {
+        $this->midgardPropertyNodes[$name][] = $property;
+    }
+
+    public function getMidgardPropertyNodes($name = null)
+    {
+        if ($name != null)
+        {
+            return $this->midgardPropertyNodes[$name];
+        }
+
+        return $this->midgardPropertyNodes;
     }
 
     private function populateChildren()
@@ -509,7 +524,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 $midgardPropertyNodes = $this->midgardPropertyNodes[$relPath];
             }
-            $this->properties[$relPath] = new Property($this, $relPath, $midgardPropertyNodes);
+            $this->properties[$relPath] = new Property($this, $relPath);
         }
 
         return $this->properties[$relPath];
@@ -1107,7 +1122,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
 
         $this->is_modified = false;
-        $this->is_new = false;
+        $this->is_new = false; 
 
         if (empty($this->properties))
         {
@@ -1180,9 +1195,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         {
             return;
         } 
-        unset($this->properties[$name]);
         $this->is_modified = true;
         $this->removeProperties[] = $this->midgardPropertyNodes[$name];
+        unset($this->properties[$name]);
         return;
     }
 
