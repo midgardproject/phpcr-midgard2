@@ -97,6 +97,11 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             return \PHPCR\PropertyType::STRING;
         }
 
+        if (is_bool($value))
+        {
+            return \PHPCR\PropertyType::BOOLEAN;
+        }
+
         if (is_array($value))
         {
             return self::determineType($value[0]);
@@ -127,10 +132,45 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         }
     }
 
+    public function validateValue($value, $type)
+    {
+        if ($type == \PHPCR\PropertyType::PATH)
+        {
+            if (strpos($value, ' ') !== false)
+            {
+                throw new \PHPCR\ValueFormatException("Invalid empty element in path");
+            }
+        }
+
+        if ($type == \PHPCR\PropertyType::URI)
+        {
+            if (strpos($value, '\\') !== false)
+            {
+                throw new \PHPCR\ValueFormatException("Invalid '\' URI character");
+            }
+        }
+
+        if ($type == \PHPCR\PropertyType::NAME)
+        {
+            if (strpos($value, ':') !== false)
+            {
+                $nsregistry = $this->parent->getSession()->getWorkspace()->getNamespaceRegistry();
+                $nsmanager = $nsregistry->getNamespaceManager();
+                if (!$nsmanager->getPrefix($value))
+                {
+                    throw new \PHPCR\ValueFormatException("Invalid '\' URI character");
+                }
+            }
+        }
+
+    }
+
     public function setValue($value, $type = null, $weak = FALSE)
     { 
+        /* \PHPCR\ValueFormatException */
+        $this->validateValue($value, $type);
+
         /* TODO, handle:
-         * \PHPCR\ValueFormatException
          * \PHPCR\Version\VersionException 
          * \PHPCR\Lock\LockException
          * \PHPCR\ConstraintViolationException
@@ -580,7 +620,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
     public function getType()
     {
-        if ($this->type > 0)
+        if ($this->type > \PHPCR\PropertyType::UNDEFINED)
         {
             return (int)$this->type;
         }
