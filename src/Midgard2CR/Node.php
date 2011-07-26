@@ -222,6 +222,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         if ($name != null)
         {
+            if (!array_key_exists($name, $this->midgardPropertyNodes))
+            {
+                return null;
+            }
             return $this->midgardPropertyNodes[$name];
         }
 
@@ -1236,7 +1240,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             }
             foreach ($values as $mixin)
             {
-                if ($mixin == 'mix:referencable')
+                if ($mixin == 'mix:referenceable')
                 {
                     return true;
                 }
