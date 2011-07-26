@@ -343,8 +343,18 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         }
 
         $ret = array();
-        $pNodes = $this->parent->getMidgardPropertyNodes($this->getName());
-        $attachments = $pNodes[0] ? $pNodes[0]->list_attachments() : array();
+        $pNodes = $this->getMidgardPropertyNodes();
+        if (empty($pNodes))
+        {
+            return null;
+        }
+
+        $attachments = array();
+        foreach ($pNodes as $prop)
+        {
+            $attachments = array_merge($attachments, $prop->list_attachments());
+        }
+
         if (empty($attachments))
         {
             if(empty($pNodes))
