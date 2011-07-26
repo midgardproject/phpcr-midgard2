@@ -198,7 +198,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
             if ($type == null)
             {
-                $type = 'Reference';
+                $type = \PHPCR\PropertyType::REFERENCE;
             }
 
             $new_value = $value->getProperty('jcr:uuid')->getString();
@@ -383,7 +383,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             || $type == \PHPCR\PropertyType::BINARY
             || $type == \PHPCR\PropertyType::DECIMAL
             || $type == \PHPCR\PropertyType::REFERENCE
-            || $type == \PHPCR\PropertyType::DOUBLE)
+            || $type == \PHPCR\PropertyType::WEAKREFERENCE)
         {
             throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to LONG."); 
         } 
