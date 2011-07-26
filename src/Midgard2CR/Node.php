@@ -220,6 +220,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function getMidgardPropertyNodes($name = null)
     {
+        if (empty($this->midgardPropertyNodes))
+        {
+            return null;
+        }
         if ($name != null)
         {
             if (!array_key_exists($name, $this->midgardPropertyNodes))
