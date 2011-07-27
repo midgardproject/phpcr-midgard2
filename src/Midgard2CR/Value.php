@@ -87,6 +87,11 @@ class DateValue extends Value
         }
         else
         {
+            if (is_integer($value))
+            {
+                $value = date('c', $value);
+            }
+
             $date = new \DateTime($value);
         }
 
