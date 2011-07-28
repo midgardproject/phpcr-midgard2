@@ -410,7 +410,10 @@ class Session implements \PHPCR\SessionInterface
     
     public function exportSystemView($absPath, $out, $skipBinary, $noRecurse)
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        $node = $this->getNode($absPath);
+        $exporter = new XMLSystemViewExporter($node, $skipBinary, $noRecurse);
+
+        fwrite($out, $exporter->getXMLBuffer());
     }
     
     public function exportDocumentView($absPath, $out, $skipBinary, $noRecurse)
