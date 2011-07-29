@@ -102,9 +102,14 @@ class XMLSystemViewExporter extends XMLExporter
         }
     }
 
+    protected function createNodeElement()
+    {
+        return $this->xmlDoc->createElementNS($this->svUri, $this->svNS . ":" . 'node');
+    }
+
     public function serializeNode(Node $node, \DOMNode $xmlNode = null, $skipBinary, $noRecurse)
     {
-        $this->xmlNode = $this->xmlDoc->createElementNS($this->svUri, $this->svNS . ":" . 'node');
+        $this->xmlNode = self::createNodeElement();
         if (!$xmlNode)
         {
             $this->xmlDoc->appendChild($this->xmlNode);
@@ -133,16 +138,12 @@ class XMLSystemViewExporter extends XMLExporter
         if (empty($nodes))
         {
             return;
-        }    
+        }   
+
         foreach ($nodes as $name => $child)
         {
             $this->serializeNode($child, $this->xmlNode, $skipBinary, $noRecurse);
         }
-    }
-
-    public function serializeGraph(Node $node, $skipBinary)
-    {
-        $this->serializeNode($node, $skipBinary, true);
     }
 }
 
