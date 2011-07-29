@@ -592,9 +592,19 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     {
         if (!class_exists('\midgard_reflector_property'))
         {
-            return null;
+            try 
+            {
+                $mrp = new \midgard_reflection_property(get_class($this->parent->getMidgard2ContentObject()));
+            }
+            catch (\midgard_error_exception $e)
+            {
+                throw new \Exception (get_class($this->parent->getMidgard2ContentObject()) . " not registered as MidgardObject derived one"); 
+            }
         }
-        $mrp = new \midgard_reflector_property (get_class($this->contentObject));
+        else 
+        {
+            $mrp = new \midgard_reflector_property (get_class($this->contentObject));
+        }
         $type = $mrp->get_midgard_type ($this->midgardPropertyName);
 
         $type_id = 0;
@@ -603,6 +613,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             case \MGD_TYPE_STRING:
             case \MGD_TYPE_LONGTEXT:
+            case \MGD_TYPE_GUID:
                 $type_id = \PHPCR\PropertyType::STRING;
                 break;
 
@@ -624,23 +635,24 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
                 break;
         }
 
+        /* Try schema value */
+        $type = $mrp->get_user_value($this->midgardPropertyName, 'RequiredType');
+        if ($type != '' || $type != null)
+        {
+            $type_id = \PHPCR\PropertyType::valueFromName($type);
+        }
+
         $this->type = $type_id;
         return $this->type;
     }
 
     public function getType()
     {
-        if ($this->type > \PHPCR\PropertyType::UNDEFINED)
-        {
-            return (int)$this->type;
-        }
-
         if ($this->isMidgardProperty == true)
-        {
+        { 
             return $this->getMGDType();
         }
-
-
+ 
         $pNodes = $this->getMidgardPropertyNodes(); 
         if (!empty($pNodes))
         {
