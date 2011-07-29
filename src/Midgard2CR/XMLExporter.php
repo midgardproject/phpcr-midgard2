@@ -23,6 +23,43 @@ abstract class XMLExporter
 
     }
 
+    protected function sortProperties(Node $node)
+    {
+        $ret = array();
+        $properties = $node->getProperties();
+        if (empty($properties))
+        {
+            return $ret;
+        }
+
+        $ret[0] = ' ';
+        $ret[1] = ' ';
+
+        $hasMixin = false;
+        foreach ($properties as $name => $property)
+        {
+            if ($name == 'jcr:primaryType')
+            {
+                $ret[0] = $property;
+            }
+            else if ($name == 'mix:mixinTypes')
+            {
+                $ret[1] = $property;
+                $hasMixin = true;
+            }
+            else
+            {
+                $ret[] = $property;
+            }
+        }
+        
+        if (!$hasMixin)
+        {
+            unset($ret[1]);
+        }
+        return $ret;
+    }
+
     protected function addNamespaceAttribute($name)
     {
         if (!$this->xmlRootNode)
