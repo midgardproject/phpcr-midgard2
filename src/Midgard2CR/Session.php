@@ -418,7 +418,10 @@ class Session implements \PHPCR\SessionInterface
     
     public function exportDocumentView($absPath, $out, $skipBinary, $noRecurse)
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        $node = $this->getNode($absPath);
+        $exporter = new XMLDocumentViewExporter($node, $skipBinary, $noRecurse);
+
+        fwrite($out, $exporter->getXMLBuffer());
     }
     
     public function setNamespacePrefix($prefix, $uri)
