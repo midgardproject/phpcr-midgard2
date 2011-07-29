@@ -11,71 +11,176 @@ class XMLSystemViewExporter extends XMLExporter
         $this->xmlDoc->formatOutput = true;
         $this->node = $node;
 
-        $nsRegistry = $this->session->getWorkspace()->getNamespaceRegistry();
-        $prefixes = $nsRegistry->getPrefixes();
+        $this->nsRegistry = $this->session->getWorkspace()->getNamespaceRegistry();
+        $prefixes = $this->nsRegistry->getPrefixes();
 
-        $svUri = $nsRegistry->getUri($this->svNS);
+        $svUri = $this->nsRegistry->getUri($this->svNS);
         $this->svUri = $svUri;
 
-        $this->serializeNode($node, $skipBinary);
+        $this->serializeNode($node, null, $skipBinary, $noRecurse);
+    }
+
+    private function addValue(\DOMNode $pNode, $value)
+    {
+        $pValue = $this->xmlDoc->createElementNS($this->svUri, $this->svNS . ":" . 'value', $value);
+        $pNode->appendChild($pValue);
+    }
+
+    private function sortProperties(Node $node)
+    {
+        $ret = array();
+        $properties = $node->getProperties();
+        if (empty($properties))
+        {
+            return $ret;
+        }
+
+        $ret[0] = ' ';
+        $ret[1] = ' ';
+
+        $hasMixin = false;
+        foreach ($properties as $name => $property)
+        {
+            if ($name == 'jcr:primaryType')
+            {
+                $ret[0] = $property;
+            }
+            else if ($name == 'mix:mixinTypes')
+            {
+                $ret[1] = $property;
+                $hasMixin = true;
+            }
+            else 
+            {
+                $ret[] = $property;
+            }
+        }
+
+        if (!$hasMixin)
+        {
+            unset($ret[1]);
+        }
+
+        return $ret;
     }
 
     public function serializeProperties(Node $node, \DOMNode $xmlNode, $skipBinary)
     {
-        $properties = $node->getProperties();
+        $properties = self::sortProperties($node);
         if (empty($properties))
         {
             return;
         }
-        foreach ($properties as $name => $property)
+        foreach ($properties as $property)
         {
             /* Create property node */
             $pNode = $this->xmlDoc->createElementNS($this->svUri, $this->svNS . ":" . 'property');
             
             /* Add name attribute */
             $nodeAttr = $this->xmlDoc->createAttributeNS($this->svUri, $this->svNS . ":" . 'name');
-            $nodeAttr->value = $property->getName();
+            $propertyName = $property->getName();
+            $nodeAttr->value = $propertyName;
             $pNode->appendChild($nodeAttr);
+
+            $this->addNamespaceAttribute($propertyName);
 
             /* Add type attribute */
             $nodeAttr = $this->xmlDoc->createAttributeNS($this->svUri, $this->svNS . ":" . 'type');
             $nodeAttr->value = \PHPCR\PropertyType::nameFromValue($property->getType());
             $pNode->appendChild($nodeAttr);
 
-            /* Add multiple attribute */
+            /* Add multiple flag attribute */
             if ($property->isMultiple())
             {
                 $nodeAttr = $this->xmlDoc->createAttributeNS($this->svUri, $this->svNS . ":" . 'multiple');
                 $nodeAttr->value = 'true';
                 $pNode->appendChild($nodeAttr);
+
+                $values = $property->getString();
+                /* FIXME, optimize binary values if skipBinary flag is true */
+                foreach ($values as $v)
+                {
+                    if ($property->getType() == \PHPCR\PropertyType::BINARY)
+                    {
+                        if ($skipBinary)
+                        {
+                            $this->addValue($pNode, '');
+                        }
+                        else 
+                        {
+                            $this->addValue($pNode, base64_encode(base64_encode($v)));
+                        }
+                    }
+                    else
+                    {
+                        $this->addValue($pNode, $v);
+                    }
+                }
+            }
+            else 
+            {
+                if ($property->getType() == \PHPCR\PropertyType::BINARY)
+                {
+                    if ($skipBinary)
+                    {
+                        $this->addValue($pNode, '');
+                    }
+                    else 
+                    {
+                        $this->addValue($pNode, base64_encode($property->getString()));
+                    }
+                }
+                else
+                { 
+                    $this->addValue($pNode, $property->getString()); 
+                }
             }
 
-            /* Create value node*/
-            if ($property->getType() == \PHPCR\PropertyType::BINARY)
-            {
-                $pValue = $this->xmlDoc->createElementNS($this->svUri, $this->svNS . ":" . 'value', $skpiBinary ? '' : $property->getString());
-            }
-            $pValue = $this->xmlDoc->createElementNS($this->svUri, $this->svNS . ":" . 'value', $property->getString());
-            $pNode->appendChild($pValue);
             $xmlNode->appendChild($pNode);
         }
     }
 
-    public function serializeNode(Node $node, $skipBinary)
+    public function serializeNode(Node $node, \DOMNode $xmlNode = null, $skipBinary, $noRecurse)
     {
         $this->xmlNode = $this->xmlDoc->createElementNS($this->svUri, $this->svNS . ":" . 'node');
-        $this->xmlDoc->appendChild($this->xmlNode);
+        if (!$xmlNode)
+        {
+            $this->xmlDoc->appendChild($this->xmlNode);
+            $this->xmlRootNode = $this->xmlNode;
+        }
+        else 
+        {
+            $xmlNode->appendChild($this->xmlNode);
+        }
 
         $nodeAttr = $this->xmlDoc->createAttributeNS($this->svUri, $this->svNS . ":" . 'name');
-        $nodeAttr->value = $node->getName();
+        $nodeName = $node->getName();
+        $nodeAttr->value = $nodeName;
 
         $this->xmlNode->appendChild($nodeAttr);
         $this->serializeProperties($node, $this->xmlNode, $skipBinary);
+
+        $this->addNamespaceAttribute($nodeName);    
+
+        if ($noRecurse)
+        {
+            return;
+        }
+
+        $nodes = $node->getNodes();
+        if (empty($nodes))
+        {
+            return;
+        }    
+        foreach ($nodes as $name => $child)
+        {
+            $this->serializeNode($child, $this->xmlNode, $skipBinary, $noRecurse);
+        }
     }
 
-    public function serializeGraph()
+    public function serializeGraph(Node $node, $skipBinary)
     {
-
+        $this->serializeNode($node, $skipBinary, true);
     }
 }
 
