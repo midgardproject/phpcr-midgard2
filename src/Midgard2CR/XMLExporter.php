@@ -97,9 +97,9 @@ abstract class XMLExporter
         return $this->xmlDoc->saveXML();
     }
 
-    public function serializeGraph()
+    public function serializeGraph(Node $node, $skipBinary)
     {
-
+        $this->serializeNode($node, $skipBinary, true);
     }
 }
 
