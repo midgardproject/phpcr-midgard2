@@ -4,7 +4,7 @@ require_once('Midgard2XMLImporter.php');
 /**
  * Handles basic importing and exporting of fixtures into Midgard2
  */
-class Midgard2ImportExport implements phpcrApiTestSuiteImportExportFixtureInterface
+class Midgard2ImportExport implements PHPCR\Test\FixtureLoaderInterface
 {
     protected $fixturePath;
 
