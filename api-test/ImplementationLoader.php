@@ -148,28 +148,6 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         $factory = new Midgard2CR\RepositoryFactory();
         return $factory->getRepository();
     }
-
-    public function getSession($credentials = false)
-    {
-        $repository = $this->getRepository();
-        //return $repository->login($credentials);
-
-        /*if (isset($config['pass']) || isset($credentials)) {
-            if (empty($config['workspace'])) {
-                $config['workspace'] = null;
-            }
-            if (empty($credentials)) {
-                $credentials = $this->getCredentials($config['user'], $config['pass']);
-            }
-            return $repository->login($credentials, $config['workspace']);
-        } elseif (isset($config['workspace'])) {
-            throw new \PHPCR\RepositoryException("Not supported login");
-            //return $repository->login(null, $config['workspace']);
-        } else {
-            throw new \PHPCR\RepositoryException("Not supported login");
-            return $repository->login(null, null);
-        }*/
-    }
 }
 
 ?>
