@@ -48,11 +48,6 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     public function execute()
     {
         $this->qs->execute();
-        if ($this->qs->resultscount == 0)
-        {
-            /* return null or throw exception (which one) ? */
-            return null;
-        }
         return new QueryResult($this->qs, $this->session);
     }
 
