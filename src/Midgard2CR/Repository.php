@@ -5,13 +5,16 @@ class Repository implements \PHPCR\RepositoryInterface
 {    
     public function login(\PHPCR\CredentialsInterface $credentials = null, $workspaceName = null)
     {
+        $connection = $this->midgard2Connect();
+        $user = $this->midgard2Login($credentials);
+        $rootObject = $this->getRootObject($workspaceName);
+
         if (   $credentials instanceof \PHPCR\GuestCredentials
             || is_null($credentials))
         {
             // Anonymous session
-            return new Session($this);
+            return new Session($connection, $this, $user, $rootObject);
         }
-        $connection = $this->midgard2Connect();
 
         /* Create workspace if it doesn't exist and such has been requested */
         if ($workspaceName != null && (version_compare(mgd_version(), '10.05.4', '>')))
@@ -32,8 +35,6 @@ class Repository implements \PHPCR\RepositoryInterface
             $connection->set_workspace($ws);
         }
 
-        $user = $this->midgard2Login($credentials);
-        $rootObject = $this->getRootObject($workspaceName);
         
         return new Session($connection, $this, $user, $rootObject);
     }

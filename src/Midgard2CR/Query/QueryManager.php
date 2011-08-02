@@ -5,15 +5,30 @@ class QueryManager implements \PHPCR\Query\QueryManagerInterface
 {
     protected $qb = null;
     protected $session = null;
+    protected $query = null;
+    protected $supportedLanguages = null;
 
-    public function QueryManager (\MidgardCR2\Session $session)
+    public function __construct (\Midgard2CR\Session $session)
     {
         $this->session = $session;
+        $this->supportedLanguages = array (
+            \PHPCR\Query\QueryInterface::JCR_SQL2,
+            \PHPCR\Query\QueryInterface::JCR_JQOM
+        );
     }
 
     public function createQuery($statement, $language)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        if ($language != \PHPCR\Query\QueryInterface::JCR_SQL2)
+        {
+            throw new \PHPCR\Query\InvalidQueryException("Unsupported '{$language}' language");
+        }
+
+        if ($this->query == null)
+        {
+            $this->query = new SQLQuery($this->session, $statement);
+        }
+        return $this->query;
     }
 
     public function getQOMFactory()
@@ -28,7 +43,7 @@ class QueryManager implements \PHPCR\Query\QueryManagerInterface
 
     public function getSupportedQueryLanguages()
     {
-        return array ("SQL");
+        return $this->supportedLanguages;
     }
 }
 ?>
