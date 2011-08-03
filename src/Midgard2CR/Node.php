@@ -18,8 +18,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $this->parent = $parent;
         if ($parent == null)
         {
-            $this->isRoot = true;
-            $this->contentObject = $midgardNode;
+            if ($midgardNode->guid
+                && $midgardNode->parent == 0)
+            {
+                $this->isRoot = true;
+                $this->contentObject = $midgardNode;
+            }
         }
         $this->midgardNode = $midgardNode;
         $this->session = $session;
