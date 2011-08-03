@@ -2,7 +2,16 @@
 class ImplementationLoader extends \PHPCR\Test\AbstractLoader
 {
     protected $unsupportedChapters = array(
-        'Versioning'
+        'Versioning',
+        'Transactions',
+    );
+
+    protected $unsupportedCases = array(
+        // FIXME: This causes exit(1)
+        'Writing\\NodeTypeAssignementTest',
+    );
+
+    protected $unsupportedTests = array(
     );
 
     public static function getInstance()   
@@ -149,5 +158,10 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     {
         $mgd = self::getMidgardConnection();
         return Midgard2CR\RepositoryFactory::getRepository();
+    }
+
+    public function getImpersonateCredentials()
+    {
+        return new \PHPCR\SimpleCredentials('admin', 'password');
     }
 }

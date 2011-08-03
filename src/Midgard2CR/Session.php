@@ -75,7 +75,7 @@ class Session implements \PHPCR\SessionInterface
     
     public function impersonate(\PHPCR\CredentialsInterface $credentials)
     {
-        return new Session($this->repository);
+        throw new \PHPCR\LoginException('Not supported'); 
     }
     
     public function getNodeByIdentifier($id)

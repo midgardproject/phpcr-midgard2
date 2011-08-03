@@ -60,6 +60,12 @@ class Repository implements \PHPCR\RepositoryInterface
     
     private function midgard2Login($credentials)
     {
+        if (   !method_exists($credentials, 'getUserID')
+            || !method_exists($credentials, 'getPassword'))
+        {
+            throw new \PHPCR\LoginException("Invalid credentials");
+        }
+
         // TODO: Handle different authtypes
         $tokens = array
         (
