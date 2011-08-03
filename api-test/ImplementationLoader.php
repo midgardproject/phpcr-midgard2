@@ -133,12 +133,12 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
 
     public function getInvalidCredentials()
     {
-
+        return new \PHPCR\SimpleCredentials('foo', 'bar');
     }
 
     public function getRestrictedCredentials()
     {
-
+        return new \PHPCR\SimpleCredentials('admin', 'password');
     }
 
     public function getUserId()
@@ -156,10 +156,5 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     {
         $mgd = self::getMidgardConnection();
         return Midgard2CR\RepositoryFactory::getRepository();
-    }
-
-    public function getImpersonateCredentials()
-    {
-        return new \PHPCR\SimpleCredentials('admin', 'password');
     }
 }
