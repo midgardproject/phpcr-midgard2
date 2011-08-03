@@ -7,8 +7,6 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     );
 
     protected $unsupportedCases = array(
-        // FIXME: This causes exit(1)
-        'Writing\\NodeTypeAssignementTest',
     );
 
     protected $unsupportedTests = array(
