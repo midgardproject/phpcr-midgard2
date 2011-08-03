@@ -8,7 +8,7 @@ class Repository implements \PHPCR\RepositoryInterface
         'jcr.repository.name' => 'midgard2cr',
         'jcr.repository.vendor' => 'The Midgard Project',
         'jcr.repository.vendor.url' => 'http://www.midgard-project.org',
-        'jcr.repository.version' => '0.0.1',
+        'jcr.repository.version' => '',
         'jcr.specification.name' => false,
         'level.1.supported' => true,
         'level.2.supported' => true,
@@ -42,7 +42,7 @@ class Repository implements \PHPCR\RepositoryInterface
         'option.update.mixin.node.types.supported' => true,
         'option.update.primary.node.type.supported' => true,
         'option.versioning.supported' => false,
-        'option.workspace.management.supported' => true,
+        'option.workspace.management.supported' => false,
         'option.xml.export.supported' => false,
         'option.xml.import.supported' => false,
         'query.full.text.search.supported' => false,
@@ -54,43 +54,41 @@ class Repository implements \PHPCR\RepositoryInterface
         'write.supported' => true,
     );
 
+    protected $connection = null;
+
+    public function __construct(array $parameters = null)
+    {
+        $this->connection = $this->midgard2Connect($parameters);
+
+        $this->descriptors['jcr.repository.version'] = mgd_version();
+
+        if (version_compare(mgd_version(), '10.05.4', '>'))
+        {
+            $this->descriptors['option.workspace.management.supported'] = true; 
+        }
+    }
+
     public function login(\PHPCR\CredentialsInterface $credentials = null, $workspaceName = null)
     {
-        $connection = $this->midgard2Connect();
         $user = $this->midgard2Login($credentials);
-        $rootObject = $this->getRootObject($workspaceName);
+        $rootObject = $this->getRootObject();
+
+        if ($workspaceName != null)
+        {
+            $this->setMidgard2Workspace($workspaceName);
+        }
 
         if (   $credentials instanceof \PHPCR\GuestCredentials
             || is_null($credentials))
         {
             // Anonymous session
-            return new Session($connection, $this, $user, $rootObject);
+            return new Session($this->connection, $this, $user, $rootObject);
         }
-
-        /* Create workspace if it doesn't exist and such has been requested */
-        if ($workspaceName != null && (version_compare(mgd_version(), '10.05.4', '>')))
-        {
-            $ws = new \midgard_workspace();
-            $wmanager = new \midgard_workspace_manager($connection);
-            if ($wmanager->path_exists($workspaceName) == false)
-            {
-                $ws->name = $workspaceName;
-                $wmanager->create_workspace($ws, "");
-            }
-            else 
-            {
-                $wmanager->get_workspace_by_path($ws, $workspaceName);   
-            }
-
-            $connection->enable_workspace(true);
-            $connection->set_workspace($ws);
-        }
-
         
-        return new Session($connection, $this, $user, $rootObject);
+        return new Session($this->connection, $this, $user, $rootObject);
     }
     
-    private function midgard2Connect()
+    private function midgard2Connect(array $parameters = null)
     {
         $mgd = \midgard_connection::get_instance();
         if ($mgd->is_connected())
@@ -98,9 +96,13 @@ class Repository implements \PHPCR\RepositoryInterface
             return $mgd;
         }
 
-        $filepath = ini_get('midgard.configuration_file');
+        if (!isset($parameters['midgard2.configuration.file']))
+        {
+            throw new \PHPCR\RepositoryException("No midgard2.configuration.file set and no initialize Midgard2 connection available");
+        }
+
         $config = new \midgard_config();
-        $config->read_file_at_path($filepath);
+        $config->read_file_at_path($parameters['midgard2.configuration.file']);
         $mgd = \midgard_connection::get_instance();
         if (!$mgd->open_config($config))
         {
@@ -138,13 +140,39 @@ class Repository implements \PHPCR\RepositoryInterface
         
         return $user;
     }
+
+    /** 
+     * Create workspace if it doesn't exist and such has been requested
+     */
+    private function setMidgard2Workspace($workspaceName)
+    {
+        if (!$this->descriptors['option.workspace.management.supported'])
+        {
+            return;
+        }
+
+        $ws = new \midgard_workspace();
+        $wmanager = new \midgard_workspace_manager($this->connection);
+        if ($wmanager->path_exists($workspaceName) == false)
+        {
+            $ws->name = $workspaceName;
+            $wmanager->create_workspace($ws, "");
+        }
+        else 
+        {
+            $wmanager->get_workspace_by_path($ws, $workspaceName);   
+        }
+
+        $this->connection->enable_workspace(true);
+        $this->connection->set_workspace($ws);
+    }
     
-    private function getRootObject($workspacename)
+    private function getRootObject()
     {
         $rootnodes = $this->getRootNodes();
         if (empty($rootnodes))
         {
-            throw new \PHPCR\NoSuchWorkspaceException('No workspaces defined');
+            throw new \PHPCR\NoSuchWorkspaceException('No root nodes defined');
         }
         return $rootnodes[0];
     }
