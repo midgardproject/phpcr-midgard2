@@ -16,7 +16,23 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
 
     public function getColumnNames()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        $ret = array();
+        foreach ($this->selectors as $name)
+        {
+            $midgardType = \MidgardNodeMapper::getMidgardName($name);
+            $o = new $midgardType;
+            foreach ($o as $k => $v)
+            {
+                if (strpos($k, '-') !== false)
+                {
+                    $ret[] = $name . "." . \MidgardNodeMapper::getPHPCRProperty($k);
+                }
+            }
+            $ret[] = 'jcr:path';
+            $ret[] = 'jcr:score'; 
+        }
+
+        return $ret;
     }
 
     public function getNodes($prefetch = false)
@@ -44,7 +60,7 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
 
     public function getIterator()
     {
-        return $this->getNodes();
+        return $this->getRows();
     }
 }
 
