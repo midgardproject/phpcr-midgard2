@@ -38,8 +38,8 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         self::prepareMidgardTestDir('var');
         self::prepareMidgardTestDir('cache');
 
-        exec("cp -r Midgard2/share/* /tmp/Midgard2CR/share");
-        exec("cp Midgard2/midgard2.conf /tmp/Midgard2CR/midgard2.conf");
+        exec("cp -r " . __DIR__ ."/../share/* /tmp/Midgard2CR/share");
+        exec("cp " . __DIR__ . "/Midgard2/midgard2.conf /tmp/Midgard2CR/midgard2.conf");
     
         $config = new \midgard_config();
         $config->read_file_at_path("/tmp/Midgard2CR/midgard2.conf");
