@@ -18,8 +18,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $this->parent = $parent;
         if ($parent == null)
         {
-            $this->isRoot = true;
-            $this->contentObject = $midgardNode;
+            if ($midgardNode->guid
+                && $midgardNode->parent == 0)
+            {
+                $this->isRoot = true;
+                $this->contentObject = $midgardNode;
+            }
         }
         $this->midgardNode = $midgardNode;
         $this->session = $session;
@@ -45,6 +49,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         {
             $this->setProperty('jcr:created',  new \DateTime('now'), \PHPCR\PropertyType::DATE);
         }
+    }
+
+    protected function populateParent()
+    {
+        if ($this->isRoot)
+        {
+            return;
+        }
+
+        $parentMidgardNode = new \midgard_node($this->getMidgard2Node()->parent);
+        $this->parent = new Node($parentMidgardNode, null, $this->getSession());
     }
 
     private function appendNode($relPath, $primaryNodeTypeName = null)
@@ -1118,7 +1133,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 foreach ($properties as $mnp)
                 {
                     $mnp->purge();
-                    Repository::checkMidgard2Exception();
+                    Repository::checkMidgard2Exception($mnp);
                 }
             }
         }
@@ -1205,7 +1220,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 foreach ($properties as $mnp)
                 {
                     $mnp->purge();
-                    Repository::checkMidgard2Exception();
+                    Repository::checkMidgard2Exception($mnp);
                 }
             }
         }

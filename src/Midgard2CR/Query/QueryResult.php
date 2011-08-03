@@ -5,27 +5,47 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
 {
     protected $qs;
     protected $session;
+    protected $selectors;
 
-    public function __construct(\midgard_query_select $qs, \Midgard2CR\Session $session)
+    public function __construct(array $selectors, \midgard_query_select $qs, \Midgard2CR\Session $session)
     {
         $this->qs = $qs;
         $this->session = $session;
+        $this->selectors = $selectors;
     }
 
     public function getColumnNames()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        $ret = array();
+        foreach ($this->selectors as $name)
+        {
+            $midgardType = \MidgardNodeMapper::getMidgardName($name);
+            $o = new $midgardType;
+            foreach ($o as $k => $v)
+            {
+                if (strpos($k, '-') !== false)
+                {
+                    $ret[] = $name . "." . \MidgardNodeMapper::getPHPCRProperty($k);
+                }
+            }
+            $ret[] = 'jcr:path';
+            $ret[] = 'jcr:score'; 
+        }
+
+        return $ret;
     }
 
     public function getNodes($prefetch = false)
     {
-        $ret = $this->qs->list_objects();
-        foreach ($ret as $object)
+        $objects = $this->qs->list_objects();
+        $ret = array();
+        foreach ($objects as $midgardNode)
         {
-            /* TODO */
+            $node = new \Midgard2CR\Node($midgardNode, null, $this->session);
+            $ret[$node->getPath()] = $node;
         }
 
-        return new \ArrayIterator(array());
+        return new \ArrayIterator($ret);
     }
 
     public function getRows()
@@ -35,12 +55,12 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
 
     public function getSelectorNames()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return $this->selectors;
     }
 
     public function getIterator()
     {
-        return $this->getNodes();
+        return $this->getRows();
     }
 }
 
