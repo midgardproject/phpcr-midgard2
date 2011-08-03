@@ -18,7 +18,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $this->parent = $parent;
         if ($parent == null)
         {
-            if ($midgardNode->guid
+            if (   $midgardNode->guid
                 && $midgardNode->parent == 0)
             {
                 $this->isRoot = true;
@@ -34,8 +34,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         $guid = $midgardNode->objectguid;
         /* FIXME, set proper type name */
-        if ($midgardNode->typename == null
-            || $midgardNode->typename == '')
+        if (!$midgardNode->typename)
         {
             $midgardNode->typename = 'nt_folder';
         }
@@ -795,8 +794,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             }
         }
 
-        if (!class_exists($this->midgardNode->typename)) {
-            throw new \PHPCR\RepositoryException("Class '{$this->midgardNode->typename}' not available");
+        if (!$this->midgardNode->typename)
+        {
+            $this->midgardNode->typename = 'nt_unstructured';
         }
 
         /* Unfortunatelly, we must initialize new midgard object and reflection object.
@@ -1147,6 +1147,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 $midgardNode->objectguid = $mobject->guid;
 
                 $parentNode = $this->parent->getMidgard2Node();
+                if (!$parentNode->id)
+                {
+                    // Refresh from DB in case reference has been lost
+                    $parentNode = new \midgard_node($parentNode->guid);
+                }
                 $midgardNode->parentguid = $parentNode->guid;
                 $midgardNode->parent = $parentNode->id;
                 $midgardNode->create();
