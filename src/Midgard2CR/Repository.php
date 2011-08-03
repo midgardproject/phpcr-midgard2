@@ -2,7 +2,58 @@
 namespace Midgard2CR;
 
 class Repository implements \PHPCR\RepositoryInterface
-{    
+{
+    protected $descriptors = array(
+        'identifier.stability' => \PHPCR\RepositoryInterface::IDENTIFIER_STABILITY_INDEFINITE_DURATION,
+        'jcr.repository.name' => 'midgard2cr',
+        'jcr.repository.vendor' => 'The Midgard Project',
+        'jcr.repository.vendor.url' => 'http://www.midgard-project.org',
+        'jcr.repository.version' => '0.0.1',
+        'jcr.specification.name' => false,
+        'level.1.supported' => true,
+        'level.2.supported' => true,
+        'node.type.management.autocreated.definitions.supported' => true,
+        'node.type.management.inheritance' => true,
+        'node.type.management.multiple.binary.properties.supported' => true,
+        'node.type.management.multivalued.properties.supported' => true,
+        'node.type.management.orderable.child.nodes.supported' => false,
+        'node.type.management.overrides.supported' => false,
+        'node.type.management.primary.item.name.supported' => true,
+        'node.type.management.property.types' => true,
+        'node.type.management.residual.definitions.supported' => false,
+        'node.type.management.same.name.siblings.supported' => false,
+        'node.type.management.update.in.use.suported' => false,
+        'node.type.management.value.constraints.supported' => false,
+        'option.access.control.supported' => false,
+        'option.activities.supported' => false,
+        'option.baselines.supported' => false,
+        'option.journaled.observation.supported' => false,
+        'option.lifecycle.supported' => false,
+        'option.locking.supported' => false,
+        'option.node.and.property.with.same.name.supported' => false,
+        'option.node.type.management.supported' => true,
+        'option.observation.supported' => false,
+        'option.query.sql.supported' => true,
+        'option.retention.supported' => false,
+        'option.shareable.nodes.supported' => false,
+        'option.simple.versioning.supported' => false,
+        'option.transactions.supported' => false,
+        'option.unfiled.content.supported' => false,
+        'option.update.mixin.node.types.supported' => true,
+        'option.update.primary.node.type.supported' => true,
+        'option.versioning.supported' => false,
+        'option.workspace.management.supported' => true,
+        'option.xml.export.supported' => false,
+        'option.xml.import.supported' => false,
+        'query.full.text.search.supported' => false,
+        'query.joins' => false,
+        'query.languages' => '',
+        'query.stored.queries.supported' => false,
+        'query.xpath.doc.order' => false,
+        'query.xpath.pos.index' => false,
+        'write.supported' => true,
+    );
+
     public function login(\PHPCR\CredentialsInterface $credentials = null, $workspaceName = null)
     {
         $connection = $this->midgard2Connect();
@@ -109,17 +160,19 @@ class Repository implements \PHPCR\RepositoryInterface
     
     public function getDescriptorKeys()
     {
-        return array();
+        return array_keys($this->descriptors);
     }
     
     public function isStandardDescriptor($key)
     {
-        return false;
+        $ref = new ReflectionClass('\PHPCR\RepositoryInterface');
+        $consts = $ref->getConstants();
+        return in_array($key, $consts);
     }
     
     public function getDescriptor($key)
     {
-        return '';
+        return (isset($this->descriptors[$key])) ?  $this->descriptors[$key] : null;
     }
 
     public static function checkMidgard2Exception($object = null)
