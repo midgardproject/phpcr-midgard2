@@ -29,15 +29,25 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
         try 
         {
-            $this->storageType = str_replace(array('[', ']'), '', $type);
-            $storage = new \midgard_query_storage(\MidgardNodeMapper::getMidgardName($this->storageType));
+            $this->storageType = \MidgardNodeMapper::getMidgardName(str_replace(array('[', ']'), '', $type));
         }
         catch (\midgard_error_exception $e)
         {
             throw new \PHPCR\RepositoryException("Invalid type '{$this->storageType}'. " . $e->getMessage());
         }
 
+        $storage = new \midgard_query_storage('midgard_node');
         $this->qs = new \midgard_query_select($storage);
+        if ($this->storageType != null)
+        {
+            $this->qs->set_constraint(
+                new \midgard_query_constraint(
+                    new \midgard_query_property('typename'),
+                    '=',
+                    new \midgard_query_value($this->storageType)
+                )
+            );
+        }
     } 
 
     public function bindValue($varName, $value)

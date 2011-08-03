@@ -19,13 +19,14 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
 
     public function getNodes($prefetch = false)
     {
-        $ret = $this->qs->list_objects();
-        foreach ($ret as $object)
+        $objects = $this->qs->list_objects();
+        $ret = array();
+        foreach ($objects as $midgardNode)
         {
-            /* TODO */
+            $ret[] = new \Midgard2CR\Node($midgardNode, null, $this->session);
         }
 
-        return new \ArrayIterator(array());
+        return new \ArrayIterator($ret);
     }
 
     public function getRows()
