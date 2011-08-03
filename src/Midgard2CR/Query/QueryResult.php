@@ -5,11 +5,13 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
 {
     protected $qs;
     protected $session;
+    protected $selectors;
 
-    public function __construct(\midgard_query_select $qs, \Midgard2CR\Session $session)
+    public function __construct(array $selectors, \midgard_query_select $qs, \Midgard2CR\Session $session)
     {
         $this->qs = $qs;
         $this->session = $session;
+        $this->selectors = $selectors;
     }
 
     public function getColumnNames()
@@ -37,7 +39,7 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
 
     public function getSelectorNames()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return $this->selectors;
     }
 
     public function getIterator()

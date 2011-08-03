@@ -6,6 +6,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     protected $session = null;
     protected $qs = null;
     protected $statement = null;
+    protected $selectors = array();
 
     protected $storageType = null;
     
@@ -27,14 +28,8 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
             }
         } while ($token != '');
 
-        try 
-        {
-            $this->storageType = \MidgardNodeMapper::getMidgardName(str_replace(array('[', ']'), '', $type));
-        }
-        catch (\midgard_error_exception $e)
-        {
-            throw new \PHPCR\RepositoryException("Invalid type '{$this->storageType}'. " . $e->getMessage());
-        }
+        $this->selectors[] = str_replace(array('[', ']'), '', $type);
+        $this->storageType = \MidgardNodeMapper::getMidgardName($this->selectors[0]);
 
         $storage = new \midgard_query_storage('midgard_node');
         $this->qs = new \midgard_query_select($storage);
@@ -58,7 +53,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     public function execute()
     {
         $this->qs->execute();
-        return new QueryResult($this->qs, $this->session);
+        return new QueryResult($this->selectors, $this->qs, $this->session);
     }
 
     public function getBindVariableNames()
