@@ -5,6 +5,9 @@
  *
  * The basic code comes from the PHPCR tutorial:
  * https://github.com/phpcr/phpcr/blob/master/doc/Tutorial.md 
+ *
+ * In order to run this, you'll need the 'midgard2' PHP extension
+ * installed. No other setup should be needed.
  */
 
 // Set up autoloader
