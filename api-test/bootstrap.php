@@ -1,6 +1,8 @@
 <?php
 
-dl('xdebug.so');
+if (!extension_loaded('xdebug') && ini_get('enable_dl')) {
+    dl('xdebug.so');
+}
 
 require_once(dirname(__FILE__) . '/../SplClassLoader.php');
 
