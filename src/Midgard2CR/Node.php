@@ -784,6 +784,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             }
         }
 
+        if (!class_exists($this->midgardNode->typename)) {
+            throw new \PHPCR\RepositoryException("Class '{$this->midgardNode->typename}' not available");
+        }
+
         /* Unfortunatelly, we must initialize new midgard object and reflection object.
          * There's no other way to check if class has property registered.
          * Others, (very) old PHP introspection routines check properties, in class default properties scope */

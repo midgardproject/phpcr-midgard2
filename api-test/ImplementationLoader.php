@@ -1,7 +1,10 @@
 <?php
-
 class ImplementationLoader extends \PHPCR\Test\AbstractLoader
 {
+    protected $unsupportedChapters = array(
+        'Versioning'
+    );
+
     public static function getInstance()   
     {
         static $instance;
@@ -145,9 +148,6 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     public function getRepository()
     {
         $mgd = self::getMidgardConnection();
-        $factory = new Midgard2CR\RepositoryFactory();
-        return $factory->getRepository();
+        return Midgard2CR\RepositoryFactory::getRepository();
     }
 }
-
-?>
