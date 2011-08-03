@@ -8,6 +8,7 @@
  * not provide the full feature set of the PHPCR spec.
  */
 
+// Set up autoloader
 require __DIR__ . "/includes.php";
 
 // Set up Midgard2 repository configs

@@ -10,6 +10,8 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
         'midgard2.configuration.db.type',
         'midgard2.configuration.db.name',
         'midgard2.configuration.db.dir',
+        // Whether to enable automatic initialization of Midgard2 database
+        'midgard2.configuration.db.init',
     );
 
     public static function getRepository(array $parameters = NULL)
@@ -17,6 +19,18 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
         if (!extension_loaded('midgard2'))
         {
             throw new \PHPCR\RepositoryException("The Midgard2 PHPCR provider requires 'midgard2' extension to be loaded.");
+        }
+
+        if (!class_exists('\\midgard_node'))
+        {
+            $shareDir = getenv('MIDGARD_ENV_GLOBAL_SHAREDIR');
+            if (!$shareDir)
+            {
+                $config = new \midgard_config();
+                $shareDir = $config->sharedir;
+            }
+
+            throw new \PHPCR\RepositoryException("Midgard2 PHPCR MgdSchema definitions not found from '{$shareDir}'. You can change this path by 'export MIDGARD_ENV_GLOBAL_SHAREDIR=/some/path'.");
         }
 
         return new Repository($parameters);    

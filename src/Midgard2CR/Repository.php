@@ -75,7 +75,7 @@ class Repository implements \PHPCR\RepositoryInterface
 
         if ($workspaceName != null)
         {
-            $this->setMidgard2Workspace($workspaceName);
+            $this->midgard2SetWorkspace($workspaceName);
         }
 
         if (   $credentials instanceof \PHPCR\GuestCredentials
@@ -119,6 +119,13 @@ class Repository implements \PHPCR\RepositoryInterface
         {
             throw new \PHPCR\RepositoryException($mgd->get_error_string());
         }
+
+        if (   isset($parameters['midgard2.configuration.db.init'])
+            && $parameters['midgard2.configuration.db.init'])
+        {
+            $this->midgard2InitDb();
+        }
+
         return $mgd;
     }
     
@@ -155,7 +162,7 @@ class Repository implements \PHPCR\RepositoryInterface
     /** 
      * Create workspace if it doesn't exist and such has been requested
      */
-    private function setMidgard2Workspace($workspaceName)
+    private function midgard2SetWorkspace($workspaceName)
     {
         if (!$this->descriptors['option.workspace.management.supported'])
         {
@@ -176,6 +183,52 @@ class Repository implements \PHPCR\RepositoryInterface
 
         $this->connection->enable_workspace(true);
         $this->connection->set_workspace($ws);
+    }
+
+    private function midgard2InitDb()
+    {
+        \midgard_storage::create_base_storage();
+
+        $re = new \ReflectionExtension('midgard2');
+        $classes = $re->getClasses();
+        foreach ($classes as $refclass)
+        {
+            $parent_class = $refclass->getParentClass();
+            if (!$parent_class)
+            {
+                continue;
+            }
+            if ($parent_class->getName() != 'midgard_object')
+            {
+                continue;
+            }
+
+            $type = $refclass->getName();            
+            if (\midgard_storage::class_storage_exists($type))
+            {
+                continue;
+            }
+
+            \midgard_storage::create_class_storage($type);
+        }
+
+        /* Prepare properties view */
+        \midgard_storage::create_class_storage("midgard_property_view");
+
+        /* Prepare namespace registry */
+        \midgard_storage::create_class_storage("midgard_namespace_registry");
+
+        /* Create required root node */
+        $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
+        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
+        $q->execute();
+        if ($q->get_results_count() == 0)
+        {
+            $root_object = new \midgard_node();
+            $root_object->name = "root";
+            $root_object->parent = 0;
+            $root_object->create();
+        }
     }
     
     private function getRootObject()
