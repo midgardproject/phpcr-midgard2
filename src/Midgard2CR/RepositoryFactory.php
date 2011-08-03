@@ -11,12 +11,12 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
         }
     }
 
-    public function getRepository(array $parameters = NULL)
+    public static function getRepository(array $parameters = NULL)
     {
         return new Repository();    
     }
 
-    public function getConfigurationKeys()
+    public static function getConfigurationKeys()
     {
         throw new \PHPCR\UnsupportedRepositoryOperationException();
     }

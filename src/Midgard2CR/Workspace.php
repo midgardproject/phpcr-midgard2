@@ -65,6 +65,10 @@ class Workspace implements \PHPCR\WorkspaceInterface
         return $this->query_manager;
     }
 
+    public function getTransactionManager()
+    {
+    }
+
     public function getNamespaceRegistry()
     {
         if ($this->namespace_registry == null)
