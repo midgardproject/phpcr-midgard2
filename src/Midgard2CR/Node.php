@@ -51,6 +51,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
     }
 
+    protected function populateParent()
+    {
+        if ($this->isRoot)
+        {
+            return;
+        }
+
+        $parentMidgardNode = new \midgard_node($this->getMidgard2Node()->parent);
+        $this->parent = new Node($parentMidgardNode, null, $this->getSession());
+    }
+
     private function appendNode($relPath, $primaryNodeTypeName = null)
     {
         /* ItemExistsException, Node at given path exists.*/
