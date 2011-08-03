@@ -35,6 +35,23 @@ class MidgardNodeMapper
         /* TODO, determine uper cases */
         return str_replace('_', ':', $type);
     }
+
+    /**
+     * Replaces '-' with ':' in given property name
+     */
+    public static function getPHPCRProperty($property)
+    {
+        if (strpos($property, '-') === false)
+        {
+            if (strpos($property, ':') !== false)
+            {
+                return $property;
+            }
+            return null;
+        }
+        /* TODO, determine uper cases */
+        return str_replace('-', ':', $property);
+    }
 }
 
 ?>

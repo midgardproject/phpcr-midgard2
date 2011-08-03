@@ -31,12 +31,21 @@ abstract class Item implements \PHPCR\ItemInterface
         return $this->midgardNode;
     }
 
+    protected function populateParent()
+    {
+        throw new \Exception("Missed implementation for populateParent");
+    }
+
     public function getPath()
     {
         if (!$this->parent)
         {
-            // Root node
-            return '/';
+            $this->populateParent();
+            if (!$this->parent)
+            {
+                /* Root node probably */
+                return '/';
+            }
         }
         $parent_path = $this->parent->getPath();
         if ($parent_path == '/')
