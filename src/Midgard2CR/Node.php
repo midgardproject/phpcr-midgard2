@@ -1114,7 +1114,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 foreach ($properties as $mnp)
                 {
                     $mnp->purge();
-                    Repository::checkMidgard2Exception();
+                    Repository::checkMidgard2Exception($mnp);
                 }
             }
         }
@@ -1201,7 +1201,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 foreach ($properties as $mnp)
                 {
                     $mnp->purge();
-                    Repository::checkMidgard2Exception();
+                    Repository::checkMidgard2Exception($mnp);
                 }
             }
         }
