@@ -5,7 +5,7 @@ class Repository implements \PHPCR\RepositoryInterface
 {
     protected $descriptors = array(
         'identifier.stability' => \PHPCR\RepositoryInterface::IDENTIFIER_STABILITY_INDEFINITE_DURATION,
-        'jcr.repository.name' => 'midgard2cr',
+        'jcr.repository.name' => 'Midgard2CR',
         'jcr.repository.vendor' => 'The Midgard Project',
         'jcr.repository.vendor.url' => 'http://www.midgard-project.org',
         'jcr.repository.version' => '',
@@ -96,13 +96,24 @@ class Repository implements \PHPCR\RepositoryInterface
             return $mgd;
         }
 
-        if (!isset($parameters['midgard2.configuration.file']))
+        $config = new \midgard_config();
+        if (isset($parameters['midgard2.configuration.file']))
         {
-            throw new \PHPCR\RepositoryException("No midgard2.configuration.file set and no initialize Midgard2 connection available");
+            $config->read_file_at_path($parameters['midgard2.configuration.file']);
+        }
+        elseif (   isset($parameters['midgard2.configuration.db.type'])
+                && isset($parameters['midgard2.configuration.db.name'])
+                && isset($parameters['midgard2.configuration.db.dir']))
+        {
+            $config->dbtype = $parameters['midgard2.configuration.db.type'];
+            $config->database = $parameters['midgard2.configuration.db.name'];
+            $config->dbdir = $parameters['midgard2.configuration.db.dir'];
+        }
+        else
+        {
+            throw new \PHPCR\RepositoryException('No initialized Midgard2 connection or configuration parameters available');
         }
 
-        $config = new \midgard_config();
-        $config->read_file_at_path($parameters['midgard2.configuration.file']);
         $mgd = \midgard_connection::get_instance();
         if (!$mgd->open_config($config))
         {
