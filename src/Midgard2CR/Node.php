@@ -780,6 +780,15 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             }
         }
 
+        /* Unfortunatelly, we must initialize new midgard object and reflection object.
+         * There's no other way to check if class has property registered.
+         * Others, (very) old PHP introspection routines check properties, in class default properties scope */
+        $ro = new \ReflectionObject(new $this->midgardNode->typename);
+        if ($ro->hasProperty($nativeProperty))
+        {
+            return true;
+        }
+
         if (property_exists($this->midgardNode->typename, $nativeProperty))
         {
             return true;
