@@ -58,14 +58,14 @@ class Repository implements \PHPCR\RepositoryInterface
 
     public function __construct(array $parameters = null)
     {
-        $this->connection = $this->midgard2Connect($parameters);
-
         $this->descriptors['jcr.repository.version'] = mgd_version();
 
         if (version_compare(mgd_version(), '10.05.4', '>'))
         {
             $this->descriptors['option.workspace.management.supported'] = true; 
         }
+
+        $this->connection = $this->midgard2Connect($parameters);
     }
 
     public function login(\PHPCR\CredentialsInterface $credentials = null, $workspaceName = null)
@@ -114,6 +114,11 @@ class Repository implements \PHPCR\RepositoryInterface
             throw new \PHPCR\RepositoryException('No initialized Midgard2 connection or configuration parameters available');
         }
 
+        if (isset($parameters['midgard2.configuration.loglevel']))
+        {
+            $config->loglevel = $parameters['midgard2.configuration.loglevel'];
+        }
+
         $mgd = \midgard_connection::get_instance();
         if (!$mgd->open_config($config))
         {
@@ -123,7 +128,7 @@ class Repository implements \PHPCR\RepositoryInterface
         if (   isset($parameters['midgard2.configuration.db.init'])
             && $parameters['midgard2.configuration.db.init'])
         {
-            $this->midgard2InitDb();
+            $this->midgard2InitDb($mgd);
         }
 
         return $mgd;
@@ -185,8 +190,13 @@ class Repository implements \PHPCR\RepositoryInterface
         $this->connection->set_workspace($ws);
     }
 
-    private function midgard2InitDb()
+    private function midgard2InitDb($connection)
     {
+        if ($this->descriptors['option.workspace.management.supported'])
+        {
+            $connection->enable_workspace(true);
+        }
+
         \midgard_storage::create_base_storage();
 
         $re = new \ReflectionExtension('midgard2');
@@ -228,6 +238,11 @@ class Repository implements \PHPCR\RepositoryInterface
             $root_object->name = "root";
             $root_object->parent = 0;
             $root_object->create();
+        }
+
+        if ($this->descriptors['option.workspace.management.supported'])
+        {
+            $connection->enable_workspace(false);
         }
     }
     

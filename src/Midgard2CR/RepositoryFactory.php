@@ -10,6 +10,7 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
         'midgard2.configuration.db.type',
         'midgard2.configuration.db.name',
         'midgard2.configuration.db.dir',
+        'midgard2.configuration.loglevel',
         // Whether to enable automatic initialization of Midgard2 database
         'midgard2.configuration.db.init',
     );
