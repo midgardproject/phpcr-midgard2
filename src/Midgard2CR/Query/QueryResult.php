@@ -23,7 +23,8 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
         $ret = array();
         foreach ($objects as $midgardNode)
         {
-            $ret[] = new \Midgard2CR\Node($midgardNode, null, $this->session);
+            $node = new \Midgard2CR\Node($midgardNode, null, $this->session);
+            $ret[$node->getPath()] = $node;
         }
 
         return new \ArrayIterator($ret);
