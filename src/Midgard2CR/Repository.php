@@ -126,6 +126,7 @@ class Repository implements \PHPCR\RepositoryInterface
     {
         if (\midgard_connection::get_instance()->get_error() != MGD_ERR_OK)
         {
+            $msg = "";
             if ($object != null)
             {
                 $msg = get_class($object) . "." . $object->name . " : ";
