@@ -3,7 +3,7 @@
  * This example demonstrates how to add and access nodes in a
  * PHPCR tree.
  *
- * The basic code comes from the PHPCR tutorial:
+ * The basic concept comes from the PHPCR tutorial:
  * https://github.com/phpcr/phpcr/blob/master/doc/Tutorial.md 
  *
  * In order to run this, you'll need the 'midgard2' PHP extension
@@ -42,3 +42,7 @@ if (!$session->nodeExists('/test')) {
 // Read the values we just saved
 $node = $session->getNode('/test');
 var_dump($node->getPropertyValue('prop'));
+
+// We can also export the contents via XML
+$session->exportDocumentView('/test', fopen('php://output', 'w'), true, true);
+
