@@ -53,7 +53,14 @@ class Row implements \Iterator, \PHPCR\Query\RowInterface
                 return $this->getScore();
             }
         }
-        return $this->node->getPropertyValue($columnName);
+        try 
+        {
+            return $this->node->getPropertyValue($columnName);
+        } 
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+            throw new \PHPCR\ItemNotFoundException($e->getMessage());
+        }
     }
 
     private function populateValues()
