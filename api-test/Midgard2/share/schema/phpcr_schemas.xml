@@ -292,7 +292,7 @@
 			<isMultiple>false</isMultiple>
 		</property>
 		<property name="jcr-statement" type="string" field="jcr_statement">
-			<description>Binary encoding</description>
+			<description>Query statement</description>
 			<RequiredType>STRING</RequiredType>
 			<getOnParentVersion>COPY</getOnParentVersion>
 			<isAutoCreated>false</isAutoCreated>
@@ -303,12 +303,12 @@
 			<DefaultValues></DefaultValues>
 		</property>
 		<property name="jcr-language" type="string" field="jcr_language">
-			<description>Binary mimetype</description>
+			<description>Query language</description>
 			<RequiredType>STRING</RequiredType>
 			<getOnParentVersion>COPY</getOnParentVersion>
 			<isAutoCreated>false</isAutoCreated>
-			<isMandatory>true</isMandatory>
-			<isProtected>true</isProtected>
+			<isMandatory>false</isMandatory>
+			<isProtected>false</isProtected>
 			<isMultiple>false</isMultiple>
 			<ValueConstraints></ValueConstraints>
 			<DefaultValues></DefaultValues>
@@ -316,6 +316,7 @@
 
 		<!-- Node and NodeType definitions -->
 		<user_values>
+			<Description>This node type may be used to store a persistent query.</Description>
 			<Supertypes>nt:base</Supertypes>
 			<isMixin>false</isMixin>
 			<HasOrderableChildNodes>false</HasOrderableChildNodes>	
