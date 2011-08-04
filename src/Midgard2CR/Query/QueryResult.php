@@ -6,6 +6,7 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
     protected $qs;
     protected $session;
     protected $selectors;
+    protected $rows = null;
 
     public function __construct(array $selectors, \midgard_query_select $qs, \Midgard2CR\Session $session)
     {
@@ -28,6 +29,9 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
                     $ret[] = $name . "." . \MidgardNodeMapper::getPHPCRProperty($k);
                 }
             }
+
+            /* Not sure if spec defines it clearly.
+             * Jackrabbit adds these columns, so PHPCR and so we */
             $ret[] = 'jcr:path';
             $ret[] = 'jcr:score'; 
         }
@@ -50,7 +54,16 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
 
     public function getRows()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        if($this->rows == null)
+        {
+            $this->rows = array();
+            $i = 0;
+            foreach ($this->getNodes() as $path => $node)
+            {
+                $this->rows[] = new Row($this, $path, ++$i, $node);
+            }
+        }
+        return new \ArrayIterator($this->rows);
     }
 
     public function getSelectorNames()
