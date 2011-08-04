@@ -96,7 +96,7 @@ class Midgard2XMLImporter extends \DomDocument
             if (property_exists($object, $GnsName))
             {
                 $vnode = $property->getElementsByTagName('value')->item(0);
-                $object->GnsName = $this->getPropertyValue($property);
+                $object->$GnsName = $this->getPropertyValue($property); 
 
                 /* Hack, FIXME, add generic node factory */
                 $createdProperty = 'jcr-created';
