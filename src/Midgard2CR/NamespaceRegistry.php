@@ -70,7 +70,7 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
         }
 
         $lowprefix = strtolower($prefix);
-        if (strpos($lowprefix, "xml") !== false
+        if (   strpos($lowprefix, "xml") !== false
             || strpos($lowprefix, "mgd") !== false)
         {
             throw new \PHPCR\NamespaceException("Prefix beginning with 'xml' or 'mgd' can not be registered");

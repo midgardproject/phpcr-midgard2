@@ -75,7 +75,7 @@ class Session implements \PHPCR\SessionInterface
     
     public function impersonate(\PHPCR\CredentialsInterface $credentials)
     {
-        return new Session($this->repository);
+        throw new \PHPCR\LoginException('Not supported'); 
     }
     
     public function getNodeByIdentifier($id)
@@ -410,6 +410,7 @@ class Session implements \PHPCR\SessionInterface
     
     public function exportSystemView($absPath, $out, $skipBinary, $noRecurse)
     {
+        $this->setNamespacePrefix('sv', 'http://www.jcp.org/jcr/sv/1.0');
         $node = $this->getNode($absPath);
         $exporter = new XMLSystemViewExporter($node, $skipBinary, $noRecurse);
 
@@ -418,6 +419,7 @@ class Session implements \PHPCR\SessionInterface
     
     public function exportDocumentView($absPath, $out, $skipBinary, $noRecurse)
     {
+        $this->setNamespacePrefix('sv', 'http://www.jcp.org/jcr/sv/1.0');
         $node = $this->getNode($absPath);
         $exporter = new XMLDocumentViewExporter($node, $skipBinary, $noRecurse);
 

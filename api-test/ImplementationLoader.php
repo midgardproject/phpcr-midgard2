@@ -2,7 +2,14 @@
 class ImplementationLoader extends \PHPCR\Test\AbstractLoader
 {
     protected $unsupportedChapters = array(
-        'Versioning'
+        'Versioning',
+        'Transactions',
+    );
+
+    protected $unsupportedCases = array(
+    );
+
+    protected $unsupportedTests = array(
     );
 
     public static function getInstance()   
@@ -31,8 +38,8 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         self::prepareMidgardTestDir('var');
         self::prepareMidgardTestDir('cache');
 
-        exec("cp -r Midgard2/share/* /tmp/Midgard2CR/share");
-        exec("cp Midgard2/midgard2.conf /tmp/Midgard2CR/midgard2.conf");
+        exec("cp -r " . __DIR__ ."/../share/* /tmp/Midgard2CR/share");
+        exec("cp " . __DIR__ . "/Midgard2/midgard2.conf /tmp/Midgard2CR/midgard2.conf");
     
         $config = new \midgard_config();
         $config->read_file_at_path("/tmp/Midgard2CR/midgard2.conf");
@@ -126,12 +133,12 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
 
     public function getInvalidCredentials()
     {
-
+        return new \PHPCR\SimpleCredentials('foo', 'bar');
     }
 
     public function getRestrictedCredentials()
     {
-
+        return new \PHPCR\SimpleCredentials('admin', 'password');
     }
 
     public function getUserId()
