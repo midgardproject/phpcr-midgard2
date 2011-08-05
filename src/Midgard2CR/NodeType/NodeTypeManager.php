@@ -8,21 +8,7 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
 
     public function __construct()
     {
-        $this->registerStandardTypes();
         $this->registerMidgard2Types();
-    }
-
-    private function registerStandardTypes()
-    {
-
-        /* TODO, remove this method and add linkedFile to schema */
-        /* JCR 2.0 3.7.11 Standard Application Node Types */
-     
-        /* nt: linkedFile */
-        $linkedfile = $this->createNamedNodeTypeTemplate('nt:linkedFile', false);
-        $linkedfile->setDeclaredSuperTypeNames(array('mix:created', 'nt:hierarchy'));
-        $linkedfile->setPrimaryItemName('jcr:content');
-        $this->registerNodeType($linkedfile, false);
     }
 
     private function registerMidgard2Types()
@@ -52,7 +38,15 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
             if (strpos($tmpName, 'nt_') !== false
                 || strpos($tmpName, 'mix_') !== false)
             {
-                $mgdschemaName = \MidgardNodeMapper::getPHPCRName($tmpName);
+                $oName = \midgard_object_class::get_schema_value($tmpName, 'OriginalName');
+                if ($oName != '' || $oName != null)
+                {
+                    $mgdschemaName = $oName;
+                }
+                else 
+                {
+                    $mgdschemaName = \MidgardNodeMapper::getPHPCRName($tmpName);
+                }
             }   
             else 
             {
@@ -101,7 +95,7 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
 
     public function getNodeType($nodeTypeName)
     {
-        $nodeTypeName = strtolower($nodeTypeName);
+        $nodeTypeName = $nodeTypeName;
         if (!$this->hasNodeType($nodeTypeName))
         {
             throw new \PHPCR\NodeType\NoSuchNodeTypeException("Node '{$nodeTypeName}' is not registered");
@@ -130,7 +124,7 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
 
     public function registerNodeType(\PHPCR\NodeType\NodeTypeDefinitionInterface $ntd, $allowUpdate)
     {
-        $name = strtolower($ntd->getName());
+        $name = $ntd->getName();
 
         /* TODO
          * InvalidNodeTypeDefinitionException */
