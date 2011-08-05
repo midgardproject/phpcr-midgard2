@@ -155,7 +155,7 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
         {
             return $this->primaryNodeTypes[$nodeTypeName];
         }
-        $this->mixinNodeTypes[$nodeTypeName];
+        return $this->mixinNodeTypes[$nodeTypeName];
     }
 
     public function getPrimaryNodeTypes()
