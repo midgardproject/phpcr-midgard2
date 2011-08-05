@@ -169,6 +169,10 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     { 
         /* \PHPCR\ValueFormatException */
         $this->validateValue($value, $type);
+        if ($type != null)
+        {
+            Value::checkTransformable($this->getType(), $type);
+        }
 
         /* TODO, handle:
          * \PHPCR\Version\VersionException 
