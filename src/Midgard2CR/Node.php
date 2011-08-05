@@ -884,6 +884,47 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function isNodeType($nodeTypeName)
     {
+        /* Check primaryType first */
+        try 
+        {
+            $type = $this->getPropertyValue('jcr:primaryType');
+        }
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+            /* Do nothing */
+        }
+        if ($type == $nodeTypeName)
+        {
+            return true;
+        }
+        /* TODO 
+         * Check supertypes */
+        /*
+        $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+        $nt = $ntm->getNodeType($type);
+         */
+
+        /* Check mixin */
+        try 
+        {
+            $mixins = $this->getPropertyValue('jcr:mixinTypes');
+        }
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+            return false;
+        }
+
+        if (!is_array($mixins))
+        {
+            $tmp[] = $mixins;
+            $mixins = $tmp;
+        }
+
+        if (in_array($nodeTypeName, $mixins))
+        {
+            return true;
+        }
+
         return false;
     }
     
@@ -911,8 +952,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         try 
         {
             /* Check if node has such mixin */
-            $mixinProperty = $this->getProperty('jcr:mixinTypes');
-            foreach ($mixinProperty->getValues() as $mixin)
+            $mixinProperty = $this->getPropertyValue('jcr:mixinTypes');
+            if (!is_array($mixinProperty))
+            {
+                $tmp[] = $mixinProperty;
+                $mixinProperty = $tmp;
+            }
+            foreach ($mixinProperty as $mixin)
             {
                 if ($mixin == $mixinName)
                 {
