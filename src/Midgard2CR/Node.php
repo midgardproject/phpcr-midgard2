@@ -1198,6 +1198,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 foreach ($properties as $mnp)
                 {
+                    $mnp->purge_attachments(true);
                     $mnp->purge();
                     Repository::checkMidgard2Exception($mnp);
                 }
@@ -1290,6 +1291,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 foreach ($properties as $mnp)
                 {
+                    $mnp->purge_attachments(true);
                     $mnp->purge();
                     Repository::checkMidgard2Exception($mnp);
                 }
