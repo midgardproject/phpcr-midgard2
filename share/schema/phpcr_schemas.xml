@@ -155,6 +155,32 @@
 		</user_values>
 	</type>
 
+	<!-- nt:linkedFile -->
+	<type name="nt_linkedfile" table="phpcr_nt_linked_file" metadata="false">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+		<!-- JCR properties of nt:linkedFile Node -->
+		<property name="jcr-content" type="string" field="jcr_content" default="nt:linkedFile">
+			<description>The type of a node</description>
+			<RequiredType>REFERENCE</RequiredType>
+			<getOnParentVersion>COPY</getOnParentVersion>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>true</isMandatory>
+			<isProtected>false</isProtected>
+			<isMultiple>false</isMultiple>
+		</property>
+
+		<!-- Node and NodeType definitions -->
+		<user_values>
+			<Supertypes>nt:hierarchyNode</Supertypes>
+			<isMixin>false</isMixin>
+			<HasOrderableChildNodes>false</HasOrderableChildNodes>	
+			<PrimaryItemName>jcr:content</PrimaryItemName>	
+			<OriginalName>nt:linkedFile</OriginalName> 
+		</user_values>
+	</type>
+
 	<!-- nt:unstructured -->
 	<type name="nt_unstructured" table="phpcr_nt_unstructured" metadata="false">
 		<property name="id" type="unsigned integer" primaryfield="id">

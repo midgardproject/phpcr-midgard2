@@ -38,7 +38,28 @@ class QueryManager implements \PHPCR\Query\QueryManagerInterface
 
     public function getQuery($node)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        $valid = true;
+        try
+        {
+            $type = $node->getPropertyValue('jcr:primaryType');
+            if ($type != 'nt:query')
+            {
+                $valid = false;
+            }
+        }
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+            $valid = false;
+        }
+        if ($valid == false)
+        {
+            throw new \PHPCR\Query\InvalidQueryException("Invalid node. Expected 'nt:query' type");
+        }
+
+        $statement = $node->getPropertyValue('jcr:statement');
+        $language = $node->getPropertyValue('jcr:language');
+
+        return $this->createQuery($statement, $language);
     }
 
     public function getSupportedQueryLanguages()
