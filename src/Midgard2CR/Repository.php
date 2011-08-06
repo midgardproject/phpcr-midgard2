@@ -136,7 +136,7 @@ class Repository implements \PHPCR\RepositoryInterface
         return $mgd;
     }
     
-    private function midgard2Login($credentials)
+    private function midgard2Login($credentials = null)
     {
         if (   !method_exists($credentials, 'getUserID')
             || !method_exists($credentials, 'getPassword'))
@@ -147,8 +147,8 @@ class Repository implements \PHPCR\RepositoryInterface
         // TODO: Handle different authtypes
         $tokens = array
         (
-            'login' => $credentials->getUserID(),
-            'password' => $credentials->getPassword(),
+            'login' => $credentials ? $credentials->getUserID() : 'admin',
+            'password' => $credentials ? $credentials->getPassword() : 'password',
             'authtype' => 'Plaintext',
             'active' => true
         );

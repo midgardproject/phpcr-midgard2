@@ -3,6 +3,42 @@ namespace Midgard2CR;
 
 class Value 
 {
+    protected function getTransformableTypes()
+    { 
+        return array();
+    }
+
+    private static function __isTransformable($valueClass, $targetType)
+    {
+        $func = '\\' . $valueClass . '::getTransformableTypes';
+        $transformableTypes = call_user_func(__NAMESPACE__ . $func);
+
+        if (empty($transformableTypes))
+        {
+            return true;
+        }
+
+        if (!in_array($targetType, $transformableTypes))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static function checkTransformable($srcType, $destType)
+    {
+        if ($srcType === $destType)
+        {
+            return;
+        }
+        $transformable = self::__isTransformable(ValueFactory::getValueClassName($srcType), $destType);
+        if (!$transformable)
+        {
+            throw new \PHPCR\ValueFormatException("Can not transform " . \PHPCR\PropertyType::nameFromValue($srcType) . " to " . \PHPCR\PropertyType::nameFromValue($destType));
+        }
+    }
+
     public static function toString($value)
     {
         return (string)$value;
@@ -67,6 +103,19 @@ class StringValue extends Value
 
 class DateValue extends Value
 {
+    protected function getTransformableTypes()
+    {
+        static $ta = array(
+            \PHPCR\PropertyType::STRING,
+            \PHPCR\PropertyType::BINARY,
+            \PHPCR\PropertyType::DOUBLE,
+            \PHPCR\PropertyType::DECIMAL,
+            \PHPCR\PropertyType::LONG
+        );
+
+        return $ta;
+    }
+
     public static function toDate($value)
     {
         if ($value instanceof \DateTime)
@@ -105,7 +154,18 @@ class DateValue extends Value
 
 class LongValue extends Value
 {
+    protected function getTransformableTypes()
+    {
+        static $ta = array(
+            \PHPCR\PropertyType::STRING,
+            \PHPCR\PropertyType::BINARY,
+            \PHPCR\PropertyType::DOUBLE,
+            \PHPCR\PropertyType::DECIMAL,
+            \PHPCR\PropertyType::DATE
+        );
 
+        return $ta;
+    }
 }
 
 class BinaryValue extends Value
@@ -122,22 +182,128 @@ class BinaryValue extends Value
 
 class DoubleValue extends Value
 {
-
+    protected function getTransformableTypes()
+    {
+        static $ta = array(
+            \PHPCR\PropertyType::STRING,
+            \PHPCR\PropertyType::BINARY,
+            \PHPCR\PropertyType::DATE,
+            \PHPCR\PropertyType::DECIMAL,
+            \PHPCR\PropertyType::LONG
+        );
+        return $ta;
+    }
 }
 
 class BooleanValue extends Value
 {
+    protected function getTransformableTypes()
+    {
+        static $ta = array(
+            \PHPCR\PropertyType::STRING,
+            \PHPCR\PropertyType::BINARY
+        );
 
+        return $ta;
+    }
+}
+
+class NameValue extends Value
+{
+    protected function getTransformableTypes()
+    {
+        static $ta = array(
+            \PHPCR\PropertyType::STRING,
+            \PHPCR\PropertyType::BINARY,
+            \PHPCR\PropertyType::PATH,
+            \PHPCR\PropertyType::URI
+        );
+
+        return $ta;
+    }
+}
+
+class PathValue extends Value
+{
+    protected function getTransformableTypes()
+    {
+        static $ta = array(
+            \PHPCR\PropertyType::STRING,
+            \PHPCR\PropertyType::BINARY,
+            \PHPCR\PropertyType::NAME,
+            \PHPCR\PropertyType::URI
+        );
+
+        return $ta;
+    }
+}
+
+class UriValue extends Value
+{
+    protected function getTransformableTypes()
+    {
+        static $ta = array(
+            \PHPCR\PropertyType::STRING,
+            \PHPCR\PropertyType::BINARY,
+            \PHPCR\PropertyType::NAME,
+            \PHPCR\PropertyType::PATH
+        );
+
+        return $ta;
+    }
+}
+
+class ReferenceValue extends Value
+{
+    protected function getTransformableTypes()
+    {
+        static $ta = array(
+            \PHPCR\PropertyType::STRING,
+            \PHPCR\PropertyType::BINARY,
+            \PHPCR\PropertyType::WEAKREFERENCE
+        );
+
+        return $ta;
+    }
+}
+
+class WeakReferenceValue extends Value
+{
+    protected function getTransformableTypes()
+    {
+        static $ta = array(
+            \PHPCR\PropertyType::STRING,
+            \PHPCR\PropertyType::BINARY,
+            \PHPCR\PropertyType::REFERENCE
+        );
+
+        return $ta;
+    }
+}
+
+class DecimalValue extends Value
+{
+    protected function getTransformableTypes()
+    {
+        static $ta = array(
+            \PHPCR\PropertyType::STRING,
+            \PHPCR\PropertyType::BINARY,
+            \PHPCR\PropertyType::DOUBLE,
+            \PHPCR\PropertyType::DATE,
+            \PHPCR\PropertyType::LONG
+        );
+
+        return $ta;
+    }
 }
 
 class ValueFactory
 {
-    public static function transformValue($value, $srcType, $dstType)
+    public static function getValueClassName($type)
     {
-        $valueClass = "Value";
-        $valueMethod = "toString";
-        
-        switch($srcType) 
+        $valueClass = 'StringValue';
+
+        switch($type) 
         {
             case \PHPCR\PropertyType::BINARY:
                 $valueClass = 'BinaryValue';
@@ -163,7 +329,39 @@ class ValueFactory
                 $valueClass = 'BooleanValue';
                 break;
 
+            case \PHPCR\PropertyType::NAME:
+                $valueClass = 'NameValue';
+                break;
+
+            case \PHPCR\PropertyType::REFERENCE:
+                $valueClass = 'ReferenceValue';
+                break;
+
+            case \PHPCR\PropertyType::PATH:
+                $valueClass = 'PathValue';
+                break;
+
+            case \PHPCR\PropertyType::WEAKREFERENCE:
+                $valueClass = 'WeakReferenceValue';
+                break;
+
+            case \PHPCR\PropertyType::URI:
+                $valueClass = 'UriValue';
+                break;
         }
+
+        return $valueClass;
+
+    }
+
+    public static function transformValue($value, $srcType, $dstType)
+    {
+        $valueClass = "Value";
+        $valueMethod = "toString";
+
+        Value::checkTransformable($srcType, $dstType);
+
+        $valueClass = self::getValueClassName($srcType);
 
         switch($dstType)
         {

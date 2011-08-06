@@ -105,7 +105,8 @@
 			<isAutoCreated>false</isAutoCreated>
 			<isMandatory>false</isMandatory>
 			<isProtected>false</isProtected>
-			<SameNameSiblings>false</SameNameSiblings> 
+			<SameNameSiblings>false</SameNameSiblings>
+			<OriginalName>mix:lastModified</OriginalName>	
 		</user_values>
 	</type>
 
@@ -175,6 +176,7 @@
 			<isMandatory>false</isMandatory>
 			<isProtected>false</isProtected>
 			<SameNameSiblings>false</SameNameSiblings> 
+			<OriginalName>mix:mimeType</OriginalName>
 		</user_values>
 	</type>
 

@@ -815,7 +815,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         $this->populateProperties();
 
-        if (isset($this->properties[$relPath]))
+        if (array_key_exists($relPath, $this->properties))
         {
             return true;
         }
@@ -861,7 +861,25 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getMixinNodeTypes()
     {
-        return array();
+        $ret = array();
+        if (!$this->hasProperty('jcr:mixinTypes'))
+        {
+            return $ret;
+        }
+
+        $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+        $mixins = $this->getPropertyValue('jcr:mixinTypes');
+        if (!is_array($mixins))
+        {
+            $tmp[] = $mixins;
+            $mixins = $tmp;
+        }
+        foreach ($mixins as $mixin)
+        {
+            $ret[] = $ntm->getNodeType($mixin);
+        }
+
+        return $ret;
     }
     
     public function isNodeType($nodeTypeName)
@@ -877,7 +895,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function addMixin($mixinName)
     {
         $midgardMixinName = \MidgardNodeMapper::getMidgardName($mixinName);
-        if ($midgardMixinName == null || !is_subclass_of($midgardMixinName, 'midgard_object'))
+        if ($midgardMixinName == null 
+            || !class_exists($midgardMixinName, false)
+            || !is_subclass_of($midgardMixinName, 'midgard_object'))
         {
             throw new \PHPCR\NodeType\NoSuchNodeTypeException("{$mixinName} is not registered type"); 
         }
@@ -930,7 +950,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
             /* FIXME, determine default value */
             $this->setProperty($jcrName, ' ');
-        } 
+        }
     }
     
     public function removeMixin($mixinName)
