@@ -16,6 +16,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function __construct(\midgard_node $midgardNode = null, Node $parent = null, Session $session)
     {
         $this->parent = $parent;
+        $this->midgardNode = $midgardNode;
+        $this->session = $session;
+
         if ($parent == null)
         {
             if (   $midgardNode->guid
@@ -25,8 +28,16 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 $this->contentObject = $midgardNode;
             }
         }
-        $this->midgardNode = $midgardNode;
-        $this->session = $session;
+    }
+
+    public function getTypeName()
+    {
+        if ($this->isRoot)
+        {
+            return 'nt:folder';
+        }
+
+        return $this->getPropertyValue('jcr:primaryType');
     }
 
     /* TODO, move this to ContentObjectFactory */
@@ -884,6 +895,47 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function isNodeType($nodeTypeName)
     {
+        /* Check primaryType first */
+        try 
+        {
+            $type = $this->getPropertyValue('jcr:primaryType');
+        }
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+            /* Do nothing */
+        }
+        if ($type == $nodeTypeName)
+        {
+            return true;
+        }
+        /* TODO 
+         * Check supertypes */
+        /*
+        $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+        $nt = $ntm->getNodeType($type);
+         */
+
+        /* Check mixin */
+        try 
+        {
+            $mixins = $this->getPropertyValue('jcr:mixinTypes');
+        }
+        catch (\PHPCR\PathNotFoundException $e)
+        {
+            return false;
+        }
+
+        if (!is_array($mixins))
+        {
+            $tmp[] = $mixins;
+            $mixins = $tmp;
+        }
+
+        if (in_array($nodeTypeName, $mixins))
+        {
+            return true;
+        }
+
         return false;
     }
     
@@ -911,8 +963,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         try 
         {
             /* Check if node has such mixin */
-            $mixinProperty = $this->getProperty('jcr:mixinTypes');
-            foreach ($mixinProperty->getValues() as $mixin)
+            $mixinProperty = $this->getPropertyValue('jcr:mixinTypes');
+            if (!is_array($mixinProperty))
+            {
+                $tmp[] = $mixinProperty;
+                $mixinProperty = $tmp;
+            }
+            foreach ($mixinProperty as $mixin)
             {
                 if ($mixin == $mixinName)
                 {
@@ -1152,6 +1209,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 foreach ($properties as $mnp)
                 {
+                    $mnp->purge_attachments(true);
                     $mnp->purge();
                     Repository::checkMidgard2Exception($mnp);
                 }
@@ -1244,6 +1302,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 foreach ($properties as $mnp)
                 {
+                    $mnp->purge_attachments(true);
                     $mnp->purge();
                     Repository::checkMidgard2Exception($mnp);
                 }

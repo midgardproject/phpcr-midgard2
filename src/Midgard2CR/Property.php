@@ -162,14 +162,19 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
                 }
             }
         }
-
     }
 
     public function setValue($value, $type = null, $weak = FALSE)
     { 
         /* \PHPCR\ValueFormatException */
         $this->validateValue($value, $type);
-        if ($type != null)
+
+        /* Check if property is registered.
+         * If it is, we need to validate if conversion follows the spec: "3.6.4 Property Type Conversion" */
+        $typename = $this->parent->getTypeName();
+        $ntm = $this->getSession()->getWorkspace()->getNodeTypeManager();
+        $nt = $ntm->getNodeType($typename);
+        if ($nt->hasRegisteredProperty($this->getName()) && $type != null)
         {
             Value::checkTransformable($this->getType(), $type);
         }
