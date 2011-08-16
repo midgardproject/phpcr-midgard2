@@ -81,6 +81,62 @@ class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInt
         return false;
     }
 
+    private function getPropertyReflector($name)
+    {
+        /* If this is MidgardObject derived property, return null.
+         * We have no session available at this point, so check prefix
+         * directly */
+        if (strpos($name, ':') !== false)
+        {
+            $parts = explode(':', $name); 
+            if ($parts[0] == 'mgd')
+            {
+                return null;
+            }
+        }
+
+        $midgardName = \MidgardNodeMapper::getMidgardName($this->name);
+        if (!$midgardName)
+        {
+            return null;
+        }
+
+        $reflector = new \midgard_reflection_property($midgardName);
+        if (!$reflector)
+        {
+            return null;
+        }
+
+        $midgardPropertyName = \MidgardNodeMapper::getMidgardPropertyName($name);
+        if (!$midgardPropertyName)
+        {
+            return null;
+        }
+
+        $midgardType = $reflector->get_midgard_type($name);
+        /* Property is not registered for this type */
+        if ($midgardType == MGD_TYPE_NONE)
+        {
+            return null;
+        }
+
+        return $reflector;
+    }
+
+    public function hasRegisteredProperty($name)
+    {
+        $reflector = $this->getPropertyReflector($name);
+        if ($reflector == null)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public function getPropertyDefinition($name)
+    {
+    }
+
     public function getPropertyDefinitions()
     {
         throw new \PHPCR\RepositoryException("Not supported");

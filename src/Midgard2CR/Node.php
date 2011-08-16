@@ -16,6 +16,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function __construct(\midgard_node $midgardNode = null, Node $parent = null, Session $session)
     {
         $this->parent = $parent;
+        $this->midgardNode = $midgardNode;
+        $this->session = $session;
+
         if ($parent == null)
         {
             if (   $midgardNode->guid
@@ -25,8 +28,16 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 $this->contentObject = $midgardNode;
             }
         }
-        $this->midgardNode = $midgardNode;
-        $this->session = $session;
+    }
+
+    public function getTypeName()
+    {
+        if ($this->isRoot)
+        {
+            return 'nt:folder';
+        }
+
+        return $this->getPropertyValue('jcr:primaryType');
     }
 
     /* TODO, move this to ContentObjectFactory */
