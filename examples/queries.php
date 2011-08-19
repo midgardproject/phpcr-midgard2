@@ -1,10 +1,6 @@
 <?php
 /**
- * This example demonstrates how to add and access nodes in a
- * PHPCR tree.
- *
- * The basic concept comes from the PHPCR tutorial:
- * https://github.com/phpcr/phpcr/blob/master/doc/Tutorial.md 
+ * This example demonstrates how to run JCR SQL2 queries
  *
  * In order to run this, you'll need the 'midgard2' PHP extension
  * installed. No other setup should be needed.
