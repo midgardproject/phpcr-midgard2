@@ -1,6 +1,8 @@
 <?php
 namespace Midgard2CR\Query;
 
+use Midgard2CR\Utils\NodeMapper;
+
 class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterface
 {
     protected $qs;
@@ -20,13 +22,13 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
         $ret = array();
         foreach ($this->selectors as $name)
         {
-            $midgardType = \MidgardNodeMapper::getMidgardName($name);
+            $midgardType = NodeMapper::getMidgardName($name);
             $o = new $midgardType;
             foreach ($o as $k => $v)
             {
                 if (strpos($k, '-') !== false)
                 {
-                    $ret[] = $name . "." . \MidgardNodeMapper::getPHPCRProperty($k);
+                    $ret[] = $name . "." . NodeMapper::getPHPCRProperty($k);
                 }
             }
 

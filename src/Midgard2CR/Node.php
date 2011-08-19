@@ -2,6 +2,7 @@
 namespace Midgard2CR;
 
 use ArrayIterator;
+use Midgard2CR\Utils\NodeMapper;
 
 class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 {
@@ -946,7 +947,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function addMixin($mixinName)
     {
-        $midgardMixinName = \MidgardNodeMapper::getMidgardName($mixinName);
+        $midgardMixinName = NodeMapper::getMidgardName($mixinName);
         if ($midgardMixinName == null 
             || !class_exists($midgardMixinName, false)
             || !is_subclass_of($midgardMixinName, 'midgard_object'))

@@ -1,6 +1,8 @@
 <?php
 namespace Midgard2CR\NodeType;
 
+use Midgard2CR\Utils\NodeMapper;
+
 class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeManagerInterface
 {
     protected $primaryNodeTypes = array();
@@ -45,7 +47,7 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
                 }
                 else 
                 {
-                    $mgdschemaName = \MidgardNodeMapper::getPHPCRName($tmpName);
+                    $mgdschemaName = NodeMapper::getPHPCRName($tmpName);
                 }
             }   
             else 
