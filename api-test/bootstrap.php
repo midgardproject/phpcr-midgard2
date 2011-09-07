@@ -23,6 +23,7 @@ $midgard2crQAutoloader->register();
 $phpcrAutoloader = new SplClassLoader('PHPCR', dirname (__FILE__) . '/../lib/PHPCR/src');
 $phpcrAutoloader->register();
 
+// TODO: Remove once https://github.com/midgardproject/midgard-php5/issues/8 is fixed
 if (getenv('MIDGARD_ENV_GLOBAL_SHAREDIR') != '/tmp/Midgard2CR/share')
 {
     die("\nBefore running these tests you need to run 'export MIDGARD_ENV_GLOBAL_SHAREDIR=/tmp/Midgard2CR/share'\n");
