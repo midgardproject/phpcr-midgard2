@@ -89,7 +89,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
          * "if a node type or implementation-specific constraint is violated or 
          *  if an attempt is made to add a node as the child of a property and 
          *  this implementation performs this validation immediately." */
-        if ($this->hasProperty($relPath))
+        $this->populateProperties();
+        if (array_key_exists($relPath, $this->properties))
         {
             throw new \PHPCR\NodeType\ConstraintViolationException("Can not add node to '{$relPath}' Item which is a Property");
         }
