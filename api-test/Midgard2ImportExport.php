@@ -70,6 +70,7 @@ class Midgard2ImportExport implements PHPCR\Test\FixtureLoaderInterface
         foreach ($classes as $refclass)
         {           
             $parent_class = $refclass->getParentClass();
+
             if (!$parent_class)
             {
                 continue;
@@ -98,8 +99,16 @@ class Midgard2ImportExport implements PHPCR\Test\FixtureLoaderInterface
             $storage = new \midgard_query_storage($type);
             $qs = new \midgard_query_select($storage);
             $qs->toggle_readonly(true);
-            
-            $qs->execute();
+
+            try 
+            {
+                $qs->execute();
+            }
+            catch (\Exception $e)
+            {
+                continue;
+            }
+
             if ($qs->resultscount == 0)
             {
                 continue;
@@ -118,7 +127,7 @@ class Midgard2ImportExport implements PHPCR\Test\FixtureLoaderInterface
                 if (!$object->purge(false))
                 {
                     if (\midgard_connection::get_instance()->get_error() == MGD_ERR_HAS_DEPENDANTS)
-                    {
+                    { 
                         self::cleanupChildren($object);
                     } 
                 }
