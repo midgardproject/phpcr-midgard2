@@ -1,9 +1,5 @@
 <?php
 
-if (!extension_loaded('xdebug') && ini_get('enable_dl')) {
-    dl('xdebug.so');
-}
-
 if (gc_enabled()) {
     echo "Disabling Zend Garbage Collection to prevent segfaults, see:\n";
     echo "  https://bugs.php.net/bug.php?id=51091\n";
