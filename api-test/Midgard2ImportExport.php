@@ -68,33 +68,15 @@ class Midgard2ImportExport implements PHPCR\Test\FixtureLoaderInterface
         $t = new \midgard_transaction();
         $t->begin();
         foreach ($classes as $refclass)
-        {           
-            $parent_class = $refclass->getParentClass();
-
-            if (!$parent_class)
-            {
-                continue;
-            }
-            if ($parent_class->getName() != 'midgard_object')
-            {
-                continue;
-            }
-            
+        {                       
             $type = $refclass->getName();
 
-            /* There's no table and nothing to purge if the type is mixin */
-            $isMixin = \midgard_object_class::get_schema_value($type, 'isMixin');
-            if ($isMixin == 'true')
-            {
-                continue;
-            } 
-
-            /* There's no table and nothing to purge if the type is abstract */
-            $isAbstract = \midgard_object_class::get_schema_value($type, 'isAbstract');
-            if ($isAbstract == 'true')
-            {
-                continue;
-            } 
+            /* Ignore abstract classes, interfaces and not MidgardObject derived */
+            if (!is_subclass_of ($type, 'MidgardObject')
+                || $refclass->isAbstract()
+                || $refclass->isInterface()) {
+                    continue;
+            }
 
             $storage = new \midgard_query_storage($type);
             $qs = new \midgard_query_select($storage);
