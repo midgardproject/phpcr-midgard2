@@ -70,17 +70,13 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         $classes = $re->getClasses();
         foreach ($classes as $refclass)
         {
-            $parent_class = $refclass->getParentClass();
-            if (!$parent_class)
-            {
-                continue;
-            }
-            if ($parent_class->getName() != 'midgard_object')
-            {
+            $type = $refclass->getName();           
+
+            if (!is_subclass_of ($type, 'MidgardDBObject')
+                || $refclass->isAbstract()) {
                 continue;
             }
 
-            $type = $refclass->getName();            
             if (midgard_storage::class_storage_exists($type))
             {
                 continue;
@@ -91,12 +87,6 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
                 throw new Exception('Could not create ' . $type . ' tables in test database.' . midgard_connection::get_instance()->get_error_string());
             }
         }
-
-        /* Prepare properties view */
-        midgard_storage::create_class_storage("midgard_property_view");
-
-        /* Prepare namespace registry */
-        midgard_storage::create_class_storage("midgard_namespace_registry");
 
         /* Create required root node */
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
