@@ -124,19 +124,6 @@
 			<description>ID of a parent node</description>
 		</property>
 
-		<!-- JCR properties of nt:file Node -->
-		<property name="jcr-primaryType" type="string" field="jcr_primarytype" default="nt:file">
-			<description>The type of a node</description>
-			<RequiredType>NAME</RequiredType>
-		</property>
-		<!-- <property name="jcr-created" type="datetime" field="jcr_created">
-			<description>Creation date</description>
-	  	<RequiredType>DATE</RequiredType>
-		</property>
-		<property name="jcr-createdBy" type="string" field="jcr_createdby">
-			<description>Name of a person who created node</description>
-		</property> -->
-
 		<!-- Node and NodeType definitions -->
 		<user_values>
 			<Supertypes>nt:hierarchyNode</Supertypes>
