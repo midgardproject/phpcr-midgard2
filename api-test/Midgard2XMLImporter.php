@@ -93,7 +93,7 @@ class Midgard2XMLImporter extends \DomDocument
         if (count($parts) == 2)
         {
             $GnsName = str_replace(':', '-', $propertyName);
-            if (property_exists($object, $GnsName))
+            if ($GnsName != 'jcr-mixinTypes' && property_exists($object, $GnsName))
             {
                 $vnode = $property->getElementsByTagName('value')->item(0);
                 $object->$GnsName = $this->getPropertyValue($property); 
