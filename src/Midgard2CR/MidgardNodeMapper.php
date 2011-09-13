@@ -16,7 +16,7 @@ class MidgardNodeMapper
             return null;
         }
 
-        return strtolower(str_replace(':', '_', $type));
+        return str_replace(':', '_', $type);
     }
 
     /**
