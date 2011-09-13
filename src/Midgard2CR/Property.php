@@ -298,7 +298,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         } 
 
         $propertyName = $this->getMidgard2PropertyName();
-        if ($propertyName)
+        if ($propertyName && !$this->isMultiple())
         {
             return $this->parent->getMidgard2ContentObject()->$propertyName;
         }
@@ -612,7 +612,14 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         }
         else 
         {
-            $mrp = new \midgard_reflector_property (get_class($this->contentObject));
+            try 
+            {
+                $mrp = new \midgard_reflector_property (get_class($this->parent->getMidgard2ContentObject()));
+            }
+            catch (\midgard_error_exception $e)
+            {
+                throw new \Exception (get_class($this->parent->getMidgard2ContentObject()) . " not registered as MidgardObject derived one"); 
+            }
         }
         $type = $mrp->get_midgard_type ($this->midgardPropertyName);
 
@@ -673,6 +680,12 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
     
     public function isMultiple()
     {
+        /* Hack, needs to be fixed in core so reflector_property can handle this */
+        if ($this->getName() == 'jcr:mixinTypes')
+        {
+            return true;
+        }
+
         if ($this->isMidgardProperty)
         {
             return false;
