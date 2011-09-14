@@ -8,7 +8,11 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
 
     public function __construct()
     {
-        $this->registerMidgard2Types();
+        static $registered = false;
+        if (!$registered) {
+            $this->registerMidgard2Types();
+            $registered = true;
+        }
     }
 
     private function registerMidgard2Types()
@@ -30,6 +34,11 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
                 || $refclass->isSubclassOf('MidgardBaseInterface'))
             {
                 $ignore = false;
+            }
+
+            if ($refclass->isAbstract())
+            {
+                $ignore = true;
             }
 
             if ($ignore == true)
