@@ -77,7 +77,8 @@ class Value
 
     public static function toBoolean($value)
     {
-        return (bool)$value;
+        $values = \PHPCR\PropertyType::convertType(array($value), \PHPCR\PropertyType::BOOLEAN);
+        return (bool) $values[0];
     }
 
     public static function toDate($value)
