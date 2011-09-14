@@ -37,6 +37,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return 'nt:folder';
         }
 
+        if ($this->primaryNodeTypeName)
+        {
+            return $this->primaryNodeTypeName;
+        }
+
         return $this->getPropertyValue('jcr:primaryType');
     }
 
@@ -106,9 +111,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $midgardNode->name = $relPath;
 
         $new_node = new \Midgard2CR\Node($midgardNode, $this, $this->getSession());
-
         $new_node->is_new = true; 
         $new_node->primaryNodeTypeName = $primaryNodeTypeName;
+        $ptnProperty = 'jcr-primaryType';
+        $new_node->$ptnProperty = $primaryNodeTypeName;
+        $new_node->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::NAME);
         $this->children[$relPath] = $new_node;
 
         $this->is_modified = true;
@@ -171,7 +178,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         $node = $this->getNode($parts[0]);
         for ($i = 1; $i < $pathElements; $i++)
-        {
+        { 
             $node = $node->appendNode($parts[$i], $primaryNodeTypeName);
         }
         return $node;
