@@ -8,11 +8,7 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
 
     public function __construct()
     {
-        static $registered = false;
-        if (!$registered) {
-            $this->registerMidgard2Types();
-            $registered = true;
-        }
+        $this->registerMidgard2Types();
     }
 
     private function registerMidgard2Types()
@@ -98,8 +94,7 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
     }
 
     public function getNodeType($nodeTypeName)
-    {
-        $nodeTypeName = $nodeTypeName;
+    { 
         if (!$this->hasNodeType($nodeTypeName))
         {
             throw new \PHPCR\NodeType\NoSuchNodeTypeException("Node '{$nodeTypeName}' is not registered");
