@@ -72,7 +72,7 @@
 	</type>
 
 	<!-- mix:lastModified -->
-	<type name="mix_lastmodified"  metadata="false" abstract="mixin">
+	<type name="mix_lastModified"  metadata="false" abstract="mixin">
 		<!-- JCR properties of mix:lastModified type -->
 		<property name="jcr-lastModified" type="datetime">
 			<RequiredType>DATE</RequiredType>
@@ -139,7 +139,7 @@
 	</type>
 
 	<!-- mix:mimeType -->
-	<type name="mix_mimetype"  metadata="false" abstract="mixin">
+	<type name="mix_mimeType"  metadata="false" abstract="mixin">
 		<!-- JCR properties of mix:mimeType type -->
 		<property name="jcr-mimeType" type="string">
 			<RequiredType>STRING</RequiredType>
