@@ -956,10 +956,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         $midgardMixinName = \MidgardNodeMapper::getMidgardName($mixinName);
         if ($midgardMixinName == null 
-            || !class_exists($midgardMixinName, false)
-            || !is_subclass_of($midgardMixinName, 'midgard_object'))
+            || !interface_exists($midgardMixinName, false))
         {
-            throw new \PHPCR\NodeType\NoSuchNodeTypeException("{$mixinName} is not registered type"); 
+            throw new \PHPCR\NodeType\NoSuchNodeTypeException("{$mixinName} {$midgardMixinName} is not registered type"); 
         }
         if (is_subclass_of($midgardMixinName, 'MidgardBaseMixin'))
         {
@@ -1001,7 +1000,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
 
         $properties = \midgard_reflector_object::list_defined_properties ($midgardMixinName);
-        foreach ($properties as $name)
+        foreach ($properties as $name => $v)
         {
             $jcrName = \MidgardNodeMapper::getPHPCRProperty($name);
             if($this->hasProperty($jcrName))
