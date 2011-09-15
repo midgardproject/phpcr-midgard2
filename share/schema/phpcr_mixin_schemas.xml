@@ -242,7 +242,6 @@
 
 	<!-- mix:shareable -->
 	<type name="mix_shareable"  metadata="false" abstract="mixin" extends="mix_referenceable">
-		<property name="dummy" />
 		<!-- JCR properties of mix:shareable type -->
 		<!-- Node and NodeType definitions -->
 		<user_values>
