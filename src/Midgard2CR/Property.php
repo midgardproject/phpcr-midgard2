@@ -187,7 +187,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
          * \InvalidArgumentException
          */ 
         $propertyName = $this->getMidgard2PropertyName();
-        if ($propertyName) 
+        if ($propertyName 
+            && (!$this->isMultiple() || $this->getName() != 'jcr:mixinTypes')) 
         { 
             $this->parent->contentObject->$propertyName = $value;
             return;
