@@ -67,7 +67,7 @@ class MidgardNodeMapper
             return null;
         }
         /* TODO, determine uper cases */
-        return str_replace('-', ':', $property);
+        return str_replace(':', '-', $property);
     }
 }
 
