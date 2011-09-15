@@ -961,8 +961,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         {
             throw new \PHPCR\NodeType\NoSuchNodeTypeException("{$mixinName} is not registered type"); 
         }
-        $isMixin = \midgard_object_class::get_schema_value($midgardMixinName, 'isMixin');
-        if ($isMixin != 'true')
+        if (is_subclass_of($midgardMixinName, 'MidgardBaseMixin'))
         {
             throw new \PHPCR\NodeType\ConstraintViolationException("{$mixinName} is not registered as mixin"); 
         }
@@ -1001,13 +1000,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $this->setProperty('jcr:mixinTypes', $mixinName);
         }
 
-        /* FIXME, better reflection needed, instance is created because 
-         * get_class_vars returns only static properties */
-        $midgardMixin = \midgard_object_class::factory($midgardMixinName);
-
-        foreach (get_object_vars($midgardMixin) as $name => $thisPHPFunctionIsAnnoying)
+        $properties = \midgard_reflector_object::list_defined_properties ($midgardMixinName);
+        foreach ($properties as $name)
         {
-            $jcrName = str_replace('-', ':', $name);
+            $jcrName = \MidgardNodeMapper::getPHPCRProperty($name);
             if($this->hasProperty($jcrName))
             {
                 continue;
