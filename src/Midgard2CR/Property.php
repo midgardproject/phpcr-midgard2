@@ -42,7 +42,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
         /* Check namespace by convention.
          * ns:name is represented as ns-name in Midgard2 */
-        $GNsProperty = str_replace(':', '-', $propertyName);
+        $GNsProperty = \MidgardNodeMapper::getMidgardPropertyName($propertyName);
         if (property_exists($this->parent->getMidgard2ContentObject(), $GNsProperty))
         {
             $this->isMidgardProperty = true;
@@ -188,8 +188,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
          */ 
         $propertyName = $this->getMidgard2PropertyName();
         if ($propertyName) 
-        {
-            $this->contentObject->$propertyName = $value;
+        { 
+            $this->parent->contentObject->$propertyName = $value;
             return;
         }
 
