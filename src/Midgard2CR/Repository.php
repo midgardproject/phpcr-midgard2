@@ -274,7 +274,7 @@ class Repository implements \PHPCR\RepositoryInterface
     
     public function isStandardDescriptor($key)
     {
-        $ref = new ReflectionClass('\PHPCR\RepositoryInterface');
+        $ref = new \ReflectionClass('\PHPCR\RepositoryInterface');
         $consts = $ref->getConstants();
         return in_array($key, $consts);
     }
