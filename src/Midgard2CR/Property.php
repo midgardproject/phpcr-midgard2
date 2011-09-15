@@ -362,6 +362,10 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         $attachments = array();
         foreach ($pNodes as $prop)
         {
+            if (!$prop->guid)
+            {
+                continue;
+            }
             $attachments = array_merge($attachments, $prop->list_attachments());
         }
 
