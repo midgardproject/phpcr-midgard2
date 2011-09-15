@@ -374,7 +374,7 @@ class Session implements \PHPCR\SessionInterface
         $children = $root_node->getNodes();
         foreach ($children as $name => $child) 
         {
-            if ($this->_check_pending_change ($child) === true)
+            if ($this->_check_pending_changes ($child) === true)
             {
                 return true;
             }
