@@ -38,6 +38,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return 'nt:folder';
         }
 
+        if ($this->primaryNodeTypeName)
+        {
+            return $this->primaryNodeTypeName;
+        }
+
         return $this->getPropertyValue('jcr:primaryType');
     }
 
@@ -90,7 +95,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
          * "if a node type or implementation-specific constraint is violated or 
          *  if an attempt is made to add a node as the child of a property and 
          *  this implementation performs this validation immediately." */
-        if ($this->hasProperty($relPath))
+        $this->populateProperties();
+        if (array_key_exists($relPath, $this->properties))
         {
             throw new \PHPCR\NodeType\ConstraintViolationException("Can not add node to '{$relPath}' Item which is a Property");
         }
@@ -106,9 +112,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $midgardNode->name = $relPath;
 
         $new_node = new \Midgard2CR\Node($midgardNode, $this, $this->getSession());
-
         $new_node->is_new = true; 
         $new_node->primaryNodeTypeName = $primaryNodeTypeName;
+        $ptnProperty = 'jcr-primaryType';
+        $new_node->$ptnProperty = $primaryNodeTypeName;
+        $new_node->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::NAME);
         $this->children[$relPath] = $new_node;
 
         $this->is_modified = true;
@@ -171,7 +179,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
         $node = $this->getNode($parts[0]);
         for ($i = 1; $i < $pathElements; $i++)
-        {
+        { 
             $node = $node->appendNode($parts[$i], $primaryNodeTypeName);
         }
         return $node;
@@ -949,13 +957,11 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         $midgardMixinName = NodeMapper::getMidgardName($mixinName);
         if ($midgardMixinName == null 
-            || !class_exists($midgardMixinName, false)
-            || !is_subclass_of($midgardMixinName, 'midgard_object'))
+            || !interface_exists($midgardMixinName, false))
         {
-            throw new \PHPCR\NodeType\NoSuchNodeTypeException("{$mixinName} is not registered type"); 
+            throw new \PHPCR\NodeType\NoSuchNodeTypeException("{$mixinName} {$midgardMixinName} is not registered type"); 
         }
-        $isMixin = \midgard_object_class::get_schema_value($midgardMixinName, 'isMixin');
-        if ($isMixin != 'true')
+        if (is_subclass_of($midgardMixinName, 'MidgardBaseMixin'))
         {
             throw new \PHPCR\NodeType\ConstraintViolationException("{$mixinName} is not registered as mixin"); 
         }
@@ -994,13 +1000,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $this->setProperty('jcr:mixinTypes', $mixinName);
         }
 
-        /* FIXME, better reflection needed, instance is created because 
-         * get_class_vars returns only static properties */
-        $midgardMixin = \midgard_object_class::factory($midgardMixinName);
-
-        foreach (get_object_vars($midgardMixin) as $name => $thisPHPFunctionIsAnnoying)
+        $properties = \midgard_reflector_object::list_defined_properties ($midgardMixinName);
+        foreach ($properties as $name => $v)
         {
-            $jcrName = str_replace('-', ':', $name);
+            $jcrName = \MidgardNodeMapper::getPHPCRProperty($name);
             if($this->hasProperty($jcrName))
             {
                 continue;

@@ -35,7 +35,13 @@ class NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeDefinitionInterface
 
     public function getPrimaryItemName()
     {
-        return $this->primaryItemName;
+        if ($this->primaryItemName)
+        {
+            return $this->primaryItemName;
+        }
+
+        $mgdName = \MidgardNodeMapper::getMidgardName ($this->getName());       
+        return \midgard_reflector_object::get_schema_value ($mgdName, "PrimaryItemName");
     }
 
     public function hasOrderableChildNodes()

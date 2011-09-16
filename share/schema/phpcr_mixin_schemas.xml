@@ -2,7 +2,7 @@
 <Schema xmlns="http://www.midgard-project.org/repligard/1.4">
 
 	<!-- mix:title -->
-	<type name="mix_title"  metadata="false">
+	<type name="mix_title"  metadata="false" abstract="mixin">
 		<!-- JCR properties of mix:title type -->
 		<property name="jcr-title" type="string">
 			<RequiredType>STRING</RequiredType>
@@ -34,7 +34,7 @@
 	</type>
 
 	<!-- mix:created -->
-	<type name="mix_created" metadata="false">
+	<type name="mix_created" metadata="false" abstract="mixin">
 		<!-- JCR properties of mix:title type -->
 		<property name="jcr-created" type="datetime">
 			<RequiredType>DATE</RequiredType>
@@ -43,7 +43,7 @@
 			<isProtected>false</isProtected>
 			<isMultiple>false</isMultiple>
 		</property>
-		<property name="jcr=createdBy" type="string">
+		<property name="jcr-createdBy" type="string">
 	  	<RequiredType>STRING</RequiredType>
 			<isAutoCreated>true</isAutoCreated>
 			<isMandatory>false</isMandatory>
@@ -72,7 +72,7 @@
 	</type>
 
 	<!-- mix:lastModified -->
-	<type name="mix_lastmodified"  metadata="false">
+	<type name="mix_lastModified"  metadata="false" abstract="mixin">
 		<!-- JCR properties of mix:lastModified type -->
 		<property name="jcr-lastModified" type="datetime">
 			<RequiredType>DATE</RequiredType>
@@ -111,7 +111,7 @@
 	</type>
 
 	<!-- mix:language -->
-	<type name="mix_language"  metadata="false">
+	<type name="mix_language"  metadata="false" abstract="mixin">
 		<!-- JCR properties of mix:language type -->
 		<property name="jcr-language" type="string">
 			<RequiredType>STRING</RequiredType>
@@ -139,7 +139,7 @@
 	</type>
 
 	<!-- mix:mimeType -->
-	<type name="mix_mimetype"  metadata="false">
+	<type name="mix_mimeType"  metadata="false" abstract="mixin">
 		<!-- JCR properties of mix:mimeType type -->
 		<property name="jcr-mimeType" type="string">
 			<RequiredType>STRING</RequiredType>
@@ -181,7 +181,7 @@
 	</type>
 
 	<!-- mix:etag -->
-	<type name="mix_etag"  metadata="false">
+	<type name="mix_etag"  metadata="false" abstract="mixin">
 		<!-- JCR properties of mix:title type -->
 		<property name="jcr-etag" type="string">
 			<RequiredType>STRING</RequiredType>
@@ -209,7 +209,7 @@
 	</type>
 
 	<!-- mix:referenceable -->
-	<type name="mix_referenceable"  metadata="false">
+	<type name="mix_referenceable"  metadata="false" abstract="mixin">
 		<!-- JCR properties of mix:title type -->
 		<property name="jcr-uuid" type="string">
 			<RequiredType>STRING</RequiredType>
@@ -241,8 +241,7 @@
 	</type>
 
 	<!-- mix:shareable -->
-	<type name="mix_shareable"  metadata="false">
-		<property name="dummy" />
+	<type name="mix_shareable"  metadata="false" abstract="mixin" extends="mix_referenceable">
 		<!-- JCR properties of mix:shareable type -->
 		<!-- Node and NodeType definitions -->
 		<user_values>

@@ -91,7 +91,7 @@ class Midgard2XMLImporter extends \DomDocument
         if (count($parts) == 2)
         {
             $GnsName = str_replace(':', '-', $propertyName);
-            if (property_exists($object, $GnsName))
+            if ($GnsName != 'jcr-mixinTypes' && property_exists($object, $GnsName))
             {
                 $vnode = $property->getElementsByTagName('value')->item(0);
                 $object->$GnsName = $this->getPropertyValue($property); 
@@ -187,6 +187,8 @@ class Midgard2XMLImporter extends \DomDocument
 
         $object = new $class();
         $object->name = $name;
+        $primaryType = 'jcr-primaryType';
+        $object->$primaryType = $type;
         $object->create();
 
         if (\midgard_connection::get_instance()->get_error() != MGD_ERR_OK)
@@ -199,7 +201,7 @@ class Midgard2XMLImporter extends \DomDocument
         $midgardNode->typename = get_class($object);
         $midgardNode->objectguid = $object->guid;
         $midgardNode->parentguid = $midgardParentNode->guid;
-        $midgardNode->parent = $midgardParentNode->id;
+        $midgardNode->parent = $midgardParentNode->id; 
         $midgardNode->create();
 
         /* FIXME, do we have to check duplicate case here? */

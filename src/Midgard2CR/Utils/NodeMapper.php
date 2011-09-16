@@ -17,7 +17,7 @@ class NodeMapper
             return null;
         }
 
-        return strtolower(str_replace(':', '_', $type));
+        return str_replace(':', '_', $type);
     }
 
     /**
@@ -68,7 +68,7 @@ class NodeMapper
             return null;
         }
         /* TODO, determine uper cases */
-        return str_replace('-', ':', $property);
+        return str_replace(':', '-', $property);
     }
 }
 

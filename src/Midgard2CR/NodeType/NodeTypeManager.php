@@ -26,29 +26,29 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
         $classes = $re->getClasses();
         foreach ($classes as $refclass)
         {
-            $parent_class = $refclass->getParentClass();
-            if (!$parent_class)
+            $ignore = true;
+            if ($refclass->isSubclassOf('MidgardObject')
+                || $refclass->isSubclassOf('MidgardBaseMixin')
+                || $refclass->isSubclassOf('MidgardBaseInterface'))
+            {
+                $ignore = false;
+            }
+
+            if ($refclass->isAbstract())
+            {
+                $ignore = true;
+            }
+
+            if ($ignore == true)
             {
                 continue;
             }
 
-            if ($parent_class->getName() != 'midgard_object')
-            {
-                continue;
-            }
             $tmpName = $refclass->getName();
             if (strpos($tmpName, 'nt_') !== false
                 || strpos($tmpName, 'mix_') !== false)
             {
-                $oName = \midgard_object_class::get_schema_value($tmpName, 'OriginalName');
-                if ($oName != '' || $oName != null)
-                {
-                    $mgdschemaName = $oName;
-                }
-                else 
-                {
-                    $mgdschemaName = NodeMapper::getPHPCRName($tmpName);
-                }
+                $mgdschemaName = \MidgardNodeMapper::getPHPCRName($tmpName);                
             }   
             else 
             {
@@ -96,8 +96,7 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
     }
 
     public function getNodeType($nodeTypeName)
-    {
-        $nodeTypeName = $nodeTypeName;
+    { 
         if (!$this->hasNodeType($nodeTypeName))
         {
             throw new \PHPCR\NodeType\NoSuchNodeTypeException("Node '{$nodeTypeName}' is not registered");
