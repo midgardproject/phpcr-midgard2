@@ -12,13 +12,21 @@ class Session implements \PHPCR\SessionInterface
     protected $removeNodes = array();
     private $transaction = null;
     private $nsregistry = null;
+    private $credentials = null;
+    private $isAnonymous = true;
 
-    public function __construct(\midgard_connection $connection, Repository $repository, \midgard_user $user = null, \midgard_object $rootObject)
+    public function __construct(\midgard_connection $connection, Repository $repository, \midgard_user $user = null, \midgard_object $rootObject, \PHPCR\CredentialsInterface $credentials)
     {
         $this->connection = $connection;
         $this->repository = $repository;
         $this->user = $user;
         $this->rootObject = $rootObject;
+        $this->credentials = $credentials;
+        if ($credentials 
+            && !($credentials instanceof \PHPCR\GuestCredentials))
+        {
+            $this->isAnonymous = false;
+        }
     }
 
     public function getRepository()
@@ -386,7 +394,33 @@ class Session implements \PHPCR\SessionInterface
     
     public function hasPermission($absPath, $actions)
     {
-        return false;
+        $hasPermission = false;
+        $acts = explode(',', $actions);
+        foreach ($acts as $action) {
+
+            /* TODO, refactor permission cases and extend them */
+
+            /* read */
+            if ($action == 'read')
+                $hasPermission = true;
+
+            /* add_node */
+            if ($action == 'add_node'
+                && $this->isAnonymous == false)
+                $hasPermission = true;
+
+            /* remove */
+            if ($action == 'remove'
+                && $this->isAnonymous == false)
+                $hasPermission = true;
+
+            /* set_property */
+            if ($action == 'set_property'
+                && $this->isAnonymous == false)
+                $hasPermission = true;
+
+        }
+        return $hasPermission;
     }
     
     public function checkPermission($absPath, $actions)
