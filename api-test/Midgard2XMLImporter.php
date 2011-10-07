@@ -140,6 +140,13 @@ class Midgard2XMLImporter extends \DomDocument
             $midgardNodeProperty->multiple = $isMultiple;
             $midgardNodeProperty->type = \PHPCR\PropertyType::valueFromName($propertyType);
             $midgardNodeProperty->value = $isBinary ? '' : $vnode->nodeValue;
+            if ($midgardNodeProperty->type == \PHPCR\PropertyType::BOOLEAN) 
+            {
+                if ($midgardNodeProperty->value == 'false')
+                    $midgardNodeProperty->value = '0';
+                if ($midgardNodeProperty->value == 'true')
+                    $midgardNodeProperty->value = '1';
+            }
             $midgardNodeProperty->parent = $midgardNode->id;
             $midgardNodeProperty->parentguid = $midgardNode->guid;
             $midgardNodeProperty->create();
