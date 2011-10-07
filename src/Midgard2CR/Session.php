@@ -11,6 +11,7 @@ class Session implements \PHPCR\SessionInterface
     protected $workspace = null;
     protected $removeNodes = array();
     private $transaction = null;
+    private $nsregistry = null;
 
     public function __construct(\midgard_connection $connection, Repository $repository, \midgard_user $user = null, \midgard_object $rootObject)
     {
@@ -425,29 +426,61 @@ class Session implements \PHPCR\SessionInterface
 
         fwrite($out, $exporter->getXMLBuffer());
     }
-    
+
+    private function populateNamespaces()
+    {
+        if ($this->nsregistry != null)
+            return;
+
+        $nsReg = $this->getWorkspace()->getNamespaceRegistry();
+        $prefixes = $nsReg->getPrefixes();
+        foreach ($prefixes as $prefix)
+        {
+            $this->nsregistry[$prefix] = $nsReg->getURI($prefix); 
+        }
+    }
+
     public function setNamespacePrefix($prefix, $uri)
     {
-        $nsReg = $this->getWorkspace()->getNamespaceRegistry();
-        $nsReg->registerNamespace($prefix, $uri);
+        if (!$prefix || !$uri) 
+        {
+            throw new \PHPCR\NamespaceException("Can not set namespace with empty prefix or empty uri");
+        }
+        
+        if (strpos(strtolower($prefix), 'xml') !== false)
+        {
+            throw new \PHPCR\NamespaceException("Can not set prefix. Reserved 'xml' included");
+        }
+
+        $this->populateNamespaces();
+        $this->nsregistry[$prefix] = $uri;
     }
     
     public function getNamespacePrefixes()
     {
-        $nsReg = $this->getWorkspace()->getNamespaceRegistry();
-        return $nsReg->getPrefixes();
+        $this->populateNamespaces();
+        return (array_keys($this->nsregistry));
     }
     
     public function getNamespaceURI($prefix)
     {
-        $nsReg = $this->getWorkspace()->getNamespaceRegistry();
-        return $nsReg->getUri($prefix);
+        $this->populateNamespaces();
+        if (!isset($this->nsregistry[$prefix]))
+        {
+            throw new \PHPCR\NamespaceException ("URI for given {$prefix} prefix not found");
+        }
+        return $this->nsregistry[$prefix];
     }
     
     public function getNamespacePrefix($uri)
     {
-        $nsReg = $this->getWorkspace()->getNamespaceRegistry();
-        return $nsReg->getPrefix($uri);   
+        $this->populateNamespaces();
+        $prefix = array_search($uri, $this->nsregistry);
+        if ($prefix === false)
+        {
+            throw new \PHPCR\NamespaceException ("Prefix for given {$uri} uri not found");
+        }
+        return $prefix;
     }
     
     public function logout()
