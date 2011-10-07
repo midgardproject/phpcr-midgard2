@@ -10,6 +10,15 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     );
 
     protected $unsupportedTests = array(
+        'Query\QOM\Sql2ToQomConverterTest::testColumnsAndSelector',
+        'Connecting\WorkspaceReadMethodsTest::testGetAccessibleWorkspaceNames',
+        'Query\QOM\Sql2ToQomConverterTest::testQueries',
+        'Query\QOM\ConvertQueriesBackAndForthTest::testBackAndForth',
+        'Reading\SessionReadMethodsTest::testImpersonate',
+        'Reading\SessionReadMethodsTest::testCheckPermission',
+        'Reading\SessionReadMethodsTest::testCheckPermissionAccessControlException',
+        'Connecting\WorkspaceReadMethodsTest::testGetAccessibleWorkspaceNames',
+        'Writing\MoveMethodsTest::testWorkspaceMove'
     );
 
     public static function getInstance()   
