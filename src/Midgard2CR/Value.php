@@ -214,6 +214,12 @@ class BooleanValue extends Value
 
         return $ta;
     }
+
+    public static function toString($value)
+    {
+        $values = \PHPCR\PropertyType::convertType(array($value), \PHPCR\PropertyType::STRING, \PHPCR\PropertyType::BOOLEAN);
+        return $values[0];
+    }
 }
 
 class NameValue extends Value
