@@ -77,6 +77,13 @@ class Value
 
     public static function toBoolean($value)
     {
+        /* Kind of ugly hack, but no idea how to convert 'false' to boolean false. 
+         * The solution might be to store '0' in storage instead of literal 'false',
+         * but in such case boolean to string conversion should return 'false', not '0'. */
+        if (is_string($value)
+            && strtolower($value) == 'false')
+            return (bool)false;
+
         $values = \PHPCR\PropertyType::convertType(array($value), \PHPCR\PropertyType::BOOLEAN);
         return (bool) $values[0];
     }
@@ -206,6 +213,12 @@ class BooleanValue extends Value
         );
 
         return $ta;
+    }
+
+    public static function toString($value)
+    {
+        $values = \PHPCR\PropertyType::convertType(array($value), \PHPCR\PropertyType::STRING, \PHPCR\PropertyType::BOOLEAN);
+        return $values[0];
     }
 }
 
