@@ -218,6 +218,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $requiredType = $pDef->getRequiredType();
 
             if ($requiredType != 0
+                && $requiredType != $type)
+            {
+                throw new \PHPCR\NodeType\ConstraintViolationException("Wrong type for {$name} property. " . \PHPCR\PropertyType::nameFromValue($type) . " given. Expected " . \PHPCR\PropertyType::nameFromValue($requiredType));
+
+            }
+
+            if ($requiredType != 0
                 && ($requiredType != null && $requiredType != $type)
                 && property_exists($this->getMidgard2ContentObject(), $name))
             {

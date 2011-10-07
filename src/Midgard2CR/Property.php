@@ -1,6 +1,7 @@
 <?php
 namespace Midgard2CR;
 require_once 'Value.php';
+require_once 'MidgardNodeMapper.php';
 
 class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterface
 {
@@ -604,65 +605,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
     public function getMidgard2ValueType()
     {
-        if (!class_exists('\midgard_reflector_property'))
-        {
-            try 
-            {
-                $mrp = new \midgard_reflection_property(get_class($this->parent->getMidgard2ContentObject()));
-            }
-            catch (\midgard_error_exception $e)
-            {
-                throw new \Exception (get_class($this->parent->getMidgard2ContentObject()) . " not registered as MidgardObject derived one"); 
-            }
-        }
-        else 
-        {
-            try 
-            {
-                $mrp = new \midgard_reflector_property (get_class($this->parent->getMidgard2ContentObject()));
-            }
-            catch (\midgard_error_exception $e)
-            {
-                throw new \Exception (get_class($this->parent->getMidgard2ContentObject()) . " not registered as MidgardObject derived one"); 
-            }
-        }
-        $type = $mrp->get_midgard_type ($this->midgardPropertyName);
-
-        $type_id = 0;
-
-        switch ($type) 
-        {
-            case \MGD_TYPE_STRING:
-            case \MGD_TYPE_LONGTEXT:
-            case \MGD_TYPE_GUID:
-                $type_id = \PHPCR\PropertyType::STRING;
-                break;
-
-            case \MGD_TYPE_UINT:
-            case \MGD_TYPE_INT:
-                $type_id = \PHPCR\PropertyType::LONG;
-                break;
-
-            case \MGD_TYPE_FLOAT:
-                $type_id = \PHPCR\PropertyType::DOUBLE;
-                break;
-
-            case \MGD_TYPE_BOOLEAN:
-                $type_id = \PHPCR\PropertyType::BOOLEAN;
-                break;
-
-            case \MGD_TYPE_TIMESTAMP:
-                $type_id = \PHPCR\PropertyType::DATE;
-                break;
-        }
-
-        /* Try schema value */
-        $type = $mrp->get_user_value($this->midgardPropertyName, 'RequiredType');
-        if ($type != '' || $type != null)
-        {
-            $type_id = \PHPCR\PropertyType::valueFromName($type);
-        }
-
+        $type_id = \MidgardNodeMapper::getPHPCRPropertyType(get_class($this->parent->getMidgard2ContentObject()), $this->midgardPropertyName);
         $this->type = $type_id;
         return $this->type;
     }
