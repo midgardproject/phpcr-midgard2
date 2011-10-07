@@ -80,14 +80,14 @@ class Repository implements \PHPCR\RepositoryInterface
             $this->midgard2SetWorkspace($workspaceName);
         }
 
-        if (   $credentials instanceof \PHPCR\GuestCredentials
+        /* if (   $credentials instanceof \PHPCR\GuestCredentials
             || is_null($credentials))
         {
             // Anonymous session
-            return new Session($this->connection, $this, $user, $rootObject);
-        }
+            return new Session($this->connection, $this, $user, $rootObject, $credentials);
+        } */
         
-        return new Session($this->connection, $this, $user, $rootObject);
+        return new Session($this->connection, $this, $user, $rootObject, $credentials);
     }
     
     private function midgard2Connect(array $parameters = null)
