@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR\NodeType;
+namespace Midgard\PHPCR\NodeType;
 
 class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
 {
@@ -13,7 +13,7 @@ class PropertyDefinition implements \PHPCR\NodeType\PropertyDefinitionInterface
     protected $typename = null;
     protected $midgardPropertyName = null;
 
-    public function __construct(\Midgard2CR\Node $node, $name)
+    public function __construct(\Midgard\PHPCR\Node $node, $name)
     {
         $midgardObject = $node->getMidgard2ContentObject();
         $this->node = $node;

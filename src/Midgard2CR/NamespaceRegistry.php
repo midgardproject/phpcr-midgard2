@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR;
+namespace Midgard\PHPCR;
 
 class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryInterface
 {
@@ -21,7 +21,7 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
         ''    => ''
     );
 
-    public function __construct(\Midgard2CR\Session $session)
+    public function __construct(\Midgard\PHPCR\Session $session)
     {
         $this->session = $session;    
         $this->registry = $this->builtins;
@@ -146,7 +146,7 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
     {
         if ($this->manager == null)
         {
-            $this->manager = new \Midgard2CR\NamespaceManager($this);
+            $this->manager = new \Midgard\PHPCR\NamespaceManager($this);
         }
         return $this->manager;
     }

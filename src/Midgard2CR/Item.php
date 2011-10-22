@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR;
+namespace Midgard\PHPCR;
 
 abstract class Item implements \PHPCR\ItemInterface
 {

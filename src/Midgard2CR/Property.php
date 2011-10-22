@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR;
+namespace Midgard\PHPCR;
 require_once 'Value.php';
 require_once 'MidgardNodeMapper.php';
 
@@ -200,7 +200,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
          * Thus, passing a Node object without an explicit type (REFERENCE or WEAKREFERENCE) will create a REFERENCE property. 
          * If the specified node is not referenceable, a ValueFormatException is thrown.
          */ 
-        if (is_a($value, '\Midgard2CR\Node'))
+        if (is_a($value, '\Midgard\PHPCR\Node'))
         {
             if (!$value->isReferenceable())
             {
@@ -218,7 +218,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             $new_value = $value->format("c");
         }
-        else if (is_a($value, '\Midgard2CR\Property'))
+        else if (is_a($value, '\Midgard\PHPCR\Property'))
         {
             $new_value = $value->getString(); 
         }

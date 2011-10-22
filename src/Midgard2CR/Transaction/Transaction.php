@@ -1,6 +1,6 @@
 <?php
 
-namespace Midgard2CR\Transaction;
+namespace Midgard\PHPCR\Transaction;
 
 class Transaction implements \PHPCR\Transaction\UserTransactionInterface
 {

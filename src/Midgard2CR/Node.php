@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR;
+namespace Midgard\PHPCR;
 
 use ArrayIterator;
 
@@ -110,7 +110,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $midgardNode->typename = str_replace(':', '_', $primaryNodeTypeName);
         $midgardNode->name = $relPath;
 
-        $new_node = new \Midgard2CR\Node($midgardNode, $this, $this->getSession());
+        $new_node = new \Midgard\PHPCR\Node($midgardNode, $this, $this->getSession());
         $new_node->is_new = true; 
         $new_node->primaryNodeTypeName = $primaryNodeTypeName;
         $ptnProperty = 'jcr-primaryType';
@@ -196,7 +196,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             throw new \InvalidArgumentException("Can not set property name with '/' delimeter");
         }
 
-        $pDef = new \Midgard2CR\NodeType\PropertyDefinition($this, $name);
+        $pDef = new \Midgard\PHPCR\NodeType\PropertyDefinition($this, $name);
         if ($value == null)
         {
             /* Property is mandatory, can not remove */

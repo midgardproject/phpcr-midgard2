@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR\NodeType;
+namespace Midgard\PHPCR\NodeType;
 
 class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInterface
 {

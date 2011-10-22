@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR;
+namespace Midgard\PHPCR;
 
 class Session implements \PHPCR\SessionInterface
 {
@@ -38,7 +38,7 @@ class Session implements \PHPCR\SessionInterface
     {
         if ($this->transaction == null)
         {
-            $this->transaction = new \Midgard2CR\Transaction\Transaction();
+            $this->transaction = new \Midgard\PHPCR\Transaction\Transaction();
         }
         return $this->transaction;
     }
@@ -67,7 +67,7 @@ class Session implements \PHPCR\SessionInterface
     {
         if ($this->workspace == null)
         { 
-            $this->workspace = new \Midgard2CR\Workspace($this);
+            $this->workspace = new \Midgard\PHPCR\Workspace($this);
         }
 
         return $this->workspace;
@@ -126,7 +126,7 @@ class Session implements \PHPCR\SessionInterface
 
         try 
         { 
-            $midgard_path = \Midgard2CR\Node::getMidgardPath($midgardNode);
+            $midgard_path = \Midgard\PHPCR\Node::getMidgardPath($midgardNode);
             /* Convert to JCR path */
             $midgard_path = str_replace('/jackalope', '', $midgard_path);
             $node = $this->getNode($midgard_path);

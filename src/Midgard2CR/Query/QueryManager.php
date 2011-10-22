@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR\Query;
+namespace Midgard\PHPCR\Query;
 
 class QueryManager implements \PHPCR\Query\QueryManagerInterface 
 {
@@ -8,7 +8,7 @@ class QueryManager implements \PHPCR\Query\QueryManagerInterface
     protected $query = null;
     protected $supportedLanguages = null;
 
-    public function __construct (\Midgard2CR\Session $session)
+    public function __construct (\Midgard\PHPCR\Session $session)
     {
         $this->session = $session;
         $this->supportedLanguages = array (

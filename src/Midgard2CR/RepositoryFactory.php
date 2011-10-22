@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR;
+namespace Midgard\PHPCR;
 
 class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
 {

@@ -1,11 +1,11 @@
 <?php
-namespace Midgard2CR;
+namespace Midgard\PHPCR;
 
 class NamespaceManager 
 {
     protected $registery = null;
 
-    public function __construct(\Midgard2CR\NamespaceRegistry $registry)
+    public function __construct(\Midgard\PHPCR\NamespaceRegistry $registry)
     {
         $this->registry = $registry;
     }

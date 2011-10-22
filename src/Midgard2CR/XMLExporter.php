@@ -1,6 +1,6 @@
 <?php
 
-namespace Midgard2CR;
+namespace Midgard\PHPCR;
 
 abstract class XMLExporter
 {

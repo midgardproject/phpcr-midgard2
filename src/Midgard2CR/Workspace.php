@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR;
+namespace Midgard\PHPCR;
 
 class Workspace implements \PHPCR\WorkspaceInterface
 {
@@ -10,7 +10,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
     protected $midgard_workspace = null;
     protected $nodeTypeManager = null;
 
-    public function __construct (\Midgard2CR\Session $session)
+    public function __construct (\Midgard\PHPCR\Session $session)
     {
         $this->session = $session;
         $workspace = \midgard_connection::get_instance()->get_workspace();
@@ -59,7 +59,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
     {
         if ($this->query_manager == null)
         {
-            $this->query_manager = new \Midgard2CR\Query\QueryManager($this->session);
+            $this->query_manager = new \Midgard\PHPCR\Query\QueryManager($this->session);
         }
 
         return $this->query_manager;
@@ -73,7 +73,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
     {
         if ($this->namespace_registry == null)
         {
-            $this->namespace_registry = new \Midgard2CR\NamespaceRegistry($this->session);
+            $this->namespace_registry = new \Midgard\PHPCR\NamespaceRegistry($this->session);
         }
 
         return $this->namespace_registry;

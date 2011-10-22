@@ -1,6 +1,6 @@
 <?php
 
-namespace Midgard2CR\Query\QOM;
+namespace Midgard\PHPCR\Query\QOM;
 
 class QueryObjectModelFactory implements \PHPCR\Query\QOM\QueryObjectModelFactoryInterface
 {

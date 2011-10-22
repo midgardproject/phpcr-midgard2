@@ -1,6 +1,6 @@
 <?php
 
-namespace Midgard2CR\Query;
+namespace Midgard\PHPCR\Query;
 
 class Row implements \Iterator, \PHPCR\Query\RowInterface
 {
@@ -12,7 +12,7 @@ class Row implements \Iterator, \PHPCR\Query\RowInterface
     protected $values = null; 
     protected $indexes = null;
 
-    public function __construct(\Midgard2CR\Query\QueryResult $qr, $path, $score, \Midgard2CR\Node $node)
+    public function __construct(\Midgard\PHPCR\Query\QueryResult $qr, $path, $score, \Midgard\PHPCR\Node $node)
     {
         $this->queryResult = $qr;
         $this->path = $path;

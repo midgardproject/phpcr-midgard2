@@ -1,12 +1,12 @@
 <?php
-namespace Midgard2CR\Query;
+namespace Midgard\PHPCR\Query;
 
 class Query implements \PHPCR\Query\QueryInterface
 {
     protected $session = null;
     protected $qb = null;
     
-    public function Query (\Midgard2CR\Session $session)
+    public function Query (\Midgard\PHPCR\Session $session)
     {
         $this->session = $session;
     }

@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR\Query;
+namespace Midgard\PHPCR\Query;
 
 class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterface
 {
@@ -8,7 +8,7 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
     protected $selectors;
     protected $rows = null;
 
-    public function __construct(array $selectors, \midgard_query_select $qs, \Midgard2CR\Session $session)
+    public function __construct(array $selectors, \midgard_query_select $qs, \Midgard\PHPCR\Session $session)
     {
         $this->qs = $qs;
         $this->session = $session;
@@ -45,7 +45,7 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
         $ret = array();
         foreach ($objects as $midgardNode)
         {
-            $node = new \Midgard2CR\Node($midgardNode, null, $this->session);
+            $node = new \Midgard\PHPCR\Node($midgardNode, null, $this->session);
             $ret[$node->getPath()] = $node;
         }
 

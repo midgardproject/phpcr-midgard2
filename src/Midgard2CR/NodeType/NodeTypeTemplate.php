@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR\NodeType;
+namespace Midgard\PHPCR\NodeType;
 use \ArrayObject;
 
 class NodeTypeTemplate extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeTemplateInterface

@@ -1,5 +1,5 @@
 <?php
-namespace Midgard2CR\Query;
+namespace Midgard\PHPCR\Query;
 
 class SQLQuery implements \PHPCR\Query\QueryInterface
 {
@@ -10,7 +10,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     protected $storageType = null;
     
-    public function __construct (\Midgard2CR\Session $session, $statement)
+    public function __construct (\Midgard\PHPCR\Session $session, $statement)
     {
         $this->session = $session;
         $this->statement = $statement;
