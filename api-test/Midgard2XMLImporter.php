@@ -1,6 +1,6 @@
 <?php
 
-require_once(dirname(__FILE__) . '/../src/Midgard2CR/MidgardNodeMapper.php');
+require_once(dirname(__FILE__) . '/../src/Midgard/PHPCR/MidgardNodeMapper.php');
 
 class Midgard2XMLImporter extends \DomDocument
 {
