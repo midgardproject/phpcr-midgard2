@@ -26,7 +26,7 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         static $instance;
         if (!is_object($instance))
         {
-            $instance = new ImplementationLoader('Midgard2CR\RepositoryFactory', 'tests');
+            $instance = new ImplementationLoader('Midgard\PHPCR\RepositoryFactory', 'tests');
         }
         return $instance;
     }
@@ -154,6 +154,6 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     public function getRepository()
     {
         $mgd = self::getMidgardConnection();
-        return Midgard2CR\RepositoryFactory::getRepository();
+        return Midgard\PHPCR\RepositoryFactory::getRepository();
     }
 }
