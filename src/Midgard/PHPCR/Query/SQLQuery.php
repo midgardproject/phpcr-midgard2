@@ -1,6 +1,8 @@
 <?php
 namespace Midgard\PHPCR\Query;
 
+use Midgard2CR\Utils\NodeMapper;
+
 class SQLQuery implements \PHPCR\Query\QueryInterface
 {
     protected $session = null;
@@ -29,7 +31,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         } while ($token != '');
 
         $this->selectors[] = str_replace(array('[', ']'), '', $type);
-        $this->storageType = \MidgardNodeMapper::getMidgardName($this->selectors[0]);
+        $this->storageType = NodeMapper::getMidgardName($this->selectors[0]);
 
         $storage = new \midgard_query_storage('midgard_node');
         $this->qs = new \midgard_query_select($storage);

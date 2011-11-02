@@ -1,6 +1,8 @@
 <?php
 namespace Midgard\PHPCR\NodeType;
 
+use Midgard2CR\Utils\NodeMapper;
+
 class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInterface
 {
     protected $manager = null;
@@ -95,7 +97,7 @@ class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInt
             }
         }
 
-        $midgardName = \MidgardNodeMapper::getMidgardName($this->name);
+        $midgardName = NodeMapper::getMidgardName($this->name);
         if (!$midgardName)
         {
             return null;
@@ -107,7 +109,7 @@ class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInt
             return null;
         }
 
-        $midgardPropertyName = \MidgardNodeMapper::getMidgardPropertyName($name);
+        $midgardPropertyName = NodeMapper::getMidgardPropertyName($name);
         if (!$midgardPropertyName)
         {
             return null;

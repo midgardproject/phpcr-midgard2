@@ -1,6 +1,8 @@
 <?php
 namespace Midgard\PHPCR\NodeType;
 
+use Midgard2CR\Utils\NodeMapper;
+
 class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeManagerInterface
 {
     protected $primaryNodeTypes = array();

@@ -1,7 +1,5 @@
 <?php
 
-require_once(dirname(__FILE__) . '/../src/Midgard/PHPCR/MidgardNodeMapper.php');
-
 class Midgard2XMLImporter extends \DomDocument
 {
     private $ns_sv = 'http://www.jcp.org/jcr/sv/1.0';
@@ -188,7 +186,7 @@ class Midgard2XMLImporter extends \DomDocument
         $propertyElements = $node->getElementsByTagNameNS($this->ns_sv, 'property');
 
         $type = $this->getNodeType($node);
-        $class = MidgardNodeMapper::getMidgardName($type);
+        $class = Midgard\PHPCR\Utils\NodeMapper::getMidgardName($type);
         if (!$class)
         {
             return;

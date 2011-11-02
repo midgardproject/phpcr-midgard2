@@ -1,0 +1,31 @@
+{
+    "name": "midgard/phpcr",
+    "type": "library",
+    "description": "PHP Content Repository implementation using Midgard2",
+    "keywords": ["phpcr", "contentrepository", "midgard"],
+    "homepage": "http://www.midgard2.org",
+    "version": "10.05.5",
+    "license": "GNU LGPL",
+    "authors": [
+        {
+            "name": "Henri Bergius",
+            "email": "henri.bergius@iki.fi",
+            "homepage": "http://bergie.iki.fi/"
+        },
+        {
+            "name": "Piotr Pokora",
+            "email": "piotrek.pokora@gmail.com",
+            "homepage": "http://blogs.nemein.com/people/piotras/"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0",
+        "ext-midgard2": ">=10.05.5",
+        "phpcr/phpcr": ">=2.1.0-beta1"
+    },
+    "autoload": {
+        "psr-0": {
+            "Midgard2CR": "src"
+        }
+    }
+}
