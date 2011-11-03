@@ -1,14 +1,55 @@
 Midgard2 PHP Content Repository provider
 ========================================
 
-This project attempts to implement a [Midgard2](http://midgard2.org/) -backed implementation of the PHP Content Repository (PHPCR) interfaces. The plan is to have a fully [Jackalope](http://jackalope.github.com/) compatible PHPCR provider that can be used in PHP Content Management Systems without requiring Java.
+This project implements a [Midgard2](http://midgard2.org/) -backed provider of the [PHP Content Repository](http://phpcr.github.com/) (PHPCR) interfaces. The plan is to have a fully [Jackalope](http://jackalope.github.com/) compatible PHPCR provider that can be used in PHP Content Management Systems without requiring Java.
 
 Using Midgard2 instead of [Apache Jackrabbit](http://jackrabbit.apache.org/) also has the benefit of making interoperability with regular relational databases used by many CMSs easy.
 
 ## Installing
 
+You need to have a [midgard2 PHP extension](https://github.com/midgardproject/midgard-php5) installed. On many distributions setting this up is as simple as:
+
+    $ sudo apt-get install php5-midgard2
+
+Then set your project to depend on `midgard/phpcr` by having your `composer.json` to include:
+
+    "require": {
+        "midgard/phpcr": ">=0.1"
+    }
+
+Then just install the provider via [Composer](http://packagist.org/):
+
     $ wget http://getcomposer.org/composer.phar
     $ php composer.phar install
+
+You also need to copy the Midgard2 PHPCR schemas from `vendor/midgard/phpcr/share/schema` to your schema directory (by default `/usr/share/midgard2/schema`).
+
+## Getting started
+
+You can use the Composer-generated autoloader to load all needed classes:
+
+    require 'vendor/.composer/autoload.php';
+
+After you've included the autoloader you should be able to open a Midgard2 repository session:
+
+    // Set up Midgard2 connection
+    $parameters = array(
+        // Use local SQLite file for storage
+        'midgard2.configuration.db.type' => 'SQLite',
+        'midgard2.configuration.db.name' => 'midgard2cr',
+        'midgard2.configuration.db.dir' => __DIR__,
+        // Let Midgard2 initialize the DB as needed
+        'midgard2.configuration.db.init' => true,
+    );
+
+    // Get a Midgard repository
+    $repository = Midgard\PHPCR\RepositoryFactory::getRepository($parameters);
+
+    // Log in to get a session
+    $credentials = new \PHPCR\SimpleCredentials('admin', 'password');
+    $session = $repository->login($credentials, 'default');
+
+After this the whole [PHPCR API](http://phpcr.github.com/doc/html/index.html) will be available. See some example code in the [examples` directory](https://github.com/bergie/phpcr-midgard2/tree/master/examples).
 
 ## About PHPCR
 
@@ -22,11 +63,9 @@ There is currently [discussion about including](http://java.net/jira/browse/JSR_
 
 ## About Midgard2
 
-Midgard2 is an open source content repository library available for multiple programming languages. For PHP it is available as [an extension](https://github.com/midgardproject/midgard-php5). On many distributions setting this up is as simple as:
+Midgard2 is an open source content repository library available for multiple programming languages.
 
-    $ sudo apt-get install php5-midgard2
-
-The Midgard2 content repository is able to access and manage content stored in various common relational databases, including SQLite, MySQL and Postgres. For this, you get a reasonably simple object-oriented interface. An example:
+Midgard2 is able to access and manage content stored in various common relational databases, including SQLite, MySQL and Postgres. For this, you get a reasonably simple object-oriented interface. An example:
 
     $article = new net_example_article();
     $article->title = "Hello, world";
@@ -80,8 +119,6 @@ or:
 Content Repositories are important piece of software infrastructure that must be usable by any projects or companies regardless of their business model. Because of this, the Midgard2 PHPCR implementation will be available under permissive terms of the [GNU Lesser General Public License](http://www.gnu.org/licenses/lgpl-2.1.html).
 
 ## Development
-
-The Midgard2 PHPCR provider is in early stages of development. Our initial goal is to implement JCR level 1 compatibility, verified by passing the relevant [Jackalope API tests](https://github.com/jackalope/jackalope-api-tests). Once we know the exact approach to take, adding JCR level 2 should be relatively straightforward. The [David's Model notes](http://wiki.apache.org/jackrabbit/DavidsModel) should be useful for prioritizing features.
 
 Contributions to the Midgard2 PHPCR provider are very much appreciated. The development is coordinated on a GitHub repository:
 
