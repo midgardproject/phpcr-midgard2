@@ -10,6 +10,8 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
 
     const MGD_PREFIX_MGD = 'mgd';
     const MGD_NAMESPACE_MGD = 'http://www.midgard-project.org/repligard/1.4';
+    const MGD_PREFIX_SV = 'sv';
+    const MGD_NAMESPACE_SV = 'http://www.jcp.org/jcr/sv/1.0';
 
     protected $builtins = array(
         self::PREFIX_JCR   => self::NAMESPACE_JCR,
@@ -18,6 +20,7 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
         self::PREFIX_XML   => self::NAMESPACE_XML,
         self::PREFIX_EMPTY => self::NAMESPACE_EMPTY,
         self::MGD_PREFIX_MGD => self::MGD_NAMESPACE_MGD,
+        self::MGD_PREFIX_SV =>  self::MGD_NAMESPACE_SV,
         ''    => ''
     );
 
