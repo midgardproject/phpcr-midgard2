@@ -19,7 +19,7 @@ $parameters = array(
 );
 
 // Get a Midgard repository
-$repository = Midgard2CR\RepositoryFactory::getRepository($parameters);
+$repository = Midgard\PHPCR\RepositoryFactory::getRepository($parameters);
 
 // Show basic information about the repository
 echo "Opened new PHPCR repository\n\n";

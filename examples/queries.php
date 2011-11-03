@@ -22,7 +22,7 @@ $parameters = array(
 );
 
 // Get a Midgard repository
-$repository = Midgard2CR\RepositoryFactory::getRepository($parameters);
+$repository = Midgard\PHPCR\RepositoryFactory::getRepository($parameters);
 
 // Log in
 $credentials = new \PHPCR\SimpleCredentials('admin', 'password');
