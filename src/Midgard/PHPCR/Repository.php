@@ -5,7 +5,7 @@ class Repository implements \PHPCR\RepositoryInterface
 {
     protected $descriptors = array(
         'identifier.stability' => \PHPCR\RepositoryInterface::IDENTIFIER_STABILITY_INDEFINITE_DURATION,
-        'jcr.repository.name' => 'Midgard2CR',
+        'jcr.repository.name' => 'Midgard2',
         'jcr.repository.vendor' => 'The Midgard Project',
         'jcr.repository.vendor.url' => 'http://www.midgard-project.org',
         'jcr.repository.version' => '',
@@ -210,7 +210,7 @@ class Repository implements \PHPCR\RepositoryInterface
             {
                 continue;
             }
-            if ($parent_class->getName() != 'midgard_object')
+            if ($parent_class->getName() != 'MidgardObject')
             {
                 continue;
             }
