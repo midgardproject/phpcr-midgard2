@@ -122,6 +122,6 @@ Content Repositories are important piece of software infrastructure that must be
 
 Contributions to the Midgard2 PHPCR provider are very much appreciated. The development is coordinated on a GitHub repository:
 
-* [github.com/bergie/phpcr-midgard2](https://github.com/bergie/phpcr-midgard2)
+* [github.com/midgardproject/phpcr-midgard2](https://github.com/midgardproject/phpcr-midgard2)
 
-Feel free to watch the repository, make a fork and [submit pull requests](http://help.github.com/pull-requests/). Code reviews, testing and [bug reports](https://github.com/bergie/phpcr-midgard2/issues) are also very welcome.
+Feel free to watch the repository, make a fork and [submit pull requests](http://help.github.com/pull-requests/). Code reviews, testing and [bug reports](https://github.com/midgardproject/phpcr-midgard2/issues) are also very welcome.
