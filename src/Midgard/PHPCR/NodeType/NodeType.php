@@ -1,7 +1,7 @@
 <?php
 namespace Midgard\PHPCR\NodeType;
 
-use Midgard2CR\Utils\NodeMapper;
+use Midgard\PHPCR\Utils\NodeMapper;
 
 class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInterface
 {

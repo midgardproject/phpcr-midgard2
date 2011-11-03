@@ -1,7 +1,8 @@
 <?php
 namespace Midgard\PHPCR;
+
+use Midgard\PHPCR\Utils\NodeMapper;
 require_once 'Value.php';
-require_once 'MidgardNodeMapper.php';
 
 class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterface
 {
@@ -43,7 +44,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
         /* Check namespace by convention.
          * ns:name is represented as ns-name in Midgard2 */
-        $GNsProperty = \MidgardNodeMapper::getMidgardPropertyName($propertyName);
+        $GNsProperty = NodeMapper::getMidgardPropertyName($propertyName);
         if (property_exists($this->parent->getMidgard2ContentObject(), $GNsProperty))
         {
             $this->isMidgardProperty = true;
@@ -605,7 +606,7 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
     public function getMidgard2ValueType()
     {
-        $type_id = \MidgardNodeMapper::getPHPCRPropertyType(get_class($this->parent->getMidgard2ContentObject()), $this->midgardPropertyName);
+        $type_id = NodeMapper::getPHPCRPropertyType(get_class($this->parent->getMidgard2ContentObject()), $this->midgardPropertyName);
         $this->type = $type_id;
         return $this->type;
     }

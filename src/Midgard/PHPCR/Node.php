@@ -2,7 +2,7 @@
 namespace Midgard\PHPCR;
 
 use ArrayIterator;
-use Midgard2CR\Utils\NodeMapper;
+use Midgard\PHPCR\Utils\NodeMapper;
 
 class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 {
@@ -1010,7 +1010,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $properties = \midgard_reflector_object::list_defined_properties ($midgardMixinName);
         foreach ($properties as $name => $v)
         {
-            $jcrName = \MidgardNodeMapper::getPHPCRProperty($name);
+            $jcrName = NodeMapper::getPHPCRProperty($name);
             if($this->hasProperty($jcrName))
             {
                 continue;
