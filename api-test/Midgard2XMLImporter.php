@@ -186,7 +186,7 @@ class Midgard2XMLImporter extends \DomDocument
         $propertyElements = $node->getElementsByTagNameNS($this->ns_sv, 'property');
 
         $type = $this->getNodeType($node);
-        $class = Midgard2CR\Utils\NodeMapper::getMidgardName($type);
+        $class = Midgard\PHPCR\Utils\NodeMapper::getMidgardName($type);
         if (!$class)
         {
             return;

@@ -4,7 +4,7 @@
     "description": "PHP Content Repository implementation using Midgard2",
     "keywords": ["phpcr", "contentrepository", "midgard"],
     "homepage": "http://www.midgard2.org",
-    "version": "10.05.5",
+    "version": "0.1",
     "license": "GNU LGPL",
     "authors": [
         {
@@ -25,7 +25,7 @@
     },
     "autoload": {
         "psr-0": {
-            "Midgard2CR": "src"
+            "Midgard": "src"
         }
     }
 }
