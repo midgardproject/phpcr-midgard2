@@ -1,7 +1,7 @@
 <?php
 namespace Midgard\PHPCR\Query;
 
-use Midgard2CR\Utils\NodeMapper;
+use Midgard\PHPCR\Utils\NodeMapper;
 
 class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterface
 {

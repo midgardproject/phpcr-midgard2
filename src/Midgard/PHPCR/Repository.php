@@ -5,7 +5,7 @@ class Repository implements \PHPCR\RepositoryInterface
 {
     protected $descriptors = array(
         'identifier.stability' => \PHPCR\RepositoryInterface::IDENTIFIER_STABILITY_INDEFINITE_DURATION,
-        'jcr.repository.name' => 'Midgard2CR',
+        'jcr.repository.name' => 'Midgard2',
         'jcr.repository.vendor' => 'The Midgard Project',
         'jcr.repository.vendor.url' => 'http://www.midgard-project.org',
         'jcr.repository.version' => '',
@@ -203,21 +203,17 @@ class Repository implements \PHPCR\RepositoryInterface
 
         $re = new \ReflectionExtension('midgard2');
         $classes = $re->getClasses();
-        foreach ($classes as $refclass)
-        {
-            $parent_class = $refclass->getParentClass();
-            if (!$parent_class)
-            {
-                continue;
-            }
-            if ($parent_class->getName() != 'midgard_object')
-            {
+        foreach ($classes as $refclass) {
+            if ($refclass->isAbstract() || $refclass->isInterface()) {
                 continue;
             }
 
-            $type = $refclass->getName();            
-            if (\midgard_storage::class_storage_exists($type))
-            {
+            $type = $refclass->getName();
+            if (!is_subclass_of($type, 'MidgardDBObject')) {
+                continue;
+            }
+
+            if (\midgard_storage::class_storage_exists($type)) {
                 continue;
             }
 

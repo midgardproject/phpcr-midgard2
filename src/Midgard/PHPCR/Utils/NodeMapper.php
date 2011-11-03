@@ -1,6 +1,7 @@
 <?php
+namespace Midgard\PHPCR\Utils;
 
-class MidgardNodeMapper 
+class NodeMapper 
 {
     /**
      * Replaces ':' with '_' and returns given type converted to lowercase.

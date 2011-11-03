@@ -1,6 +1,8 @@
 <?php
 namespace Midgard\PHPCR\NodeType;
 
+use Midgard\PHPCR\Utils\NodeMapper;
+
 class NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeDefinitionInterface
 {
     protected $childNodeDefinitions = array();
@@ -40,7 +42,7 @@ class NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeDefinitionInterface
             return $this->primaryItemName;
         }
 
-        $mgdName = \MidgardNodeMapper::getMidgardName ($this->getName());       
+        $mgdName = NodeMapper::getMidgardName ($this->getName());       
         return \midgard_reflector_object::get_schema_value ($mgdName, "PrimaryItemName");
     }
 

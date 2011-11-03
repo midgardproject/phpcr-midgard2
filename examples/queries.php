@@ -7,7 +7,7 @@
  */
 
 // Set up autoloader
-require __DIR__ . "/includes.php";
+require __DIR__ . '/../vendor/.composer/autoload.php';
 
 // Set up Midgard2 repository configs
 $parameters = array(
@@ -22,7 +22,7 @@ $parameters = array(
 );
 
 // Get a Midgard repository
-$repository = Midgard2CR\RepositoryFactory::getRepository($parameters);
+$repository = Midgard\PHPCR\RepositoryFactory::getRepository($parameters);
 
 // Log in
 $credentials = new \PHPCR\SimpleCredentials('admin', 'password');
