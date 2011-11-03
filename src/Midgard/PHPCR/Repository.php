@@ -203,21 +203,17 @@ class Repository implements \PHPCR\RepositoryInterface
 
         $re = new \ReflectionExtension('midgard2');
         $classes = $re->getClasses();
-        foreach ($classes as $refclass)
-        {
-            $parent_class = $refclass->getParentClass();
-            if (!$parent_class)
-            {
-                continue;
-            }
-            if ($parent_class->getName() != 'MidgardObject')
-            {
+        foreach ($classes as $refclass) {
+            if ($refclass->isAbstract() || $refclass->isInterface()) {
                 continue;
             }
 
-            $type = $refclass->getName();            
-            if (\midgard_storage::class_storage_exists($type))
-            {
+            $type = $refclass->getName();
+            if (!is_subclass_of($type, 'MidgardDBObject')) {
+                continue;
+            }
+
+            if (\midgard_storage::class_storage_exists($type)) {
                 continue;
             }
 
