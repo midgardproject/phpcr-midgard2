@@ -8,7 +8,7 @@
  */
 
 // Set up autoloader
-require __DIR__ . "/includes.php";
+require __DIR__ . '/../vendor/.composer/autoload.php';
 
 // Set up Midgard2 repository configs
 $parameters = array(

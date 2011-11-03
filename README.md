@@ -5,6 +5,11 @@ This project attempts to implement a [Midgard2](http://midgard2.org/) -backed im
 
 Using Midgard2 instead of [Apache Jackrabbit](http://jackrabbit.apache.org/) also has the benefit of making interoperability with regular relational databases used by many CMSs easy.
 
+## Installing
+
+    $ wget http://getcomposer.org/composer.phar
+    $ php composer.phar install
+
 ## About PHPCR
 
 The PHP Content Repository API is a PHP version of the Java Content Repository specification. [From Wikipedia](http://en.wikipedia.org/wiki/Content_repository_API_for_Java):

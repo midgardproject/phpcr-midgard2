@@ -25,7 +25,7 @@
     },
     "autoload": {
         "psr-0": {
-            "Midgard": "src"
+            "Midgard\\PHPCR": "src"
         }
     }
 }

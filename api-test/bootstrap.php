@@ -7,17 +7,8 @@ if (gc_enabled()) {
     gc_disable(); 
 }
 
-require_once(dirname(__FILE__) . '/../SplClassLoader.php');
-
-// Midgard2CR is in the src dir
-$midgard2crAutoloader = new SplClassLoader('Midgard\PHPCR', dirname(__FILE__) . '/../src');
-$midgard2crAutoloader->register();
-// Midgard2CR\Query 
-$midgard2crQAutoloader = new SplClassLoader('Midgard\PHPCR\Query', dirname(__FILE__) . '/../src/Midgard2CR/Query');
-$midgard2crQAutoloader->register();
-// PHPCR is in a submodule in lib/PHPCR
-$phpcrAutoloader = new SplClassLoader('PHPCR', dirname (__FILE__) . '/../lib/PHPCR/src');
-$phpcrAutoloader->register();
+// Set up autoloader
+require __DIR__ . '/../vendor/.composer/autoload.php';
 
 // TODO: Remove once https://github.com/midgardproject/midgard-php5/issues/8 is fixed
 if (getenv('MIDGARD_ENV_GLOBAL_SHAREDIR') != '/tmp/Midgard2CR/share')
