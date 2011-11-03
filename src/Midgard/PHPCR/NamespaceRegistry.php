@@ -12,10 +12,8 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
     const MGD_NAMESPACE_MGD = 'http://www.midgard-project.org/repligard/1.4';
     const MGD_PREFIX_SV = 'sv';
     const MGD_NAMESPACE_SV = 'http://www.jcp.org/jcr/sv/1.0';
-    const MGD_PREFIX_SV = 'sv';
-    const MGD_NAMESPACE_SV = 'http://www.w3.org/2001/XMLSchema';
-    const MGD_PREFIX_XS = 'sv';
-    const MGD_NAMESPACE_XS = 'http://www.jcp.org/jcr/sv/1.0';
+    const MGD_PREFIX_XS = 'xsd';
+    const MGD_NAMESPACE_XS = 'http://www.w3.org/2001/XMLSchema';
 
 
     protected $builtins = array(
