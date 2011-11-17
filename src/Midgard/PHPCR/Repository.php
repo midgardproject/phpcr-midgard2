@@ -127,6 +127,9 @@ class Repository implements \PHPCR\RepositoryInterface
             throw new \PHPCR\RepositoryException($mgd->get_error_string());
         }
 
+        $mgd->enable_dbus(false);
+        $mgd->enable_quota(false);
+
         if (   isset($parameters['midgard2.configuration.db.init'])
             && $parameters['midgard2.configuration.db.init'])
         {
