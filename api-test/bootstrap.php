@@ -13,7 +13,8 @@ require __DIR__ . '/../vendor/.composer/autoload.php';
 // TODO: Remove once https://github.com/midgardproject/midgard-php5/issues/8 is fixed
 if (getenv('MIDGARD_ENV_GLOBAL_SHAREDIR') != '/tmp/Midgard2CR/share')
 {
-    die("\nBefore running these tests you need to run 'export MIDGARD_ENV_GLOBAL_SHAREDIR=/tmp/Midgard2CR/share'\n");
+    echo "\nBefore running these tests you need to run 'export MIDGARD_ENV_GLOBAL_SHAREDIR=/tmp/Midgard2CR/share'\n";
+    exit(1);
 }
 
 define('SPEC_VERSION_DESC', 'jcr.specification.version');
@@ -32,6 +33,6 @@ define('OPTION_QUERY_SQL_SUPPORTED', 'option.query.sql.supported');
 define('QUERY_XPATH_POS_INDEX', 'query.xpath.pos.index');
 define('QUERY_XPATH_DOC_ORDER', 'query.xpath.doc.order');
 
-require './suite/inc/FixtureLoaderInterface.php';
-require './suite/inc/AbstractLoader.php';
-require 'ImplementationLoader.php';
+require __DIR__ . '/suite/inc/FixtureLoaderInterface.php';
+require __DIR__ . '/suite/inc/AbstractLoader.php';
+require __DIR__ . '/ImplementationLoader.php';

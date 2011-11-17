@@ -1114,7 +1114,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return false;
     }
 
-    private function getMidgardRelativePath($object)
+    private static function getMidgardRelativePath($object)
     {
         $storage = new \midgard_query_storage('midgard_node');
 
