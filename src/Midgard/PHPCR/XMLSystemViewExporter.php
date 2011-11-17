@@ -60,6 +60,9 @@ class XMLSystemViewExporter extends XMLExporter
 
                 $values = $property->getString();
                 /* FIXME, optimize binary values if skipBinary flag is true */
+                if (!$values) {
+                    continue;
+                }
                 foreach ($values as $v)
                 {
                     if ($property->getType() == \PHPCR\PropertyType::BINARY)
