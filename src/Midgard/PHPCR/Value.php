@@ -3,7 +3,7 @@ namespace Midgard\PHPCR;
 
 class Value 
 {
-    protected function getTransformableTypes()
+    protected static function getTransformableTypes()
     { 
         return array();
     }
@@ -111,7 +111,7 @@ class StringValue extends Value
 
 class DateValue extends Value
 {
-    protected function getTransformableTypes()
+    protected static function getTransformableTypes()
     {
         static $ta = array(
             \PHPCR\PropertyType::STRING,
@@ -162,7 +162,7 @@ class DateValue extends Value
 
 class LongValue extends Value
 {
-    protected function getTransformableTypes()
+    protected static function getTransformableTypes()
     {
         static $ta = array(
             \PHPCR\PropertyType::STRING,
@@ -190,7 +190,7 @@ class BinaryValue extends Value
 
 class DoubleValue extends Value
 {
-    protected function getTransformableTypes()
+    protected static function getTransformableTypes()
     {
         static $ta = array(
             \PHPCR\PropertyType::STRING,
@@ -205,7 +205,7 @@ class DoubleValue extends Value
 
 class BooleanValue extends Value
 {
-    protected function getTransformableTypes()
+    protected static function getTransformableTypes()
     {
         static $ta = array(
             \PHPCR\PropertyType::STRING,
@@ -224,7 +224,7 @@ class BooleanValue extends Value
 
 class NameValue extends Value
 {
-    protected function getTransformableTypes()
+    protected static function getTransformableTypes()
     {
         static $ta = array(
             \PHPCR\PropertyType::STRING,
@@ -239,7 +239,7 @@ class NameValue extends Value
 
 class PathValue extends Value
 {
-    protected function getTransformableTypes()
+    protected static function getTransformableTypes()
     {
         static $ta = array(
             \PHPCR\PropertyType::STRING,
@@ -254,7 +254,7 @@ class PathValue extends Value
 
 class UriValue extends Value
 {
-    protected function getTransformableTypes()
+    protected static function getTransformableTypes()
     {
         static $ta = array(
             \PHPCR\PropertyType::STRING,
@@ -269,7 +269,7 @@ class UriValue extends Value
 
 class ReferenceValue extends Value
 {
-    protected function getTransformableTypes()
+    protected static function getTransformableTypes()
     {
         static $ta = array(
             \PHPCR\PropertyType::STRING,
@@ -283,7 +283,7 @@ class ReferenceValue extends Value
 
 class WeakReferenceValue extends Value
 {
-    protected function getTransformableTypes()
+    protected static function getTransformableTypes()
     {
         static $ta = array(
             \PHPCR\PropertyType::STRING,
@@ -297,7 +297,7 @@ class WeakReferenceValue extends Value
 
 class DecimalValue extends Value
 {
-    protected function getTransformableTypes()
+    protected static function getTransformableTypes()
     {
         static $ta = array(
             \PHPCR\PropertyType::STRING,
