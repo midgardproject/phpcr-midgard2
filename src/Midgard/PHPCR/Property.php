@@ -307,10 +307,10 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         }
 
         $pNodes = $this->parent->getMidgardPropertyNodes($this->getName());
-
+        $ret = array();
         if (!empty($pNodes))
         {
-            if (count($pNodes) == 1)
+            if (!$this->isMultiple())
             {
                 return $pNodes[0]->value;
             } 
@@ -509,25 +509,24 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             throw new \PHPCR\RepositoryException("Not implemented");
         }
 
-        if ($type == \PHPCR\PropertyType::REFERENCE
-            || $type == \PHPCR\PropertyType::WEAKREFERENCE)
+        if ($type == \PHPCR\PropertyType::REFERENCE || $type == \PHPCR\PropertyType::WEAKREFERENCE)
         {
             try {
                 $v = $this->getNativeValue();
                 if (is_array($v))
                 {
+                    $ret = array();
                     foreach ($v as $id)
                     {
                         $ret[] = $this->parent->getSession()->getNodeByIdentifier($id);
                     } 
-
                     return $ret;
                 } 
                 return $this->parent->getSession()->getNodeByIdentifier($v);
             }
             catch (\PHPCR\PathNotFoundException $e)
             {
-                    throw new \PHPCR\ItemNotFoundException($e->getMessage());
+                throw new \PHPCR\ItemNotFoundException($e->getMessage());
             }
         }
    
