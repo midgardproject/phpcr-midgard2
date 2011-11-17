@@ -191,7 +191,15 @@ class Session implements \PHPCR\SessionInterface
 
     public function getNodes($absPaths)
     {
-        return null;
+        $nodes = array();
+        foreach ($absPaths as $absPath) {
+            try {
+                $nodes[] = $this->getNode($absPath);
+            } catch (\Exception $e) {
+                continue;
+            }
+        }
+        return $nodes;
     }
 
     public function getProperty($absPath)
