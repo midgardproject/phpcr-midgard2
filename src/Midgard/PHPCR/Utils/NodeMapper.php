@@ -17,6 +17,10 @@ class NodeMapper
             return null;
         }
 
+        if (substr($type, 0, 4) == 'mgd:') {
+            return substr($type, 4);
+        }
+
         return str_replace(':', '_', $type);
     }
 
