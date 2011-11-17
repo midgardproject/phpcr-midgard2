@@ -694,7 +694,7 @@ xdebug_print_function_stack();
 
         foreach ($pnodes as $mpn)
         { 
-            if ($this->isNew())
+            if ($this->isNew() && !$mpn->guid)
             {
                 $mpn->parent = $this->parent->getMidgard2Node()->id;
                 $mpn->parentguid = $this->parent->getMidgard2Node()->guid;
