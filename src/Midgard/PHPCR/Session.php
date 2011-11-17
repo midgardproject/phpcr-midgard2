@@ -345,10 +345,19 @@ class Session implements \PHPCR\SessionInterface
         //NoSuchNodeTypeException
         //ReferentialIntegrityException
     }
+
+    private function refreshNode(Node $node, $keepChanges)
+    {
+        $node->refresh();
+        $children = $node->getNodes();
+        foreach($children as $child) {
+            $this->refreshNode($child, $keepChanges);
+        }
+    }
     
     public function refresh($keepChanges)
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        $this->refreshNode($this->getRootNode(), $keepChanges);
     }
     
     public function clear()

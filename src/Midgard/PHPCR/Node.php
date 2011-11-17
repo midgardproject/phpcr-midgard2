@@ -1287,6 +1287,17 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
     }
 
+    public function refresh($keepChanges)
+    {
+        if ($this->isModified() && $keepChanges) {
+            return;
+        }
+
+        $this->midgardNode = new \midgard_node($this->midgardNode->guid);
+        $this->properties = null;
+        $this->contentObject = null;
+    }
+
     public function remove()
     {
         if ($this->remove == true)
