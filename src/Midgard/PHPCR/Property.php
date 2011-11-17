@@ -121,21 +121,27 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
             $this->parent->setMidgardPropertyNode($this->getName(), $propertyNode);
         }
 
-        $propertyNode->value = ValueFactory::transformValue($value, $type, \PHPCR\PropertyType::STRING);
-        $propertyNode->type = $type;
-
-        $this->is_new = true;
-        $this->is_modified = false;
-
-        if ($propertyNode->guid)
-        { 
+        if (!$propertyNode->guid) {
+            $this->is_new = true;
+            $this->is_modified = false;
+        } else {
             $this->is_modified = true;
             $this->is_new = false;
         }
+
+        $propertyNode->value = ValueFactory::transformValue($value, $type, \PHPCR\PropertyType::STRING);
+        $propertyNode->type = $type;
     }
 
     public function validateValue($value, $type)
     {
+        /*
+        if (is_array($value) && !$this->isMultiple()) {
+xdebug_print_function_stack();
+            throw new \PHPCR\ValueFormatException("Attempted to set array as value to a non-multivalued property");
+        }
+        */
+
         if ($type == \PHPCR\PropertyType::PATH)
         {
             if (strpos($value, ' ') !== false)
@@ -166,36 +172,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         }
     }
 
-    public function setValue($value, $type = null, $weak = FALSE)
-    { 
-        /* \PHPCR\ValueFormatException */
-        $this->validateValue($value, $type);
-
-        /* Check if property is registered.
-         * If it is, we need to validate if conversion follows the spec: "3.6.4 Property Type Conversion" */
-        $typename = $this->parent->getTypeName();
-        $ntm = $this->getSession()->getWorkspace()->getNodeTypeManager();
-        $nt = $ntm->getNodeType($typename);
-        if ($nt->hasRegisteredProperty($this->getName()) && $type != null)
-        {
-            Value::checkTransformable($this->getType(), $type);
-        }
-
-        /* TODO, handle:
-         * \PHPCR\Version\VersionException 
-         * \PHPCR\Lock\LockException
-         * \PHPCR\ConstraintViolationException
-         * \PHPCR\RepositoryException
-         * \InvalidArgumentException
-         */ 
-        $propertyName = $this->getMidgard2PropertyName();
-        if ($propertyName 
-            && (!$this->isMultiple() || $this->getName() != 'jcr:mixinTypes')) 
-        { 
-            $this->parent->contentObject->$propertyName = $value;
-            return;
-        }
-
+    private function normalizePropertyValue($value)
+    {
         /*
          * The type detection follows PropertyType::determineType. 
          * Thus, passing a Node object without an explicit type (REFERENCE or WEAKREFERENCE) will create a REFERENCE property. 
@@ -213,19 +191,49 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
                 $type = \PHPCR\PropertyType::REFERENCE;
             }
 
-            $new_value = $value->getProperty('jcr:uuid')->getString();
+            return $value->getProperty('jcr:uuid')->getString();
         }
         else if (is_a($value, '\DateTime'))
         {
-            $new_value = $value->format("c");
+            return $value->format("c");
         }
         else if (is_a($value, '\Midgard\PHPCR\Property'))
         {
-            $new_value = $value->getString(); 
+            return $value->getString(); 
         }
-        else 
+        return $value;
+    }
+
+    public function setValue($value, $type = null, $weak = FALSE)
+    { 
+        /* \PHPCR\ValueFormatException */
+        $this->validateValue($value, $type);
+
+        /* Check if property is registered.
+         * If it is, we need to validate if conversion follows the spec: "3.6.4 Property Type Conversion" */
+        $typename = $this->parent->getTypeName();
+        $ntm = $this->getSession()->getWorkspace()->getNodeTypeManager();
+        $nt = $ntm->getNodeType($typename);
+        if ($nt->hasRegisteredProperty($this->getName()) && $type != null)
         {
-            $new_value = $value;
+            Value::checkTransformable($this->getType(), $type);
+        }
+
+        $value = $this->normalizePropertyValue($value);
+
+        /* TODO, handle:
+         * \PHPCR\Version\VersionException 
+         * \PHPCR\Lock\LockException
+         * \PHPCR\ConstraintViolationException
+         * \PHPCR\RepositoryException
+         * \InvalidArgumentException
+         */ 
+        $propertyName = $this->getMidgard2PropertyName();
+        if ($propertyName 
+            && (!$this->isMultiple() || $this->getName() != 'jcr:mixinTypes')) 
+        { 
+            $this->parent->contentObject->$propertyName = $value;
+            return;
         }
 
         if ($type == null)
@@ -237,31 +245,28 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
             if ($type == null)
             {
-                $type = self::determineType($new_value);
+                $type = self::determineType($value);
             }
         }
 
         $pNodes = $this->getMidgardPropertyNodes();
-        if (is_array($new_value))
+        if (is_array($value))
         {
-            $i = 0;
-            foreach($new_value as $v)
+            // FIXME: We should ensure the property is multivalued
+            foreach($value as $v)
             {
-                if (isset($pNodes[$i]))
-                {
-                    $this->setMidgard2NodePropertyValue($pNodes[$i], $v, $type);
+                if ($pNodes) {
+                    $pNode = array_shift($pNodes);
+                    $this->setMidgard2NodePropertyValue($pNode, $v, $type);
+                    continue;
                 }
-                else 
-                {
-                    $this->setMidgard2NodePropertyValue(null, $v, $type);
-                }
-                $i++;
+                $this->setMidgard2NodePropertyValue(null, $v, $type);
             }
             $this->contentObject->multiple = true;
         }
         else 
         {
-            $this->setMidgard2NodePropertyValue(empty($pNodes) ? null : $pNodes[0], $new_value, $type);
+            $this->setMidgard2NodePropertyValue(empty($pNodes) ? null : $pNodes[0], $value, $type);
         }
 
         $this->type = $type;
@@ -312,7 +317,8 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         {
             if (!$this->isMultiple())
             {
-                return $pNodes[0]->value;
+                $property = array_pop($pNodes);
+                return $property->value;
             } 
             else 
             {
@@ -701,6 +707,13 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
 
         $this->is_new = false;
         $this->is_modified = false;
+    }
+
+    public function refresh($keepChanges)
+    {
+        if ($keepChanges && ($this->isModified() || $this->isNew())) {
+            return;
+        }
     }
 
     public function remove()

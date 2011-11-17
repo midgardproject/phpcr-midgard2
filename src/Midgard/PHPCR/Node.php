@@ -245,11 +245,14 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $mnp = new \midgard_node_property();
             $mnp->title = $name;
             $mnp->type = $type;
+            if (!$type && is_array($value)) {
+                $mnp->multiple = true;
+            }
             $this->setMidgardPropertyNode($name, $mnp);
-            $property = new Property ($this, $name);
+            $property = new Property($this, $name);
             $this->properties[$name] = $property;
         }
-        $property->setValue ($value, $type);
+        $property->setValue($value, $type);
         
         /* TODO, for performance reason, we could check if property's value has been changed.
          * By default, it's modified */
@@ -1224,9 +1227,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 foreach ($properties as $mnp)
                 {
-                    $mnp->purge_attachments(true);
-                    $mnp->purge();
-                    Repository::checkMidgard2Exception($mnp);
+                    if (!$mnp->purge_attachments(true)) {
+                        Repository::checkMidgard2Exception($mnp);
+                    }
+                    if (!$mnp->purge()) {
+                        Repository::checkMidgard2Exception($mnp);
+                    }
                 }
             }
         }
@@ -1289,12 +1295,14 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function refresh($keepChanges)
     {
-        if ($this->isModified() && $keepChanges) {
+        if ($keepChanges && ($this->isModified() || $this->isNew())) {
             return;
         }
 
         $this->midgardNode = new \midgard_node($this->midgardNode->guid);
-        $this->properties = null;
+        foreach ($this->properties as $name => $property) {
+            $this->getProperty($name)->refresh($keepChanges);
+        }
         $this->contentObject = null;
     }
 
@@ -1328,9 +1336,23 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 foreach ($properties as $mnp)
                 {
+                    if (!$mnp->guid) {
+                        continue;
+                    }
+
                     $mnp->purge_attachments(true);
-                    $mnp->purge();
                     Repository::checkMidgard2Exception($mnp);
+                    if (!$mnp->purge()) {
+                        // Object's connection was somehow lost, refresh
+                        try {
+                            $mnp = new \midgard_node_property($mnp->guid);
+                        } catch (\midgard_error_exception $e) {
+                            // Object isn't in DB any longer, just skip
+                            continue;
+                        }
+                        $mnp->purge();
+                        Repository::checkMidgard2Exception($mnp);
+                    }
                 }
             }
         }
