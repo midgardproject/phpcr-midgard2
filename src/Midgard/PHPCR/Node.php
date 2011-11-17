@@ -149,10 +149,14 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $primaryNodeTypeName = $def->getDefaultPrimaryTypeName();
             if ($primaryNodeTypeName == null)
             {
-                /* ConstraintViolationException - if a node type or implementation-specific constraint 
-                 * is violated or if an attempt is made to add a node as the child of a property and 
-                 * this implementation performs this validation immediately.*/ 
-                throw new \PHPCR\NodeType\ConstraintViolationException("Can not determine default node type name for " . $this->getName());
+                if ($this->getPath() == '/') {
+                    $primaryNodeTypeName = 'nt:unstructured';
+                } else {
+                    /* ConstraintViolationException - if a node type or implementation-specific constraint 
+                    * is violated or if an attempt is made to add a node as the child of a property and 
+                    * this implementation performs this validation immediately.*/ 
+                    throw new \PHPCR\NodeType\ConstraintViolationException("Can not determine default node type name for " . $this->getName() . "when trying to add '{$relPath}'");
+                }
             }
         }
         else
