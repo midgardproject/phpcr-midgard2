@@ -308,7 +308,10 @@ xdebug_print_function_stack();
         $propertyName = $this->getMidgard2PropertyName();
         if ($propertyName && !$this->isMultiple())
         {
-            return $this->parent->getMidgard2ContentObject()->$propertyName;
+            $contentObject = $this->parent->getMidgard2ContentObject();
+            if ($contentObject && isset($contentObject->$propertyName)) {
+                return $this->parent->getMidgard2ContentObject()->$propertyName;
+            }
         }
 
         $pNodes = $this->parent->getMidgardPropertyNodes($this->getName());
