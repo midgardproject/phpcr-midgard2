@@ -22,6 +22,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     private function QBFromStatement()
     {
         $scanner = new \PHPCR\Util\QOM\Sql2Scanner($this->statement);
+        $type = null;
         do {
             $token = $scanner->fetchNextToken(); 
             if ($token == 'FROM')
@@ -29,6 +30,10 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
                 $type = $scanner->fetchNextToken();
             }
         } while ($token != '');
+
+        if (is_null($type)) {
+            throw new \PHPCR\Query\InvalidQueryException('No content types defined in query');
+        }
 
         $this->selectors[] = str_replace(array('[', ']'), '', $type);
         $this->storageType = NodeMapper::getMidgardName($this->selectors[0]);
