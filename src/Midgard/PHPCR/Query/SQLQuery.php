@@ -23,11 +23,15 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     {
         $scanner = new \PHPCR\Util\QOM\Sql2Scanner($this->statement);
         $type = null;
+        $inTree = null;
         do {
             $token = $scanner->fetchNextToken(); 
-            if ($token == 'FROM')
-            {
+            if ($token == 'FROM') {
                 $type = $scanner->fetchNextToken();
+            }
+            if ($token == 'ISCHILDNODE') {
+                $scanner->fetchNextToken();
+                $inTree = substr($scanner->fetchNextToken(), 1, -1);
             }
         } while ($token != '');
 
@@ -40,9 +44,10 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
         $storage = new \midgard_query_storage('midgard_node');
         $this->qs = new \midgard_query_select($storage);
-        if ($this->storageType != null)
-        {
-            $this->qs->set_constraint(
+        $constraints = new \midgard_query_constraint_group();
+
+        if ($this->storageType != null) {
+            $constraints->add_constraint(
                 new \midgard_query_constraint(
                     new \midgard_query_property('typename'),
                     '=',
@@ -50,6 +55,19 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
                 )
             );
         }
+
+        if ($inTree) {
+            $parent = $this->session->getNode($inTree);
+            $constraints->add_constraint(
+                new \midgard_query_constraint(
+                    new \midgard_query_property('parent'),
+                    '=',
+                    new \midgard_query_value($parent->getMidgard2Node()->id)
+                )
+            );
+        }
+
+        $this->qs->set_constraint($constraints);
     } 
 
     public function bindValue($varName, $value)
