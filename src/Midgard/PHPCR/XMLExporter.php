@@ -13,12 +13,12 @@ abstract class XMLExporter
     protected $node = null;
     protected $nsRegistry = null;
 
-    public function serializeProperties(Node $node, DOMNode $xmlNode, $skipBinary)
+    public function serializeProperties(Node $node, \DOMNode $xmlNode, $skipBinary)
     {
 
     }
 
-    public function serializeNode(Node $node, $skipBinary)
+    public function serializeNode(Node $node, \DOMNode $xmlNode = null, $skipBinary, $noRecurse)
     {
 
     }

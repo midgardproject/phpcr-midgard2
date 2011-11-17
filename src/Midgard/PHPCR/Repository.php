@@ -73,6 +73,7 @@ class Repository implements \PHPCR\RepositoryInterface
     public function login(\PHPCR\CredentialsInterface $credentials = null, $workspaceName = null)
     {
         $user = $this->midgard2Login($credentials);
+
         $rootObject = $this->getRootObject();
 
         if ($workspaceName != null)
@@ -138,6 +139,10 @@ class Repository implements \PHPCR\RepositoryInterface
     
     private function midgard2Login($credentials = null)
     {
+        if (!$credentials) {
+            return null;
+        }
+
         if (   !method_exists($credentials, 'getUserID')
             || !method_exists($credentials, 'getPassword'))
         {

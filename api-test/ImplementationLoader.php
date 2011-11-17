@@ -1,6 +1,6 @@
 <?php
 
-require '../MidgardBootstrap.php';
+require __DIR__ . '/../MidgardBootstrap.php';
 
 class ImplementationLoader extends \PHPCR\Test\AbstractLoader
 {
@@ -63,7 +63,7 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
 
     public function getFixtureLoader()
     {
-        require_once "Midgard2ImportExport.php";
+        require_once __DIR__ . "/Midgard2ImportExport.php";
         return new Midgard2ImportExport(__DIR__."/suite/fixtures/");
     }
 

@@ -1,1 +1,4 @@
 midgard2cr.db
+composer.lock
+composer.phar
+vendor/
