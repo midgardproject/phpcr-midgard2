@@ -298,6 +298,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
 
         $children = $this->midgardNode->list();
+        $this->children = array();
         foreach ($children as $child)
         {
             $this->children[$child->name] = new Node($child, $this, $this->getSession());
@@ -758,6 +759,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $path = self::getMidgardPath($midgardNode);
             /* Convert to JCR path */
             $path = str_replace ('/jackalope', '', $path);
+            $path = str_replace('/root', '', $path);
             $node = $this->session->getNode($path);
             $ret[] = $node->getProperty($midgardProperty->title);
         } 
