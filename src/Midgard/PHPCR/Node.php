@@ -207,7 +207,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             /* Property is mandatory, can not remove */
             if ($pDef->isMandatory())
             {
-                throw new \PHPCR\ConstraintViolationException("Can not remove property {$name} which is mandatory");
+                throw new \PHPCR\NodeType\ConstraintViolationException("Can not remove property {$name} which is mandatory for {$this->primaryNodeTypeName }");
             }
 
             /* Protected */
@@ -1379,7 +1379,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return;
         } 
         $this->is_modified = true;
-        $this->removeProperties[] = $this->midgardPropertyNodes[$name];
+        if (isset($this->midgardPropertyNodes[$name])) {
+            $this->removeProperties[] = $this->midgardPropertyNodes[$name];
+        }
         unset($this->properties[$name]);
         return;
     }
