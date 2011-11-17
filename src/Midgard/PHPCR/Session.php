@@ -15,15 +15,14 @@ class Session implements \PHPCR\SessionInterface
     private $credentials = null;
     private $isAnonymous = true;
 
-    public function __construct(\midgard_connection $connection, Repository $repository, \midgard_user $user = null, \midgard_object $rootObject, \PHPCR\CredentialsInterface $credentials)
+    public function __construct(\midgard_connection $connection, Repository $repository, \midgard_user $user = null, \midgard_object $rootObject, \PHPCR\CredentialsInterface $credentials = null)
     {
         $this->connection = $connection;
         $this->repository = $repository;
         $this->user = $user;
         $this->rootObject = $rootObject;
         $this->credentials = $credentials;
-        if ($credentials 
-            && !($credentials instanceof \PHPCR\GuestCredentials))
+        if ($credentials && !($credentials instanceof \PHPCR\GuestCredentials))
         {
             $this->isAnonymous = false;
         }
