@@ -3,7 +3,7 @@ namespace Midgard\PHPCR;
 
 class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
 {
-    protected $configurationKeys = array(
+    protected static $configurationKeys = array(
         // You can either provide a path to a configuration file
         'midgard2.configuration.file',
         // Or a direct set of configurations
@@ -39,6 +39,6 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
 
     public static function getConfigurationKeys()
     {
-        return $this->configurationKeys;
+        return self::$configurationKeys;
     }
 }
