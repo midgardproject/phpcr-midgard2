@@ -348,7 +348,7 @@ class Session implements \PHPCR\SessionInterface
 
     private function refreshNode(Node $node, $keepChanges)
     {
-        $node->refresh();
+        $node->refresh($keepChanges);
         $children = $node->getNodes();
         foreach($children as $child) {
             $this->refreshNode($child, $keepChanges);
