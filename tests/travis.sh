@@ -27,7 +27,7 @@ mkdir /tmp/Midgard2CR/share
 mkdir /tmp/Midgard2CR/blobs
 mkdir /tmp/Midgard2CR/var
 mkdir /tmp/Midgard2CR/cache
-cp -r share/* /tmp/midgard/share
+cp -r share/* /tmp/Midgard2CR/share
 cp api-test/Midgard2/midgard2.conf /tmp/Midgard2CR/midgard2.conf
 
 # Install dependencies with Composer
