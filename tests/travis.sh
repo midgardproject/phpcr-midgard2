@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# Install dependencies with Composer
-wget http://getcomposer.org/composer.phar
-php composer.phar install
-
 # Install Pake
 pyrus channel-discover pear.indeyets.ru
 pyrus install -f http://pear.indeyets.ru/get/pake-1.6.3.tgz
@@ -33,3 +29,7 @@ mkdir /tmp/Midgard2CR/cache
 cp -r share /tmp/midgard/share
 cp api-test/Midgard2/midgard2.conf /tmp/Midgard2CR/midgard2.conf
 export MIDGARD_ENV_GLOBAL_SHAREDIR=/tmp/Midgard2CR/share
+
+# Install dependencies with Composer
+wget http://getcomposer.org/composer.phar
+php composer.phar install
