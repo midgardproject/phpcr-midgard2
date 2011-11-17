@@ -33,6 +33,6 @@ define('OPTION_QUERY_SQL_SUPPORTED', 'option.query.sql.supported');
 define('QUERY_XPATH_POS_INDEX', 'query.xpath.pos.index');
 define('QUERY_XPATH_DOC_ORDER', 'query.xpath.doc.order');
 
-require './suite/inc/FixtureLoaderInterface.php';
-require './suite/inc/AbstractLoader.php';
-require 'ImplementationLoader.php';
+require __DIR__ . '/suite/inc/FixtureLoaderInterface.php';
+require __DIR__ . '/suite/inc/AbstractLoader.php';
+require __DIR__ . '/ImplementationLoader.php';

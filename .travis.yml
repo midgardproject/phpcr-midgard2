@@ -6,4 +6,4 @@ php:
 before_script:
   - ./tests/travis.sh
 
-script: phpunit -c api-test/phpunit.xml 
+script: ./tests/travis-test.sh
