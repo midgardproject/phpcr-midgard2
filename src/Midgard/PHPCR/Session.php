@@ -128,6 +128,7 @@ class Session implements \PHPCR\SessionInterface
             $midgard_path = \Midgard\PHPCR\Node::getMidgardPath($midgardNode);
             /* Convert to JCR path */
             $midgard_path = str_replace('/jackalope', '', $midgard_path);
+            $midgard_path = str_replace('/root', '', $midgard_path);
             $node = $this->getNode($midgard_path);
             return $node;
         }
