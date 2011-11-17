@@ -87,12 +87,12 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
 
     public function getAllNodeTypes()
     {
-        return new ArrayIterator(array_merge($this->primaryNodeTypes, $this->mixinNodeTypes));
+        return new \ArrayIterator(array_merge($this->primaryNodeTypes, $this->mixinNodeTypes));
     }
 
     public function getMixinNodeTypes()
     {
-        return new ArrayIterator($this->mixinNodeTypes);
+        return new \ArrayIterator($this->mixinNodeTypes);
     }
 
     public function getNodeType($nodeTypeName)
@@ -111,7 +111,7 @@ class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeMan
 
     public function getPrimaryNodeTypes()
     {
-        return new ArrayIterator($this->primaryNodeTypes);
+        return new \ArrayIterator($this->primaryNodeTypes);
     }
 
     public function hasNodeType($name)
