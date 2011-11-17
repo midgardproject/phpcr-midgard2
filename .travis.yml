@@ -7,3 +7,6 @@ before_script:
   - ./tests/travis.sh
 
 script: ./tests/travis-test.sh
+
+notifications:
+    irc: "irc.freenode.org#midgard"
