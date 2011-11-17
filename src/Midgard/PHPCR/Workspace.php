@@ -67,6 +67,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
 
     public function getTransactionManager()
     {
+        throw new \PHPCR\UnsupportedRepositoryOperationException("Transactions not supported");
     }
 
     public function getNamespaceRegistry()
