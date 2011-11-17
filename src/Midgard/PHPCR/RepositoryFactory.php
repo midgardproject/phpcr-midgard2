@@ -5,14 +5,14 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
 {
     protected static $configurationKeys = array(
         // You can either provide a path to a configuration file
-        'midgard2.configuration.file',
+        'midgard2.configuration.file' => 'string: path to a Midgard2 configuration file',
         // Or a direct set of configurations
-        'midgard2.configuration.db.type',
-        'midgard2.configuration.db.name',
-        'midgard2.configuration.db.dir',
-        'midgard2.configuration.loglevel',
+        'midgard2.configuration.db.type' => 'string: database type (SQLite, MySQL, ...)',
+        'midgard2.configuration.db.name' => 'string: database name',
+        'midgard2.configuration.db.dir' => 'string: database directory path (when used with SQLite)',
+        'midgard2.configuration.loglevel' => 'string: Midgard2 log level',
         // Whether to enable automatic initialization of Midgard2 database
-        'midgard2.configuration.db.init',
+        'midgard2.configuration.db.init' => 'boolean: whether Midgard2 database should be initialized automatically',
     );
 
     public static function getRepository(array $parameters = NULL)
