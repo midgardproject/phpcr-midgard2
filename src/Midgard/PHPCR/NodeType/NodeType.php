@@ -7,7 +7,7 @@ class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInt
 {
     protected $manager = null;
 
-    public function __construct($ntt, NodeTypeManager $manager) {
+    public function __construct(\PHPCR\NodeType\NodeTypeDefinitionInterface $ntt, NodeTypeManager $manager) {
         $this->name = $ntt->getName();
         if ($this->name === null
             || $this->name === "")
@@ -167,17 +167,18 @@ class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInt
     public function canRemoveProperty($propertyName)
     {
         // Determine if property is registered for MgdSchema class
-        $mrp = new \midgard_reflector_property ($this->classname);
-
-        // Property is registered for GObject, so we can not remove it
-        $mtype = $mrp->get_midgard_type ($propertyName);
-        if ($mtype > 0) 
-        {
-            return false;
+        $mrp = $this->getPropertyReflector($propertyName);
+        if ($mrp) {
+            // Property is registered for GObject, so we can not remove it
+            $mtype = $mrp->get_midgard_type($propertyName);
+            if ($mtype > 0) 
+            {
+                return false;
+            }
         }
 
         // Otherwise we should be able to do this
-        
+        // FIXME: Check whether the property is mandatory 
         return true;
     }
 }
