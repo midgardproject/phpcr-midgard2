@@ -30,12 +30,12 @@ class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInt
     public function getSupertypes()
     {
         $rv = array();
-        $o = \midgard_schema_object::factory ($this->classname);
+        $o = \midgard_schema_object::factory($this->classname);
         $parentname = $o->parent();
 
         if ($parentname != null)
         {
-            $rv[] = new NodeType ($parentname);
+            $rv[] = new NodeType($parentname);
         }
 
         return $rv;

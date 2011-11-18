@@ -21,7 +21,8 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'Reading\SessionReadMethodsTest::testCheckPermission',
         'Reading\SessionReadMethodsTest::testCheckPermissionAccessControlException',
         'Connecting\WorkspaceReadMethodsTest::testGetAccessibleWorkspaceNames',
-        'Writing\MoveMethodsTest::testWorkspaceMove'
+        'Writing\MoveMethodsTest::testWorkspaceMove',
+        //'NodeTypeDiscovery\\NodeTypeTest::testIsNodeTypeMixinVersion'
     );
 
     public static function getInstance()   
