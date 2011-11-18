@@ -44,6 +44,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
         $storage = new \midgard_query_storage('midgard_node');
         $this->qs = new \midgard_query_select($storage);
+
         $constraints = new \midgard_query_constraint_group();
 
         if ($this->storageType != null) {
@@ -67,7 +68,9 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
             );
         }
 
-        $this->qs->set_constraint($constraints);
+        if ($this->storageType || $inTree) {
+            $this->qs->set_constraint($constraints);
+        }
     } 
 
     public function bindValue($varName, $value)

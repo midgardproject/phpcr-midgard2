@@ -320,8 +320,12 @@ xdebug_print_function_stack();
         {
             if (!$this->isMultiple())
             {
-                $property = array_pop($pNodes);
-                return $property->value;
+                foreach ($pNodes as $pNode) {
+                    if (!is_object($pNode)) {
+                        continue;
+                    }
+                    return $pNode->value;
+                }
             } 
             else 
             {
@@ -629,7 +633,13 @@ xdebug_print_function_stack();
         $pNodes = $this->getMidgardPropertyNodes(); 
         if (!empty($pNodes))
         {
-            $this->type = $pNodes[0]->type;
+            foreach ($pNodes as $pNode) {
+                if (!is_object($pNode)) { 
+                    continue;
+                }
+                $this->type = $pNode->type;
+                break;
+            }
         }
 
         return $this->type;
@@ -694,6 +704,9 @@ xdebug_print_function_stack();
 
         foreach ($pnodes as $mpn)
         { 
+            if (!is_object($mpn)) {
+                continue;
+            }
             if ($this->isNew() && !$mpn->guid)
             {
                 $mpn->parent = $this->parent->getMidgard2Node()->id;
