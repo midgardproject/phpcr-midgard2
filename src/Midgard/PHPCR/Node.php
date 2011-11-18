@@ -207,7 +207,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             /* Property is mandatory, can not remove */
             if ($pDef->isMandatory())
             {
-                throw new \PHPCR\ConstraintViolationException("Can not remove property {$name} which is mandatory");
+                throw new \PHPCR\NodeType\ConstraintViolationException("Can not remove property {$name} which is mandatory for {$this->primaryNodeTypeName }");
             }
 
             /* Protected */
@@ -245,11 +245,14 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $mnp = new \midgard_node_property();
             $mnp->title = $name;
             $mnp->type = $type;
+            if (!$type && is_array($value)) {
+                $mnp->multiple = true;
+            }
             $this->setMidgardPropertyNode($name, $mnp);
-            $property = new Property ($this, $name);
+            $property = new Property($this, $name);
             $this->properties[$name] = $property;
         }
-        $property->setValue ($value, $type);
+        $property->setValue($value, $type);
         
         /* TODO, for performance reason, we could check if property's value has been changed.
          * By default, it's modified */
@@ -295,6 +298,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
 
         $children = $this->midgardNode->list();
+        $this->children = array();
         foreach ($children as $child)
         {
             $this->children[$child->name] = new Node($child, $this, $this->getSession());
@@ -755,6 +759,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $path = self::getMidgardPath($midgardNode);
             /* Convert to JCR path */
             $path = str_replace ('/jackalope', '', $path);
+            $path = str_replace('/root', '', $path);
             $node = $this->session->getNode($path);
             $ret[] = $node->getProperty($midgardProperty->title);
         } 
@@ -1224,9 +1229,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 foreach ($properties as $mnp)
                 {
-                    $mnp->purge_attachments(true);
-                    $mnp->purge();
-                    Repository::checkMidgard2Exception($mnp);
+                    if (!$mnp->purge_attachments(true)) {
+                        Repository::checkMidgard2Exception($mnp);
+                    }
+                    if (!$mnp->purge()) {
+                        Repository::checkMidgard2Exception($mnp);
+                    }
                 }
             }
         }
@@ -1287,6 +1295,24 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
     }
 
+    public function refresh($keepChanges)
+    {
+        if ($keepChanges && ($this->isModified() || $this->isNew())) {
+            return;
+        }
+
+        if ($this->midgardNode->guid) {
+            $this->midgardNode = new \midgard_node($this->midgardNode->guid);
+        }
+
+        if ($this->properties) {
+            foreach ($this->properties as $name => $property) {
+                $this->getProperty($name)->refresh($keepChanges);
+            }
+        }
+        $this->contentObject = null;
+    }
+
     public function remove()
     {
         if ($this->remove == true)
@@ -1317,9 +1343,23 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             {
                 foreach ($properties as $mnp)
                 {
+                    if (!$mnp->guid) {
+                        continue;
+                    }
+
                     $mnp->purge_attachments(true);
-                    $mnp->purge();
                     Repository::checkMidgard2Exception($mnp);
+                    if (!$mnp->purge()) {
+                        // Object's connection was somehow lost, refresh
+                        try {
+                            $mnp = new \midgard_node_property($mnp->guid);
+                        } catch (\midgard_error_exception $e) {
+                            // Object isn't in DB any longer, just skip
+                            continue;
+                        }
+                        $mnp->purge();
+                        Repository::checkMidgard2Exception($mnp);
+                    }
                 }
             }
         }
@@ -1346,7 +1386,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return;
         } 
         $this->is_modified = true;
-        $this->removeProperties[] = $this->midgardPropertyNodes[$name];
+        if (isset($this->midgardPropertyNodes[$name])) {
+            $this->removeProperties[] = $this->midgardPropertyNodes[$name];
+        }
         unset($this->properties[$name]);
         return;
     }

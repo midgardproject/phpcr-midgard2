@@ -339,4 +339,28 @@
 		</user_values>
 	</type>
 
+	<!-- nt:address -->
+	<type name="nt_address" table="phpcr_nt_address" metadata="false" extends="nt_base">
+		<property name="id" type="unsigned integer" primaryfield="id">
+			<description>Local non-replication-safe database identifier</description>
+		</property>
+        <property name="protocol" type="string" />
+        <property name="host" type="string" />
+        <property name="port" type="string" />
+
+		<!-- Node and NodeType definitions -->
+		<user_values>
+			<Supertypes>nt:address</Supertypes>
+			<isMixin>false</isMixin>
+			<PrimaryItemName></PrimaryItemName>
+			<RequiredPrimaryTypes></RequiredPrimaryTypes>
+			<DefaultPrimaryType></DefaultPrimaryType>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<OnParentVersion>VERSION</OnParentVersion>
+			<isProtected>false</isProtected>
+			<SameNameSiblings>false</SameNameSiblings> 
+		</user_values>
+	</type>
+
 </Schema>

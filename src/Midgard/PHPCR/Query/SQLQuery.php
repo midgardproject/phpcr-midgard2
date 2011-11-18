@@ -19,32 +19,70 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->QBFromStatement();
     }
 
+    private function addConstraintSingle(\midgard_query_constraint $constraint)
+    {
+        $this->qs->set_constraint($constraint);
+    }
+
+    private function addConstraintMultiple(array $constraints)
+    {
+        var_dump($constraints);
+        die();
+        $cg = new \midgard_query_constraint_group('AND');
+        foreach ($constraints as $constraint) {
+            $cg->add_constraint($constraint);
+        }
+        $this->qs->set_constraint($cg);
+    }
+
     private function QBFromStatement()
     {
         $scanner = new \PHPCR\Util\QOM\Sql2Scanner($this->statement);
+        $type = null;
+        $inTree = null;
         do {
             $token = $scanner->fetchNextToken(); 
-            if ($token == 'FROM')
-            {
+            if ($token == 'FROM') {
                 $type = $scanner->fetchNextToken();
             }
+            if ($token == 'ISCHILDNODE') {
+                $scanner->fetchNextToken();
+                $inTree = substr($scanner->fetchNextToken(), 1, -1);
+            }
         } while ($token != '');
+
+        if (is_null($type)) {
+            throw new \PHPCR\Query\InvalidQueryException('No content types defined in query');
+        }
 
         $this->selectors[] = str_replace(array('[', ']'), '', $type);
         $this->storageType = NodeMapper::getMidgardName($this->selectors[0]);
 
         $storage = new \midgard_query_storage('midgard_node');
         $this->qs = new \midgard_query_select($storage);
-        if ($this->storageType != null)
-        {
-            $this->qs->set_constraint(
-                new \midgard_query_constraint(
-                    new \midgard_query_property('typename'),
-                    '=',
-                    new \midgard_query_value($this->storageType)
-                )
+        $constraints = array();
+
+        if ($this->storageType != null) {
+            $constraints[] = new \midgard_query_constraint(
+                new \midgard_query_property('typename'),
+                '=',
+                new \midgard_query_value($this->storageType)
             );
         }
+
+        if ($inTree) {
+            $parent = $this->session->getNode($inTree);
+            $constraints[] = new \midgard_query_constraint(
+                new \midgard_query_property('parent'),
+                '=',
+                new \midgard_query_value($parent->getMidgard2Node()->id)
+            );
+        }
+
+        if (count($constraints) > 1) {
+            return $this->addConstraintMultiple($constraints);
+        }
+        $this->addConstraintSingle($constraints[0]);
     } 
 
     public function bindValue($varName, $value)
