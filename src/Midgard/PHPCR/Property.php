@@ -172,7 +172,7 @@ xdebug_print_function_stack();
         }
     }
 
-    private function normalizePropertyValue($value)
+    private function normalizePropertyValue($value, $type)
     {
         /*
          * The type detection follows PropertyType::determineType. 
@@ -219,7 +219,7 @@ xdebug_print_function_stack();
             Value::checkTransformable($this->getType(), $type);
         }
 
-        $value = $this->normalizePropertyValue($value);
+        $value = $this->normalizePropertyValue($value, $type);
 
         /* TODO, handle:
          * \PHPCR\Version\VersionException 
