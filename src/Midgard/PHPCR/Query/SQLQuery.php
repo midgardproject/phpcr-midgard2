@@ -19,6 +19,22 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->QBFromStatement();
     }
 
+    private function addConstraintSingle(\midgard_query_constraint $constraint)
+    {
+        $this->qs->set_constraint($constraint);
+    }
+
+    private function addConstraintMultiple(array $constraints)
+    {
+        var_dump($constraints);
+        die();
+        $cg = new \midgard_query_constraint_group('AND');
+        foreach ($constraints as $constraint) {
+            $cg->add_constraint($constraint);
+        }
+        $this->qs->set_constraint($cg);
+    }
+
     private function QBFromStatement()
     {
         $scanner = new \PHPCR\Util\QOM\Sql2Scanner($this->statement);
@@ -44,33 +60,29 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
         $storage = new \midgard_query_storage('midgard_node');
         $this->qs = new \midgard_query_select($storage);
-
-        $constraints = new \midgard_query_constraint_group();
+        $constraints = array();
 
         if ($this->storageType != null) {
-            $constraints->add_constraint(
-                new \midgard_query_constraint(
-                    new \midgard_query_property('typename'),
-                    '=',
-                    new \midgard_query_value($this->storageType)
-                )
+            $constraints[] = new \midgard_query_constraint(
+                new \midgard_query_property('typename'),
+                '=',
+                new \midgard_query_value($this->storageType)
             );
         }
 
         if ($inTree) {
             $parent = $this->session->getNode($inTree);
-            $constraints->add_constraint(
-                new \midgard_query_constraint(
-                    new \midgard_query_property('parent'),
-                    '=',
-                    new \midgard_query_value($parent->getMidgard2Node()->id)
-                )
+            $constraints[] = new \midgard_query_constraint(
+                new \midgard_query_property('parent'),
+                '=',
+                new \midgard_query_value($parent->getMidgard2Node()->id)
             );
         }
 
-        if ($this->storageType || $inTree) {
-            $this->qs->set_constraint($constraints);
+        if (count($constraints) > 1) {
+            return $this->addConstraintMultiple($constraints);
         }
+        $this->addConstraintSingle($constraints[0]);
     } 
 
     public function bindValue($varName, $value)
