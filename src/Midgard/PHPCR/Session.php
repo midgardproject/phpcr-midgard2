@@ -315,16 +315,26 @@ class Session implements \PHPCR\SessionInterface
          
         // VersionException
         // TODO
+        
+        $t = $this->getTransactionManager();
+        if ($t->inTransaction() == false) 
+            $t->begin();
 
-        /* Remove nodes marked as removed */
-        foreach ($this->removeNodes as $node)
-        {
-            $node->removeMidgard2Node();
+        try {
+            /* Remove nodes marked as removed */
+            foreach ($this->removeNodes as $node)
+            {
+                $node->removeMidgard2Node();
+            }
+
+            $root_node = $this->getRootNode();
+            $root_node->save();
+        
+            $children = $root_node->getNodes();
+        } catch (\Exception $e) {
+            $t->rollback();
+            throw $e;
         }
-
-        $root_node = $this->getRootNode();
-        $root_node->save();
-        $children = $root_node->getNodes();
         foreach ($children as $name => $child) 
         { 
             /* FIXME DO NOT EXPECT BOOLEAN, CATCH EXCEPTION */
@@ -335,6 +345,7 @@ class Session implements \PHPCR\SessionInterface
                 switch ($midgard_errcode) 
                 {
                 case MGD_ERR_OBJECT_NAME_EXISTS:
+                    $t->rollback();
                     throw new \PHPCR\ItemExistsException($midgard_errstr);
                     break;
                 case MGD_ERR_INVALID_NAME:
@@ -343,14 +354,18 @@ class Session implements \PHPCR\SessionInterface
                 case MGD_ERR_INVALID_PROPERTY_VALUE:
                 case MGD_ERR_INVALID_PROPERTY:
                 case MGD_ERR_TREE_IS_CIRCULAR:
+                    $t->rollback();
                     throw new \PHPCR\InvalidItemStateException($midgard_errstr);
                     break;
                 case MGD_ERR_INTERNAL:
+                    $t->rollback();
                     throw new \PHPCR\RepositoryException($midgard_errstr);
                 }
             }
         }
 
+        $t->commit();
+    
         //NoSuchNodeTypeException
         //ReferentialIntegrityException
     }

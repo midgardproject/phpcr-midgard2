@@ -65,8 +65,6 @@ class Midgard2ImportExport implements PHPCR\Test\FixtureLoaderInterface
     { 
         $re = new ReflectionExtension('midgard2');
         $classes = $re->getClasses();
-        $t = new \midgard_transaction();
-        $t->begin();
         foreach ($classes as $refclass)
         {                       
             $type = $refclass->getName();
@@ -115,7 +113,6 @@ class Midgard2ImportExport implements PHPCR\Test\FixtureLoaderInterface
                 }
             }        
         }
-        $t->commit();
     }
 
     /**
@@ -131,11 +128,14 @@ class Midgard2ImportExport implements PHPCR\Test\FixtureLoaderInterface
             throw new Exception('Fixture not readable at: ' . $fixture);
         }
 
+        $transaction = new midgard_transaction ();
+        $transaction->begin();
         self::cleanup(); 
 
         $importer = new Midgard2XMLImporter($fixture);
         $importer->execute();
-
+        $transaction->commit();
+    
         return true;
     }
 
