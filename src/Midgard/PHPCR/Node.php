@@ -1302,8 +1302,10 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
 
         $this->midgardNode = new \midgard_node($this->midgardNode->guid);
-        foreach ($this->properties as $name => $property) {
-            $this->getProperty($name)->refresh($keepChanges);
+        if ($this->properties) {
+            foreach ($this->properties as $name => $property) {
+                $this->getProperty($name)->refresh($keepChanges);
+            }
         }
         $this->contentObject = null;
     }
