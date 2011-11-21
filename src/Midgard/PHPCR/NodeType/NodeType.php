@@ -2,18 +2,20 @@
 namespace Midgard\PHPCR\NodeType;
 
 use Midgard\PHPCR\Utils\NodeMapper;
+use PHPCR\NodeType\NodeTypeInterface;
+use PHPCR\NodeType\NodeTypeDefinitionInterface;
+use midgard_reflector_object;
 
-class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInterface
+class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 {
-    protected $manager = null;
+    protected $subTypeDefinitions = null;
 
-    public function __construct(\PHPCR\NodeType\NodeTypeDefinitionInterface $ntt, NodeTypeManager $manager) {
-        $this->name = $ntt->getName();
-        if ($this->name === null
-            || $this->name === "")
-        {
+    public function __construct(NodeTypeDefinitionInterface $ntt, NodeTypeManager $manager)
+    {
+        if (!$ntt->getName()) {
             throw new \PHPCR\RepositoryException("Can not initialize NodeType for empty name");
         }
+        parent::__construct($ntt->getName(), $manager);
 
         $this->childNodeDefinitions = $ntt->getDeclaredChildNodeDefinitions();
         $this->propertyDefinitions = $ntt->getDeclaredPropertyDefinitions();
@@ -23,59 +25,62 @@ class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInt
         $this->isAbstract = $ntt->isAbstract();
         $this->isMixin = $ntt->isMixin();
         $this->isQueryable = $ntt->isQueryable();
-
-        $this->manager = $manager;
     }
 
     public function getSupertypes()
     {
-        $rv = array();
-        $o = \midgard_schema_object::factory($this->classname);
-        $parentname = $o->parent();
-
-        if ($parentname != null)
-        {
-            $rv[] = new NodeType($parentname);
+        $superTypes = array();
+        foreach ($this->getDeclaredSupertypes() as $superType) {
+            $superTypes[] = $superType;
+            $superTypes = array_merge($superTypes, $superType->getSupertypes());
         }
-
-        return $rv;
-    }
-
-    public function getDeclaredSupertypes()
-    {
-        return $this->getSupertypes();
-    }
-
-    public function getSubtypes()
-    {
-        $rv = array();
-
-        $children = \midgard_reflector_object::list_children($this->classname);
-        if (!is_empty($children))
-        {
-            foreach ($children as $name => $v)
-            {
-                $children[$name] = new NodeType($name);
-            }
-        }
-
-        return $rv;
-
+        return $superTypes;
     }
 
     public function getDeclaredSubtypes()
     {
-        return $this->getSubtypes();
+        if (!is_null($this->subTypeDefinitions)) {
+            return $this->subTypeDefinitions;
+        }
+
+        $midgardName = NodeMapper::getMidgardName($this->name);
+        $children = midgard_reflector_object::list_children($midgardName);
+        $this->subTypeDefinitions = array();
+
+        if (!$children) {
+            return $this->childNodeDefinitions;
+        }
+
+        foreach ($children as $name => $v) {
+            $childName = NodeMapper::getPHPCRName($name);
+            $childDefinition = new NodeTypeDefinition($childName, $this->nodeTypeManager);
+            $this->subTypeDefinitions[$childName] = $childDefinition;
+        }
+        return $this->subTypeDefinitions;
+    }
+
+    public function getSubtypes()
+    {
+        return $this->getDeclaredSubTypes();
+    }
+
+    public function getDeclaredSupertypes()
+    {
+        $superTypes = array();
+        foreach ($this->getDeclaredSupertypeNames() as $superType) {
+            $superTypes[] = $this->nodeTypeManager->getNodeType($superType);
+        }
+        return $superTypes;
     }
 
     public function isNodeType($nodeTypeName)
     {
-        if ($this->classname === $nodeTypeName)
+        if ($this->name === $nodeTypeName)
         {
             return true;
         }
 
-        if (in_array ($nodeTypeName, $this->getSupertypes()))
+        if (in_array($nodeTypeName, $this->getDeclaredSupertypeNames()))
         {
             return true;
         }
