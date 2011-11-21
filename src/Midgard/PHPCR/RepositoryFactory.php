@@ -17,6 +17,11 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
 
     public static function getRepository(array $parameters = NULL)
     {
+        static $repository = null;
+
+        if ($repository !== null)
+            return $repository;
+
         if (!extension_loaded('midgard2'))
         {
             throw new \PHPCR\RepositoryException("The Midgard2 PHPCR provider requires 'midgard2' extension to be loaded.");
@@ -34,7 +39,8 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
             throw new \PHPCR\RepositoryException("Midgard2 PHPCR MgdSchema definitions not found from '{$shareDir}'. You can change this path by 'export MIDGARD_ENV_GLOBAL_SHAREDIR=/some/path'.");
         }
 
-        return new Repository($parameters);    
+        $repository = new Repository($parameters);    
+        return $repository;
     }
 
     public static function getConfigurationKeys()
