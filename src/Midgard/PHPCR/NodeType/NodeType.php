@@ -75,78 +75,26 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
     public function isNodeType($nodeTypeName)
     {
-        if ($this->name === $nodeTypeName)
-        {
+        if ($this->name === $nodeTypeName) {
             return true;
         }
 
-        if (in_array($nodeTypeName, $this->getDeclaredSupertypeNames()))
-        {
+        if (in_array($nodeTypeName, $this->getDeclaredSupertypeNames())) {
             return true;
         }
 
         return false;
     }
 
-    private function getPropertyReflector($name)
-    {
-        /* If this is MidgardObject derived property, return null.
-         * We have no session available at this point, so check prefix
-         * directly */
-        if (strpos($name, ':') !== false)
-        {
-            $parts = explode(':', $name); 
-            if ($parts[0] == 'mgd')
-            {
-                return null;
-            }
-        }
-
-        $midgardName = NodeMapper::getMidgardName($this->name);
-        if (!$midgardName)
-        {
-            return null;
-        }
-
-        $reflector = new \midgard_reflection_property($midgardName);
-        if (!$reflector)
-        {
-            return null;
-        }
-
-        $midgardPropertyName = NodeMapper::getMidgardPropertyName($name);
-        if (!$midgardPropertyName)
-        {
-            return null;
-        }
-
-        $midgardType = $reflector->get_midgard_type($name);
-        /* Property is not registered for this type */
-        if ($midgardType == MGD_TYPE_NONE)
-        {
-            return null;
-        }
-
-        return $reflector;
-    }
-
     public function hasRegisteredProperty($name)
     {
-        $reflector = $this->getPropertyReflector($name);
-        if ($reflector == null)
-        {
-            return false;
-        }
-        return true;
-    }
-
-    public function getPropertyDefinition($name)
-    {
+        $properties = $this->getPropertyDefinitions();
+        return isset($properties[$name]);
     }
 
     public function getPropertyDefinitions()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return $this->getDeclaredPropertyDefinitions();
     }
 
     public function getChildNodeDefinitions()
@@ -171,19 +119,15 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
     public function canRemoveProperty($propertyName)
     {
-        // Determine if property is registered for MgdSchema class
-        $mrp = $this->getPropertyReflector($propertyName);
-        if ($mrp) {
-            // Property is registered for GObject, so we can not remove it
-            $mtype = $mrp->get_midgard_type($propertyName);
-            if ($mtype > 0) 
-            {
-                return false;
-            }
+        $definitions = $this->getPropertyDefinitions();
+        if (!isset($definitions[$propertyName])) {
+            return true;
         }
 
-        // Otherwise we should be able to do this
-        // FIXME: Check whether the property is mandatory 
+        if ($definitions[propertyName]->isMandatory()) {
+            return false;
+        }
+
         return true;
     }
 }

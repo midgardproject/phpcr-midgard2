@@ -59,5 +59,28 @@ foreach ($nodeTypes as $nodeType) {
         echo "  " . implode(' ', $additionalInfo) . "\n";
     }
 
+    foreach ($nodeType->getPropertyDefinitions() as $property) {
+        echo "  - " . $property->getName();
+        $propertyInfo = array();
+        if ($property->getRequiredType() !== null) {
+            $typeName = PHPCR\PropertyType::nameFromValue($property->getRequiredType());
+            $propertyInfo[] = '(' . strtoupper($typeName) . ')';
+        }
+
+        if ($property->isMandatory()) {
+            $propertyInfo[] = 'MANDATORY';
+        }
+
+        if ($property->isProtected()) {
+            $propertyInfo[] = 'PROTECTED';
+        }
+
+        if ($property->isAutoCreated()) {
+            $propertyInfo[] = 'AUTOCREATED';
+        }
+
+        echo " " . implode(' ', $propertyInfo) . "\n";
+    }
+
     echo "\n";
 }

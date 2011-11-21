@@ -1,6 +1,10 @@
 <?php
 namespace Midgard\PHPCR\Utils;
 
+use midgard_reflection_property;
+use midgard_error_exception;
+use PHPCR\PropertyType;
+
 class NodeMapper 
 {
     /**
@@ -77,67 +81,45 @@ class NodeMapper
 
     public static function getPHPCRPropertyType($classname, $property)
     {
-        if (!class_exists('\midgard_reflector_property'))
-        {
-            try 
-            {
-                $mrp = new \midgard_reflection_property($classname);
-            }
-            catch (\midgard_error_exception $e)
-            {
-                throw new \Exception ($classname. " not registered as MidgardObject derived one"); 
-            }
+        if (!is_subclass_of($classname, 'MidgardDBObject')) {
+            return null;
         }
-        else 
-        {
-            try 
-            {
-                $mrp = new \midgard_reflector_property ($classname);
-            }
-            catch (\midgard_error_exception $e)
-            {
-                throw new \Exception ($classname . " not registered as MidgardObject derived one"); 
-            }
+
+        $mrp = new midgard_reflection_property($classname);
+        $requiredType = $mrp->get_user_value($property, 'RequiredType');
+        if ($requiredType) {
+            return PropertyType::valueFromName($requiredType);
         }
-        $type = $mrp->get_midgard_type ($property);
 
-        $type_id = 0;
-
-        switch ($type) 
-        {
+        $type = $mrp->get_midgard_type($property);
+        switch ($type) {
             case \MGD_TYPE_STRING:
             case \MGD_TYPE_LONGTEXT:
             case \MGD_TYPE_GUID:
-                $type_id = \PHPCR\PropertyType::STRING;
+                $type_id = PropertyType::STRING;
                 break;
 
             case \MGD_TYPE_UINT:
             case \MGD_TYPE_INT:
-                $type_id = \PHPCR\PropertyType::LONG;
+                $type_id = PropertyType::LONG;
                 break;
 
             case \MGD_TYPE_FLOAT:
-                $type_id = \PHPCR\PropertyType::DOUBLE;
+                $type_id = PropertyType::DOUBLE;
                 break;
 
             case \MGD_TYPE_BOOLEAN:
-                $type_id = \PHPCR\PropertyType::BOOLEAN;
+                $type_id = PropertyType::BOOLEAN;
                 break;
 
             case \MGD_TYPE_TIMESTAMP:
-                $type_id = \PHPCR\PropertyType::DATE;
+                $type_id = PropertyType::DATE;
                 break;
-        }
 
-        /* Try schema value */
-        $type = $mrp->get_user_value($property, 'RequiredType');
-        if ($type != '' || $type != null)
-        {
-            $type_id = \PHPCR\PropertyType::valueFromName($type);
+            default:
+                $type_id = 0;
         }
 
         return $type_id;
     }
 }
-
-?>

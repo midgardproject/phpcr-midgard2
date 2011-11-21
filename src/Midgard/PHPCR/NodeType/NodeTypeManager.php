@@ -1,6 +1,7 @@
 <?php
 namespace Midgard\PHPCR\NodeType;
 
+use PHPCR\NodeType\NodeTypeManagerInterface;
 use Midgard\PHPCR\Utils\NodeMapper;
 use PHPCR\NodeType\NodeTypeDefinitionInterface;
 use PHPCR\NodeTypeExistsException;
@@ -9,8 +10,9 @@ use PHPCR\NodeType\NoSuchNodeTypeException;
 use ArrayIterator;
 use ReflectionExtension;
 use midgard_reflector_object;
+use IteratorAggregate;
 
-class NodeTypeManager implements \IteratorAggregate, \PHPCR\NodeType\NodeTypeManagerInterface
+class NodeTypeManager implements IteratorAggregate, NodeTypeManagerInterface
 {
     protected $primaryNodeTypes = array();
     protected $mixinNodeTypes = array();

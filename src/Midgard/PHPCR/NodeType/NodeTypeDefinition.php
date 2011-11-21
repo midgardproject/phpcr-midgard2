@@ -2,10 +2,12 @@
 namespace Midgard\PHPCR\NodeType;
 
 use Midgard\PHPCR\Utils\NodeMapper;
+use PHPCR\NodeType\NodeTypeDefinitionInterface;
 use ReflectionClass;
 use midgard_reflector_object;
+use midgard_reflection_property;
 
-class NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeDefinitionInterface
+class NodeTypeDefinition implements NodeTypeDefinitionInterface
 {
     protected $nodeTypeManager = null;
     protected $childNodeDefinitions = null;
@@ -33,6 +35,17 @@ class NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeDefinitionInterface
     {
         if (!is_null($this->propertyDefinitions)) {
             return $this->propertyDefinitions;
+        }
+
+        $midgardName = NodeMapper::getMidgardName($this->name);
+        $this->propertyDefinitions = array();
+        $properties = midgard_reflector_object::list_defined_properties($midgardName);
+        foreach ($properties as $property => $value) {
+            $propertyPHPCR = NodeMapper::getPHPCRProperty($property);
+            if (!$propertyPHPCR) {
+                continue;
+            }
+            $this->propertyDefinitions[$property] = new PropertyDefinition($this, $propertyPHPCR); 
         }
 
         return $this->propertyDefinitions;
@@ -96,5 +109,47 @@ class NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeDefinitionInterface
     public function isQueryable()
     {
         return $this->isQueryable;
+    }
+
+    protected function getPropertyReflector($name)
+    {
+        /* If this is MidgardObject derived property, return null.
+         * We have no session available at this point, so check prefix
+         * directly */
+        if (strpos($name, ':') !== false)
+        {
+            $parts = explode(':', $name); 
+            if ($parts[0] == 'mgd')
+            {
+                return null;
+            }
+        }
+
+        $midgardName = NodeMapper::getMidgardName($this->name);
+        if (!$midgardName)
+        {
+            return null;
+        }
+
+        $reflector = new midgard_reflection_property($midgardName);
+        if (!$reflector)
+        {
+            return null;
+        }
+
+        $midgardPropertyName = NodeMapper::getMidgardPropertyName($name);
+        if (!$midgardPropertyName)
+        {
+            return null;
+        }
+
+        $midgardType = $reflector->get_midgard_type($name);
+        /* Property is not registered for this type */
+        if ($midgardType == MGD_TYPE_NONE)
+        {
+            return null;
+        }
+
+        return $reflector;
     }
 }
