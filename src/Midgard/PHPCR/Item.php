@@ -16,16 +16,28 @@ abstract class Item implements ItemInterface
     protected $midgardNode = null;
     protected $propertyManager = null;
 
+    protected function populateContentObject()
+    {
+        if ($this->contentObject) {
+            return;
+        }
+
+        $midgardType = '\\' . NodeMapper::getMidgardName($this->getTypeName());
+        if ($this->midgardNode->objectguid) {
+            $this->contentObject = new $midgardType($this->midgardNode->objectguid);
+        } else {
+            $this->contentObject = new $midgardType();
+        }
+        /*
+        if ($this->hasProperty('jcr:created'))
+        {
+            $this->setProperty('jcr:created',  new \DateTime('now'), \PHPCR\PropertyType::DATE);
+        }*/
+    }
+
     public function getMidgard2ContentObject()
     {
-        if (is_null($this->contentObject)) {
-            $guid = $this->midgardNode->objectguid;
-            if ($guid == '') {
-                $guid = null;
-            }
-            $typename = $this->midgardNode->typename ? $this->midgardNode->typename : 'nt_unstructured';
-            $this->contentObject = midgard_object_class::factory($typename, $guid);
-        }
+        $this->populateContentObject();
         return $this->contentObject;
     }
 

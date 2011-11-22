@@ -11,7 +11,9 @@ use PHPCR\PathNotFoundException;
 use PHPCR\ItemExistsException;
 use PHPCR\RepositoryException;
 use PHPCR\NodeType\NoSuchNodeTypeException;
+use PHPCR\ItemNotFoundException;
 use midgard_node;
+use Midgard\PHPCR\NodeType\PropertyDefinition;
 
 class Node extends Item implements IteratorAggregate, NodeInterface
 {
@@ -28,6 +30,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $this->parent = $parent;
         $this->midgardNode = $midgardNode;
         $this->session = $session;
+
+        if (!$midgardNode->guid || !$midgardNode->objectguid) {
+            $this->is_new = true;
+        }
 
         if ($parent == null) {
             if ($midgardNode->guid && $midgardNode->parent == 0) {
@@ -47,38 +53,17 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             return $this->primaryNodeTypeName;
         }
 
-        return $this->getPropertyValue('jcr:primaryType');
-    }
-
-    /* TODO, move this to ContentObjectFactory */
-    private function contentObjectFactory(midgard_node $midgardNode,  $primaryNodeTypeName = null)
-    {
-        $guid = $midgardNode->objectguid;
-        /* FIXME, set proper type name */
-        if (!$midgardNode->typename)
-        {
-            $midgardNode->typename = 'nt_folder';
-        }
-        $this->contentObject = \midgard_object_class::factory($midgardNode->typename, $guid ? $guid : null);
-        if ($primaryNodeTypeName != null)
-        {
-            $this->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::NAME);
+        $property = 'jcr-primaryType';
+        if ($this->contentObject && $this->contentObject->$property) {
+            return $this->contentObject->$property;
         }
 
-        if ($this->hasProperty('jcr:created'))
-        {
-            $this->setProperty('jcr:created',  new \DateTime('now'), \PHPCR\PropertyType::DATE);
-        }
-    }
-
-    protected function populateParent()
-    {
-        if ($this->isRoot) {
-            return;
+        if ($this->midgardNode->typename) {
+            return NodeMapper::getPHPCRNAME($this->midgardNode->typename);
         }
 
-        $parentMidgardNode = new midgard_node($this->getMidgard2Node()->parent);
-        $this->parent = new Node($parentMidgardNode, null, $this->getSession());
+        // FIXME: Check midgard_node_property as well
+        return 'nt:unstructured';
     }
 
     private function appendNode($relPath, $primaryNodeTypeName = null)
@@ -107,15 +92,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         // TODO
 
         $midgardNode = new midgard_node();
-        $midgardNode->typename = str_replace(':', '_', $primaryNodeTypeName);
+        $midgardNode->typename = NodeMapper::getMidgardName($primaryNodeTypeName);
         $midgardNode->name = $relPath;
 
         $new_node = new Node($midgardNode, $this, $this->getSession());
-        $new_node->is_new = true; 
-        $new_node->primaryNodeTypeName = $primaryNodeTypeName;
-        $ptnProperty = 'jcr-primaryType';
-        $new_node->$ptnProperty = $primaryNodeTypeName;
-        $new_node->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::NAME);
         $this->children[$relPath] = $new_node;
 
         $this->is_modified = true;
@@ -285,27 +265,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         return $this->midgardPropertyNodes;
-    }
-
-    private function populateChildren()
-    {
-        if (!is_null($this->children))
-        {
-            return;
-        }
-
-        /* Node is not saved, so DO NOT list children of the same type */
-        if (!$this->midgardNode->guid)
-        {
-            return;
-        }
-
-        $children = $this->midgardNode->list();
-        $this->children = array();
-        foreach ($children as $child)
-        {
-            $this->children[$child->name] = new Node($child, $this, $this->getSession());
-        }
     }
 
     public function getNode($relPath)
@@ -492,7 +451,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         return $allFilters;
     }
 
-    private function getItemsFiltered($items, $filter, $isNode)
+    private function getItemsFiltered($items, $filter = null, $isNode)
     {
         if ($filter == null)
         {
@@ -530,76 +489,98 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     public function getNodes($filter = null)
     {
         $this->populateChildren();
+        return $this->getItemsFiltered($this->children ? $this->children : array(), $filter, true); 
+    }
 
-        if ($filter == null) 
-        {
-            return new \ArrayIterator($this->children ? $this->children : array());
+    protected function populateParent()
+    {
+        if ($this->isRoot) {
+            return;
         }
 
-        return $this->getItemsFiltered($this->children ? $this->children : array(), $filter, true); 
+        $parentMidgardNode = new midgard_node($this->getMidgard2Node()->parent);
+        $this->parent = new Node($parentMidgardNode, null, $this->getSession());
+    }
+
+    private function populateChildren()
+    {
+        if (!is_null($this->children)) {
+            return;
+        }
+
+        /* Node is not saved, so DO NOT list children */
+        if (!$this->midgardNode->guid) {
+            return;
+        }
+
+        $children = $this->midgardNode->list();
+        $this->children = array();
+        foreach ($children as $child) {
+            $this->children[$child->name] = new Node($child, $this, $this->getSession());
+        }
+    }
+
+    private function populateProperty(PropertyDefinition $definition)
+    {
+        $propertyName = $definition->getName();
+        if (isset($this->properties[$propertyName])) {
+            return;
+        }
+
+        if (!$this->contentObject) {
+            // TODO: Exception?
+            return;
+        }
+
+        $midgardName = NodeMapper::getMidgardName($propertyName);
+        if ($midgardName && isset($this->contentObject->$midgardName)) {
+            // Direct property of content object
+            $this->properties[$propertyName] = new Property($this, $propertyName);
+            return;
+        }
+
+        // midgard_node_property
+        $this->properties[$propertyName] = new Property($this, $propertyName);
     }
 
     private function populateProperties()
     {
-        if ($this->contentObject == null)
-        {
-            $this->contentObjectFactory($this->midgardNode, $this->primaryNodeTypeName);
+        if ($this->contentObject == null) {
+            $this->populateContentObject();
         }
 
-        if (!is_null($this->properties))
-        {
-            return;
+        if (is_null($this->properties)) {
+            $this->properties = array();
         }
 
-        foreach ($this->contentObject as $property => $value)
-        {
-            if (strpos($property, '-') === false)
-            {
-                $this->properties["mgd:{$property}"] = ' ';
+        $primary = $this->getPrimaryNodeType();
+        foreach ($primary->getPropertyDefinitions() as $property) {
+            $this->populateProperty($property);
+        }
+
+        $mixins = $this->getMixinNodeTypes();
+        foreach ($mixins as $mixin) {
+            foreach ($mixin->getPropertyDefinitions() as $property) {
+                $this->populateProperty($property);
             }
-            else 
-            {
-                $parts = explode('-', $property);
-                $this->properties["{$parts[0]}:{$parts[1]}"] = ' ';
-            }
-        }
-
-        $nodeProperties = $this->midgardNode->list_children('midgard_node_property');
-        foreach ($nodeProperties as $property)
-        {
-            $this->midgardPropertyNodes[$property->title][] = $property;
-            $this->properties[$property->title] = ' ';
         }
     }
 
     public function getProperty($relPath)
     {
         $remainingPath = '';
-        if (strpos($relPath, '/') !== false)
-        {
+        if (strpos($relPath, '/') !== false) {
             $parts = explode('/', $relPath);
             $property_name = array_pop($parts);
             $remainingPath = implode('/', $parts); 
             return $this->getNode($remainingPath)->getProperty($property_name);
         }
 
-        if (!isset($this->properties[$relPath]))
-        {
+        if (!isset($this->properties[$relPath])) {
             $this->populateProperties();
-            if (empty($this->properties) || !array_key_exists($relPath, $this->properties))
-            {
+            if (!isset($this->properties[$relPath])) {
                 throw new PathNotFoundException("Property at path '{$relPath}' not found at node " . $this->getName() . " at path " . $this->getPath());
             }
-        }
-
-        if (!is_object($this->properties[$relPath]))
-        {
-            $midgardPropertyNodes = null;
-            if (isset($this->midgardPropertyNodes[$relPath]))
-            {
-                $midgardPropertyNodes = $this->midgardPropertyNodes[$relPath];
-            }
-            $this->properties[$relPath] = new Property($this, $relPath);
         }
 
         return $this->properties[$relPath];
@@ -614,10 +595,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     {
         $this->populateProperties();
         $ret = $this->getItemsFiltered($this->properties, $filter, false);
-        foreach ($ret as $name => $property)
-        {
-            $ret[$name] = is_object($this->properties[$name]) ? $this->properties[$name] : $this->getProperty($name); 
-        }
         return new \ArrayIterator($ret);
     }
 
@@ -625,25 +602,18 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     {
         $properties = $this->getProperties($filter);
         $ret = array();
-        foreach ($properties as $name => $o)
-        {
-            $type = $this->getProperty($name)->getType();
-            if ($type == \PHPCR\PropertyType::WEAKREFERENCE
-                || $type == \PHPCR\PropertyType::REFERENCE
-                || $type == \PHPCR\PropertyType::PATH)
-            {
-                if ($dereference == true)
-                {
-                    $ret[$name] = $this->getProperty($name)->getNode();
+        foreach ($properties as $name => $property) {
+            $type = $property->getType();
+            if ($type == PropertyType::WEAKREFERENCE || $type == PropertyType::REFERENCE || $type == PropertyType::PATH) {
+                if ($dereference == true) {
+                    $ret[$name] = $property->getNode();
                 }
-                else
-                {
-                    $ret[$name] = $this->getProperty($name)->getString();
+                else {
+                    $ret[$name] = $property->getString();
                 }
             }
-            else 
-            {
-                $ret[$name] = $this->getProperty($name)->getValue(); 
+            else {
+                $ret[$name] = $property->getValue(); 
             }
         }
         return $ret;
@@ -651,23 +621,13 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function getPrimaryItem()
     {
-        try
-        {
-            $primaryType = $this->getPropertyValue('jcr:primaryType');
-            $ntm = $this->session->getWorkspace()->getNodeTypeManager();
-            $nt = $ntm->getNodeType($primaryType);
-            $primaryItem = $nt->getPrimaryItemName();
-            if ($primaryItem == null)
-            {
-                throw new \PHPCR\ItemNotFoundException("PrimaryItem not found for {$this->getName()} node");
-            }
+        $nt = $this->getPrimaryNodeType();
+        $primaryItem = $nt->getPrimaryItemName();
+        if (!$primaryItem) {
+            throw new ItemNotFoundException("PrimaryItem not found for {$this->getName()} node");
         }
-        catch (PathNotFoundException $e)
-        {
-                throw new \PHPCR\ItemNotFoundException("primaryType property not found for {$this->getName()} node");
-        }
-        if ($this->hasNode($primaryItem))
-        {
+
+        if ($this->hasNode($primaryItem)) {
             return $this->getNode($primaryItem);
         }
         
@@ -677,16 +637,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     public function getIdentifier()
     {
         $this->populateProperties();
-
-        /* Try uuid first */
-        try 
-        {
-            $uuidProperty = $this->getProperty('jcr:uuid');
-            return $uuidProperty->getValue();
-        }
-        catch (PathNotFoundException $e)
-        {
-            /* Do notthing */
+        if ($this->hasProperty('jcr:uuid')) {
+            return $this->getPropertyValue('jcr:uuid');
         }
 
         /* Return guid if uuid is not found */
@@ -985,40 +937,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             }
         }
 
-        $hasMixin = false;
-        try 
-        {
-            /* Check if node has such mixin */
-            $mixinProperty = $this->getPropertyValue('jcr:mixinTypes');
-            if (!is_array($mixinProperty))
-            {
-                $tmp[] = $mixinProperty;
-                $mixinProperty = $tmp;
-            }
-            foreach ($mixinProperty as $mixin)
-            {
-                if ($mixin == $mixinName)
-                {
-                    $hasMixin = true;
-                }
-            }
-
-            if ($hasMixin == false)
-            {
-                $this->setProperty('jcr:mixinTypes', $mixinName);
-            }
-            else 
-            {
-                /* If this node is already of type mixinName (either due to a previously 
-                 * added mixin or due to its primary type, through inheritance) then this method has no effect.*/
-                return;
-            }
-        }
-        catch (PathNotFoundException $e)
-        {
-            $this->setProperty('jcr:mixinTypes', $mixinName);
-        }
-
+        $this->setProperty('jcr:mixinTypes', $mixinName);
         $properties = \midgard_reflector_object::list_defined_properties ($midgardMixinName);
         foreach ($properties as $name => $v)
         {

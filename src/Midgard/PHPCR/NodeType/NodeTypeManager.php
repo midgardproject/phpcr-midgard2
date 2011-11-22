@@ -107,7 +107,7 @@ class NodeTypeManager implements IteratorAggregate, NodeTypeManagerInterface
     public function getNodeType($nodeTypeName)
     { 
         if (!$this->hasNodeType($nodeTypeName)) {
-            throw new NoSuchNodeTypeException("Node '{$nodeTypeName}' is not registered");
+            throw new NoSuchNodeTypeException("Node Type '{$nodeTypeName}' is not registered");
         }
 
         if (isset($this->primaryNodeTypes[$nodeTypeName])) {
