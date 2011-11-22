@@ -68,6 +68,10 @@ class Property extends Item implements \IteratorAggregate, \PHPCR\PropertyInterf
         return $this->parent->getMidgardPropertyNodes($this->getName());
     }
 
+    protected function populateParent()
+    {
+    }
+
     public function getParentNode()
     {
         return $this->parent;
@@ -211,9 +215,7 @@ xdebug_print_function_stack();
 
         /* Check if property is registered.
          * If it is, we need to validate if conversion follows the spec: "3.6.4 Property Type Conversion" */
-        $typename = $this->parent->getTypeName();
-        $ntm = $this->getSession()->getWorkspace()->getNodeTypeManager();
-        $nt = $ntm->getNodeType($typename);
+        $nt = $this->parent->getPrimaryNodeType();
         if ($nt->hasRegisteredProperty($this->getName()) && $type != null)
         {
             Value::checkTransformable($this->getType(), $type);

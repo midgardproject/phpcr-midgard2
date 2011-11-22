@@ -2,14 +2,18 @@
 namespace Midgard\PHPCR;
 
 use ArrayIterator;
+use IteratorAggregate;
 use Midgard\PHPCR\Utils\NodeMapper;
+use PHPCR\NodeInterface;
 use PHPCR\NodeType\ConstraintViolationException; 
 use PHPCR\PropertyType;
 use PHPCR\PathNotFoundException;
 use PHPCR\ItemExistsException;
+use PHPCR\RepositoryException;
+use PHPCR\NodeType\NoSuchNodeTypeException;
 use midgard_node;
 
-class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
+class Node extends Item implements IteratorAggregate, NodeInterface
 {
     protected $children = null;
     protected $properties = null;
@@ -19,7 +23,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     protected $removeProperties = null;
     protected $isRoot = false;
 
-    public function __construct(\midgard_node $midgardNode = null, Node $parent = null, Session $session)
+    public function __construct(midgard_node $midgardNode = null, Node $parent = null, Session $session)
     {
         $this->parent = $parent;
         $this->midgardNode = $midgardNode;
@@ -33,7 +37,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
     }
 
-    public function getTypeName()
+    private function getTypeName()
     {
         if ($this->isRoot) {
             return 'nt:folder';
@@ -79,9 +83,8 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     private function appendNode($relPath, $primaryNodeTypeName = null)
     {
-        /* ItemExistsException, Node at given path exists.*/
         try  {
-            $node_exists = $this->getNode ($relPath);
+            $node_exists = $this->getNode($relPath);
             throw new ItemExistsException("Node at given path {$relPath} exists");
         } 
         catch (PathNotFoundException $e) {
@@ -107,7 +110,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $midgardNode->typename = str_replace(':', '_', $primaryNodeTypeName);
         $midgardNode->name = $relPath;
 
-        $new_node = new \Midgard\PHPCR\Node($midgardNode, $this, $this->getSession());
+        $new_node = new Node($midgardNode, $this, $this->getSession());
         $new_node->is_new = true; 
         $new_node->primaryNodeTypeName = $primaryNodeTypeName;
         $ptnProperty = 'jcr-primaryType';
@@ -345,7 +348,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 //$guid = $this->getMidgard2Object()->guid;
                 $guid = '';
 
-                throw new \PHPCR\PathNotFoundException("Node at path '{$relPath}' not found. ({$remainingPath}). Requested at node {$absPath} with possible guid identifier '{$guid}'." . print_r($this->children ? array_keys($this->children) : array(), true));
+                throw new PathNotFoundException("Node at path '{$relPath}' not found. ({$remainingPath}). Requested at node {$absPath} with possible guid identifier '{$guid}'." . print_r($this->children ? array_keys($this->children) : array(), true));
             }
         }
 
@@ -585,7 +588,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $this->populateProperties();
             if (empty($this->properties) || !array_key_exists($relPath, $this->properties))
             {
-                throw new \PHPCR\PathNotFoundException("Property at path '{$relPath}' not found at node " . $this->getName() . " at path " . $this->getPath());
+                throw new PathNotFoundException("Property at path '{$relPath}' not found at node " . $this->getName() . " at path " . $this->getPath());
             }
         }
 
@@ -659,7 +662,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 throw new \PHPCR\ItemNotFoundException("PrimaryItem not found for {$this->getName()} node");
             }
         }
-        catch (\PHPCR\PathNotFoundException $e)
+        catch (PathNotFoundException $e)
         {
                 throw new \PHPCR\ItemNotFoundException("primaryType property not found for {$this->getName()} node");
         }
@@ -681,7 +684,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $uuidProperty = $this->getProperty('jcr:uuid');
             return $uuidProperty->getValue();
         }
-        catch (\PHPCR\PathNotFoundException $e)
+        catch (PathNotFoundException $e)
         {
             /* Do notthing */
         }
@@ -792,7 +795,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             $this->getNode($relPath);
             return true;
         }
-        catch (\PHPCR\PathNotFoundException $e) 
+        catch (PathNotFoundException $e) 
         {
             return false;
         }
@@ -888,7 +891,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $nt = $ntm->getNodeType($primaryType);
         if (!$nt) {
             $name = $this->getName();
-            throw new \PHPCR\RepositoryException("Failed to get NodeType from current '{$name}' node ({$primaryType})");
+            throw new RepositoryException("Failed to get NodeType from current '{$name}' node ({$primaryType})");
         }
         return $nt;
     }
@@ -908,6 +911,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
 
         foreach ($mixins as $mixin) {
+            if (!$mixin) {
+                continue;
+            }
             $ret[] = $ntm->getNodeType($mixin);
         }
 
@@ -921,7 +927,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         {
             $type = $this->getPropertyValue('jcr:primaryType');
         }
-        catch (\PHPCR\PathNotFoundException $e)
+        catch (PathNotFoundException $e)
         {
             /* Do nothing */
         }
@@ -941,7 +947,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         {
             $mixins = $this->getPropertyValue('jcr:mixinTypes');
         }
-        catch (\PHPCR\PathNotFoundException $e)
+        catch (PathNotFoundException $e)
         {
             return false;
         }
@@ -967,15 +973,16 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function addMixin($mixinName)
     {
-        $midgardMixinName = NodeMapper::getMidgardName($mixinName);
-        if ($midgardMixinName == null 
-            || !interface_exists($midgardMixinName, false))
-        {
-            throw new \PHPCR\NodeType\NoSuchNodeTypeException("{$mixinName} {$midgardMixinName} is not registered type"); 
+        if (!$this->canAddMixin($mixinName)) {
+            throw new NoSuchNodeTypeException("{$mixinName} is not registered mixin type"); 
         }
-        if (is_subclass_of($midgardMixinName, 'MidgardBaseMixin'))
-        {
-            throw new \PHPCR\NodeType\ConstraintViolationException("{$mixinName} is not registered as mixin"); 
+
+        // Check if we already have such a mixin
+        $mixins = $this->getMixinNodeTypes();
+        foreach ($mixins as $mixin) {
+            if ($mixin->getName() == $mixinName) {
+                return;
+            }
         }
 
         $hasMixin = false;
@@ -1007,7 +1014,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
                 return;
             }
         }
-        catch (\PHPCR\PathNotFoundException $e)
+        catch (PathNotFoundException $e)
         {
             $this->setProperty('jcr:mixinTypes', $mixinName);
         }
@@ -1032,7 +1039,16 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function canAddMixin($mixinName)
     {
-        return false;
+        $midgardMixinName = NodeMapper::getMidgardName($mixinName);
+        if ($midgardMixinName == null || !interface_exists($midgardMixinName, false)) {
+            return false;
+        }
+
+        if (is_subclass_of($midgardMixinName, 'MidgardBaseMixin')) {
+            return false;
+        }
+
+        return true;
     }
     
     public function getDefinition()
@@ -1394,31 +1410,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
      */
     public function isReferenceable()
     {
-        try
-        {
-            $p = $this->getProperty('jcr:mixinTypes');
-            /* FIXME, we should get array as this property is multiple */
-            $values = $p->getValue();
-            if (!is_array($values))
-            {
-                if ($values == 'mix:referenceable')
-                {
-                    return true;
-                }
-                return false;
+        $mixins = $this->getMixinNodeTypes();
+        foreach ($mixins as $mixin) {
+            if ($mixin->getName() == 'mix:referenceable') {
+                return true;
             }
-            foreach ($values as $mixin)
-            {
-                if ($mixin == 'mix:referenceable')
-                {
-                    return true;
-                }
-            }
-            return false;
         }
-        catch (\PHPCR\PathNotFoundException $e)
-        {
-            return false;
-        }
+        return false;
     } 
 }

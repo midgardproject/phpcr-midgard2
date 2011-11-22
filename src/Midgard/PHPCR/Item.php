@@ -1,7 +1,12 @@
 <?php
 namespace Midgard\PHPCR;
 
-abstract class Item implements \PHPCR\ItemInterface
+use PHPCR\ItemInterface;
+use PHPCR\ItemVisitorInterface; 
+use PHPCR\ItemNotFoundException; 
+use midgard_object_class;
+
+abstract class Item implements ItemInterface
 {
     protected $session = null;
     protected $parent = null;
@@ -13,15 +18,13 @@ abstract class Item implements \PHPCR\ItemInterface
 
     public function getMidgard2ContentObject()
     {
-        if ($this->contentObject == null)
-        {
+        if (is_null($this->contentObject)) {
             $guid = $this->midgardNode->objectguid;
-            if ($guid == '')
-            {
+            if ($guid == '') {
                 $guid = null;
             }
-            $typename = $this->midgardNode->typename ? $this->midgardNode->typename : 'nt_folder';
-            $this->contentObject = \midgard_object_class::factory($typename, $guid);
+            $typename = $this->midgardNode->typename ? $this->midgardNode->typename : 'nt_unstructured';
+            $this->contentObject = midgard_object_class::factory($typename, $guid);
         }
         return $this->contentObject;
     }
@@ -31,18 +34,13 @@ abstract class Item implements \PHPCR\ItemInterface
         return $this->midgardNode;
     }
 
-    protected function populateParent()
-    {
-        throw new \Exception("Missed implementation for populateParent");
-    }
+    abstract protected function populateParent();
 
     public function getPath()
     {
-        if (!$this->parent)
-        {
+        if (!$this->parent) {
             $this->populateParent();
-            if (!$this->parent)
-            {
+            if (!$this->parent) {
                 /* Root node probably */
                 return '/';
             }
@@ -57,8 +55,7 @@ abstract class Item implements \PHPCR\ItemInterface
     
     public function getName()
     {
-        if (!$this->parent)
-        {
+        if (!$this->parent) {
             // Root node
             return '';
         }
@@ -67,63 +64,53 @@ abstract class Item implements \PHPCR\ItemInterface
 
     public function getAncestor($depth)
     {
-        if ($depth < 0
-            || $depth > $this->getDepth())
-        {
-            throw new \PHPCR\ItemNotFoundException("Invalid depth ({$depth}) value.");
+        if ($depth < 0 || $depth > $this->getDepth()) {
+            throw new ItemNotFoundException("Invalid depth ({$depth}) value.");
         }
 
         /* n is the depth of this Item, which returns this Item itself. */
-        if ($depth == $this->getDepth())
-        {
+        if ($depth == $this->getDepth()) {
             return $this;
         }
 
         $ancestor = $this;
 
-        while (true) 
-        {
-            try 
-            {
+        while (true) {
+            try {
                 $ancestor = $ancestor->getParent();
-                if ($ancestor->getDepth() == $depth)
-                {
+                if ($ancestor->getDepth() == $depth) {
                     break;
                 }
             } 
-            catch (\PHPCR\ItemNotFoundException $e) 
-            {
+            catch (ItemNotFoundException $e) {
                 $ancestor = $this->getSession()->getRootNode();
                 break;
             }
         }
 
-        if ($ancestor != null)
-        { 
+        if ($ancestor != null) { 
             return $ancestor;
         }
 
-        throw new \PHPCR\ItemNotFoundException("No item found at depth {$depth}");
+        throw new ItemNotFoundException("No item found at depth {$depth}");
     }
 
     public function getParent()
     {
-        if (!$this->parent)
-        {
-            throw new \PHPCR\ItemNotFoundException();
+        $this->populateParent();
+        if (!$this->parent) {
+            throw new ItemNotFoundException();
         }
         return $this->parent;
     }
 
     public function getDepth()
     {
-        try 
-        {
+        try {
             $parent = $this->getParent();
             return $parent->getDepth() + 1;
         } 
-        catch (\PHPCR\ItemNotFoundException $e)
-        {
+        catch (ItemNotFoundException $e) {
             return 0;
         }
     }
@@ -148,12 +135,12 @@ abstract class Item implements \PHPCR\ItemInterface
         return $this->is_modified;
     }
 
-    public function isSame(\PHPCR\ItemInterface $otherItem)
+    public function isSame(ItemInterface $otherItem)
     {
         return false;
     }
 
-    public function accept(\PHPCR\ItemVisitorInterface $visitor)
+    public function accept(ItemVisitorInterface $visitor)
     {
         $visitor->visit($this);
     }
