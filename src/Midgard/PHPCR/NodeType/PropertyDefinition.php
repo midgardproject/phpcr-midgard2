@@ -134,8 +134,7 @@ class PropertyDefinition implements PropertyDefinitionInterface
 
     public function getDeclaringNodeType()
     {
-        $ntm = $this->node->getSession()->getWorkspace()->getNodeTypeManager();
-        return $ntm->getNodeType($this->node->getProperty('jcr:primaryType'));
+        return $this->nodeDefinition->getName();
     }
 
     public function getName()

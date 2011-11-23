@@ -41,9 +41,8 @@ class QueryManager implements \PHPCR\Query\QueryManagerInterface
         $valid = true;
         try
         {
-            $type = $node->getPropertyValue('jcr:primaryType');
-            if ($type != 'nt:query')
-            {
+            $type = $node->getPrimaryNodeType();
+            if (!$type || $type->getName() != 'nt:query') {
                 $valid = false;
             }
         }

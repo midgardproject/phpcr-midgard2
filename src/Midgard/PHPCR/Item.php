@@ -5,6 +5,7 @@ use PHPCR\ItemInterface;
 use PHPCR\ItemVisitorInterface; 
 use PHPCR\ItemNotFoundException; 
 use midgard_object_class;
+use Midgard\PHPCR\Utils\NodeMapper;
 
 abstract class Item implements ItemInterface
 {

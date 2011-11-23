@@ -5,6 +5,7 @@ use ArrayIterator;
 use IteratorAggregate;
 use Midgard\PHPCR\Utils\NodeMapper;
 use PHPCR\NodeInterface;
+use PHPCR\ItemInterface;
 use PHPCR\NodeType\ConstraintViolationException; 
 use PHPCR\PropertyType;
 use PHPCR\PathNotFoundException;
@@ -13,6 +14,12 @@ use PHPCR\RepositoryException;
 use PHPCR\NodeType\NoSuchNodeTypeException;
 use PHPCR\ItemNotFoundException;
 use midgard_node;
+use midgard_query_select;
+use midgard_query_constraint;
+use midgard_query_constraint_group;
+use midgard_query_storage;
+use midgard_query_property;
+use midgard_query_value;
 use Midgard\PHPCR\NodeType\PropertyDefinition;
 
 class Node extends Item implements IteratorAggregate, NodeInterface
@@ -43,7 +50,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
     }
 
-    private function getTypeName()
+    protected function getTypeName()
     {
         if ($this->isRoot) {
             return 'nt:folder';
@@ -125,7 +132,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         if ($primaryNodeTypeName == null)
         {
             $def = $this->getDefinition();
-            $primaryNodeTypeName = $def->getDefaultPrimaryTypeName();
+            //$primaryNodeTypeName = $def->getDefaultPrimaryTypeName();
             if ($primaryNodeTypeName == null)
             {
                 if ($this->getPath() == '/') {
@@ -527,13 +534,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             return;
         }
 
-        if (!$this->contentObject) {
-            // TODO: Exception?
-            return;
-        }
-
         $midgardName = NodeMapper::getMidgardName($propertyName);
-        if ($midgardName && isset($this->contentObject->$midgardName)) {
+        if ($this->contentObject && $midgardName && isset($this->contentObject->$midgardName)) {
             // Direct property of content object
             $this->properties[$propertyName] = new Property($this, $propertyName);
             return;
@@ -541,6 +543,32 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         // midgard_node_property
         $this->properties[$propertyName] = new Property($this, $propertyName);
+    }
+
+    private function populatePropertiesUndefined()
+    {
+        $q = new midgard_query_select(new midgard_query_storage('midgard_node_property'));
+        $cg = new midgard_query_constraint_group('AND');
+        $cg->add_constraint(
+            new midgard_query_constraint(
+                new midgard_query_property('parent'),
+                '=',
+                new midgard_query_value($this->midgardNode->id)
+            )
+        );
+        $cg->add_constraint(
+            new midgard_query_constraint(
+                new midgard_query_property('name'),
+                'NOT IN',
+                new midgard_query_value(array_keys($this->properties))
+            )
+        );
+        $q->set_constraint($cg);
+        $q->execute();
+        $properties = $q->list_objects();
+        foreach ($properties as $property) {
+            $this->properties[$property->name] = new Property($this, $property->name);
+        }
     }
 
     private function populateProperties()
@@ -564,6 +592,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                 $this->populateProperty($property);
             }
         }
+
+        $this->populatePropertiesUndefined();
     }
 
     public function getProperty($relPath)
@@ -576,11 +606,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             return $this->getNode($remainingPath)->getProperty($property_name);
         }
 
-        if (!isset($this->properties[$relPath])) {
-            $this->populateProperties();
-            if (!isset($this->properties[$relPath])) {
-                throw new PathNotFoundException("Property at path '{$relPath}' not found at node " . $this->getName() . " at path " . $this->getPath());
-            }
+        if (!$this->hasProperty($relPath) || !isset($this->properties[$relPath])) {
+            throw new PathNotFoundException("Property at path '{$relPath}' not found at node " . $this->getName() . " at path " . $this->getPath());
         }
 
         return $this->properties[$relPath];
@@ -874,45 +901,16 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function isNodeType($nodeTypeName)
     {
-        /* Check primaryType first */
-        try 
-        {
-            $type = $this->getPropertyValue('jcr:primaryType');
-        }
-        catch (PathNotFoundException $e)
-        {
-            /* Do nothing */
-        }
-        if ($type == $nodeTypeName)
-        {
+        $primary = $this->getPrimaryNodeType();
+        if ($primary->isNodeType($nodeTypeName)) {
             return true;
         }
-        /* TODO 
-         * Check supertypes */
-        /*
-        $ntm = $this->session->getWorkspace()->getNodeTypeManager();
-        $nt = $ntm->getNodeType($type);
-         */
 
-        /* Check mixin */
-        try 
-        {
-            $mixins = $this->getPropertyValue('jcr:mixinTypes');
-        }
-        catch (PathNotFoundException $e)
-        {
-            return false;
-        }
-
-        if (!is_array($mixins))
-        {
-            $tmp[] = $mixins;
-            $mixins = $tmp;
-        }
-
-        if (in_array($nodeTypeName, $mixins))
-        {
-            return true;
+        $mixins = $this->getMixinNodeTypes();
+        foreach ($mixins as $mixin) {
+            if ($mixin->isNodeType($nodeTypeName)) {
+                return true;
+            }
         }
 
         return false;
@@ -972,7 +970,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function getDefinition()
     {
-        return new NodeType\NodeDefinition($this);
+        return $this->getPrimaryNodeType();
     }
     
     public function update($srcWorkspace)
@@ -1025,10 +1023,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         return $this->getNodes();
     }
 
-    public function isSame(\PHPCR\ItemInterface $item)
+    public function isSame(ItemInterface $item)
     {
-        if (!$item instanceof \PHPCR\NodeInterface)
-        {
+        if (!$item instanceof NodeInterface) {
             return false;
         }
 
@@ -1036,18 +1033,15 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         /* Check session */
        
         $thisContentObject = $this->getMidgard2ContentObject();
-        if (!$thisContentObject)
-        {
+        if (!$thisContentObject) {
             return false;
         }
         $itemContentObject = $item->getMidgard2ContentObject();
-        if (!$itemContentObject)
-        {
+        if (!$itemContentObject) {
             return false;
         }
 
-        if ($thisContentObject->guid == $itemContentObject->guid)
-        {
+        if ($thisContentObject->guid == $itemContentObject->guid) {
             return true;
         }
 
