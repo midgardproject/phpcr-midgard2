@@ -1,5 +1,5 @@
 <?php
-namespace Midgard\PHPCR;
+namespace Midgard\PHPCR\Utils;
 
 class Value 
 {

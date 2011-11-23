@@ -3,6 +3,7 @@ namespace Midgard\PHPCR;
 
 use ArrayIterator;
 use IteratorAggregate;
+use InvalidArgumentException;
 use Midgard\PHPCR\Utils\NodeMapper;
 use PHPCR\NodeInterface;
 use PHPCR\ItemInterface;
@@ -27,7 +28,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     protected $children = null;
     protected $properties = null;
     protected $midgardPropertyNodes = null;
-    protected $primaryNodeTypeName = null;
     protected $remove = false;
     protected $removeProperties = null;
     protected $isRoot = false;
@@ -35,41 +35,33 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     public function __construct(midgard_node $midgardNode = null, Node $parent = null, Session $session)
     {
         $this->parent = $parent;
-        $this->midgardNode = $midgardNode;
         $this->session = $session;
 
-        if (!$midgardNode->guid || !$midgardNode->objectguid) {
-            $this->is_new = true;
-        }
+        $this->setMidgard2Node($midgardNode);
 
         if ($parent == null) {
             if ($midgardNode->guid && $midgardNode->parent == 0) {
                 $this->isRoot = true;
-                $this->contentObject = $midgardNode;
+                $this->setMidgard2ContentObject($midgardNode);
             }
         }
     }
 
-    protected function getTypeName()
+    protected function getTypeName($checkContentObject = true)
     {
         if ($this->isRoot) {
             return 'nt:folder';
         }
 
-        if ($this->primaryNodeTypeName) {
-            return $this->primaryNodeTypeName;
+        $typeName = $this->getMidgard2PropertyValue('jcr:primaryType', false, $checkContentObject);
+        if ($typeName) {
+            return $typeName;
         }
 
-        $property = 'jcr-primaryType';
-        if ($this->contentObject && $this->contentObject->$property) {
-            return $this->contentObject->$property;
+        if ($this->getMidgard2Node()->typename) {
+            return NodeMapper::getPHPCRNAME($this->getMidgard2Node()->typename);
         }
 
-        if ($this->midgardNode->typename) {
-            return NodeMapper::getPHPCRNAME($this->midgardNode->typename);
-        }
-
-        // FIXME: Check midgard_node_property as well
         return 'nt:unstructured';
     }
 
@@ -120,7 +112,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $pos = strpos('/', $relPath);
         if ($pos === 0)
         {
-            throw new \InvalidArgumentException("Can not add Node at absolute path"); 
+            throw new InvalidArgumentException("Can not add Node at absolute path"); 
         }
 
         /* RepositoryException - If the last element of relPath has an index or if another error occurs. */
@@ -198,7 +190,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     public function setProperty($name, $value, $type = null)
     {
         if (strpos($name, '/') !== false) {
-            throw new \InvalidArgumentException("Can not set property name with '/' delimeter");
+            throw new InvalidArgumentException("Can not set property name with '/' delimeter");
         }
 
         $nodeDef = $this->getNodeDefinitionThatHasProperty($name);
@@ -210,10 +202,12 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             return $this->removeProperty($name);
         }
 
+        $propertyDef = null;
         if ($type != null && $nodeDef) {
             $propertyDefs = $nodeDef->getPropertyDefinitions();
             if (isset($propertyDefs[$name])) {
-               $requiredType = $propertyDefs[$name]->getRequiredType();
+                $propertyDef = $propertyDefs[$name];
+                $requiredType = $propertyDefs[$name]->getRequiredType();
 
                 if ($requiredType != 0 && $requiredType != $type) {
                     throw new ConstraintViolationException("Wrong type for {$name} property. " . PropertyType::nameFromValue($type) . " given. Expected " . PropertyType::nameFromValue($requiredType));
@@ -225,53 +219,23 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             }
         }
 
+        $origValue = null;
         try 
         {
             $property = $this->getProperty($name);
+            $origValue = $property->getValue();
         } 
         catch (PathNotFoundException $e)
         { 
-            $mnp = new \midgard_node_property();
-            $mnp->title = $name;
-            $mnp->type = $type;
-            if (!$type && is_array($value)) {
-                $mnp->multiple = true;
-            }
-            $this->setMidgardPropertyNode($name, $mnp);
-            $property = new Property($this, $name);
-            $this->properties[$name] = $property;
+            $this->properties[$name] = new Property($this, $name, $propertyDef);
         }
         $property->setValue($value, $type);
-        
-        /* TODO, for performance reason, we could check if property's value
-         * has been changed.
-         * By default, it's modified */
-        $this->is_modified = true;
+       
+        if (is_null($origValue) || $value != $origValue) {
+            $this->is_modified = true;
+        }
 
         return $property;
-    }
-
-    public function setMidgardPropertyNode($name, \midgard_node_property $property)
-    {
-        $this->midgardPropertyNodes[$name][] = $property;
-    }
-
-    public function getMidgardPropertyNodes($name = null)
-    {
-        if (empty($this->midgardPropertyNodes))
-        {
-            return null;
-        }
-        if ($name != null)
-        {
-            if (!array_key_exists($name, $this->midgardPropertyNodes))
-            {
-                return null;
-            }
-            return $this->midgardPropertyNodes[$name];
-        }
-
-        return $this->midgardPropertyNodes;
     }
 
     public function getNode($relPath)
@@ -516,11 +480,11 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         /* Node is not saved, so DO NOT list children */
-        if (!$this->midgardNode->guid) {
+        if (!$this->getMidgard2Node()->guid) {
             return;
         }
 
-        $children = $this->midgardNode->list();
+        $children = $this->getMidgard2Node()->list();
         $this->children = array();
         foreach ($children as $child) {
             $this->children[$child->name] = new Node($child, $this, $this->getSession());
@@ -534,15 +498,18 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             return;
         }
 
+        $this->properties[$propertyName] = new Property($this, $propertyName, $definition);
+
+        /*
         $midgardName = NodeMapper::getMidgardName($propertyName);
         if ($this->contentObject && $midgardName && isset($this->contentObject->$midgardName)) {
             // Direct property of content object
-            $this->properties[$propertyName] = new Property($this, $propertyName);
+
             return;
         }
 
         // midgard_node_property
-        $this->properties[$propertyName] = new Property($this, $propertyName);
+        $this->properties[$propertyName] = new Property($this, $propertyName, $definition);*/
     }
 
     private function populatePropertiesUndefined()
@@ -553,7 +520,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             new midgard_query_constraint(
                 new midgard_query_property('parent'),
                 '=',
-                new midgard_query_value($this->midgardNode->id)
+                new midgard_query_value($this->getMidgard2Node()->id)
             )
         );
         $cg->add_constraint(
@@ -782,70 +749,14 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function hasProperty($relPath)
     {
-        $pos = strpos($relPath, '/');
-        if ($pos === 0)
-        {
-            throw new \InvalidArgumentException("Expected relative path. Absolute given");
-        }
-
-        /* Try native property first */
-        $nativeProperty = $relPath;
-        if (strpos($relPath, ':') !== false)
-        {
-            $parts = explode(':', $relPath);
-            if ($parts[0] == 'mgd')
-            {
-                $nativeProperty = $parts[1];
-            }
-            else 
-            {
-                $nativeProperty = str_replace(':', '-', $relPath);
-            }
-        }
-
-        if (strpos($relPath, '-') !== false)
-        {
-            $parts = explode('-', $relPath);
-            if ($parts[0] == 'mgd')
-            {
-                $nativeProperty = $parts[1];
-            }
-        }
-
-        if (!$this->midgardNode->typename)
-        {
-            $this->midgardNode->typename = 'nt_unstructured';
-        }
-
-        /* Unfortunatelly, we must initialize new midgard object and reflection object.
-         * There's no other way to check if class has property registered.
-         * Others, (very) old PHP introspection routines check properties, in class default properties scope */
-        $ro = new \ReflectionObject(new $this->midgardNode->typename);
-        if ($ro->hasProperty($nativeProperty))
-        {
-            return true;
-        }
-
-        if (property_exists($this->midgardNode->typename, $nativeProperty))
-        {
-            return true;
-        }
-
         $this->populateProperties();
-
-        if (array_key_exists($relPath, $this->properties))
-        {
-            return true;
-        }
-
-        return false;
+        return isset($this->properties[$relPath]);
     }
     
     public function hasNodes()
     {
         $this->populateChildren();
-        if (empty($this->children))
-        {
+        if (empty($this->children)) {
             return false;
         }
 
@@ -855,8 +766,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     public function hasProperties()
     {
         $this->populateProperties();
-        if (empty($this->properties))
-        {
+        if (empty($this->properties)) {
             return false;
         }
 
@@ -877,13 +787,12 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function getMixinNodeTypes()
     {
-        $ret = array();
-        if (!$this->hasProperty('jcr:mixinTypes')) {
-            return $ret;
+        $mixins = $this->getMidgard2PropertyValue('jcr:mixinTypes', true);
+        if (!$mixins) {
+            return array();
         }
 
         $ntm = $this->session->getWorkspace()->getNodeTypeManager();
-        $mixins = $this->getPropertyValue('jcr:mixinTypes');
         if (!is_array($mixins)) {
             $tmp[] = $mixins;
             $mixins = $tmp;

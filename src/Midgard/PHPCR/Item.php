@@ -5,6 +5,14 @@ use PHPCR\ItemInterface;
 use PHPCR\ItemVisitorInterface; 
 use PHPCR\ItemNotFoundException; 
 use midgard_object_class;
+use midgard_query_select;
+use midgard_query_constraint;
+use midgard_query_constraint_group;
+use midgard_query_storage;
+use midgard_query_property;
+use midgard_query_value;
+use midgard_node;
+use midgard_node_property;
 use Midgard\PHPCR\Utils\NodeMapper;
 
 abstract class Item implements ItemInterface
@@ -23,7 +31,7 @@ abstract class Item implements ItemInterface
             return;
         }
 
-        $midgardType = '\\' . NodeMapper::getMidgardName($this->getTypeName());
+        $midgardType = '\\' . NodeMapper::getMidgardName($this->getTypeName(false));
         if ($this->midgardNode->objectguid) {
             $this->contentObject = new $midgardType($this->midgardNode->objectguid);
         } else {
@@ -42,9 +50,125 @@ abstract class Item implements ItemInterface
         return $this->contentObject;
     }
 
+    protected function setMidgard2ContentObject($object)
+    {
+        $this->contentObject = $object;
+    }
+
     public function getMidgard2Node()
     {
         return $this->midgardNode;
+    }
+
+    protected function setMidgard2Node(midgard_node $node)
+    {
+        if (!$node->guid || !$node->objectguid) {
+            $this->is_new = true;
+        }
+        $this->midgardNode = $node;
+    }
+
+    private function prepareMidgard2PropertyObject($name, $multiple)
+    {
+        $midgardName = NodeMapper::getMidgardPropertyName($name);
+        $prop = new midgard_node_property();
+        $prop->name = $midgardName;
+        $prop->title = $name;
+        $prop->parent = $this->getMidgard2Node()->id;
+        $prop->parentguid = $this->getMidgard2Node()->guid;
+        $prop->multiple = $multiple;
+        return $prop;
+    }
+
+    protected function getMidgard2PropertyStorage($name, $multiple, $checkContentObject = true)
+    {
+        $midgardName = NodeMapper::getMidgardPropertyName($name);
+
+        if (!$multiple && $checkContentObject) {
+            $contentObject = $this->getMidgard2ContentObject();
+            if (property_exists($contentObject, $midgardName)) {
+                return $contentObject;
+            }
+        }
+
+        $q = new midgard_query_select(new midgard_query_storage('midgard_node_property'));
+        $cg = new midgard_query_constraint_group('AND');
+        $cg->add_constraint(
+            new midgard_query_constraint(
+                new midgard_query_property('parent'),
+                '=',
+                new midgard_query_value($this->getMidgard2Node()->id)
+            )
+        );
+        $cg->add_constraint(
+            new midgard_query_constraint(
+                new midgard_query_property('name'),
+                '=',
+                new midgard_query_value($midgardName)
+            )
+        );
+        $q->set_constraint($cg);
+        $q->execute();
+        if ($q->get_results_count() < 1) {
+            $prop = $this->prepareMidgard2PropertyObject($name, $multiple);
+            if ($multiple) {
+                return array($prop);
+            }
+            return $prop;
+        }
+        $objects = $q->list_objects();
+        if ($multiple) {
+            return $objects;
+        }
+        // TODO: Remove other property objects?
+        return $objects[0];
+    }
+
+    protected function getMidgard2PropertyValue($name, $multiple, $checkContentObject = true)
+    {
+        $object = $this->getMidgard2PropertyStorage($name, $multiple, $checkContentObject);
+        if ($multiple) {
+            $values = array();
+            foreach ($object as $property) {
+                $values[] = $property->value;
+            }
+            return $values;
+        }
+
+        if ($object instanceof midgard_node_property) {
+            return $object->value;
+        }
+
+        $midgardName = NodeMapper::getMidgardPropertyName($name);
+        return $object->$midgardName;
+    }
+
+    protected function setMidgard2PropertyValue($name, $multiple, $value)
+    {
+        $object = $this->getMidgard2PropertyStorage($name, $multiple);
+        if ($multiple) {
+            $storedValues = array();
+            foreach ($object as $propertyObject) {
+                if (!in_array($propertyObject->value, $value)) {
+                    $propertyObject->delete();
+                    continue;
+                }
+                $storedValues[] = $value;
+            }
+            $toStore = array_diff($value, $storedValues);
+            foreach ($toStore as $val) {
+                $prop = $this->prepareMidgard2PropertyObject($name, $multiple);
+                $prop->value = $val;
+            }
+            return;
+        }
+
+        if ($object instanceof midgard_node_property) {
+            return $object->value = $value;
+        }
+
+        $midgardName = NodeMapper::getMidgardPropertyName($name);
+        return $object->$midgardName = $value;
     }
 
     abstract protected function populateParent();
@@ -146,6 +270,12 @@ abstract class Item implements ItemInterface
     public function isModified()
     {
         return $this->is_modified;
+    }
+
+    protected function setUnmodified()
+    {
+        $this->is_new = false;
+        $this->is_modified = false;
     }
 
     public function isSame(ItemInterface $otherItem)
