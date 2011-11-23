@@ -21,7 +21,8 @@
     "require": {
         "php": ">=5.3.0",
         "ext-midgard2": ">=10.05.5",
-        "phpcr/phpcr": ">=2.1.0-beta1"
+        "phpcr/phpcr": ">=2.1.0-beta1",
+        "phpcr/phpcr-utils": "*"
     },
     "autoload": {
         "psr-0": {
