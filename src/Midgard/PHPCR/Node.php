@@ -242,6 +242,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         if (is_null($this->children)) {
             $this->populateChildren();
+        } elseif (!isset($this->children[$relPath])) {
+            $this->populateChildren(true);
         }
         
         if (!isset($this->children[$relPath]) || $this->children[$relPath]->is_removed) {
@@ -321,8 +323,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $prefix = $nsnames[0];
         $name = $nsnames[1];
 
-        if (array_key_exists($name, $this->children))
-        {
+        if (array_key_exists($name, $items)) {
             $ret[$name] = $items[$name];
         }
             
@@ -442,10 +443,14 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $this->midgardNode->parentguid = $parentMidgardNode->guid;
     }
 
-    private function populateChildren()
+    private function populateChildren($appendOnly = false)
     {
-        if (!is_null($this->children)) {
+        if (!is_null($this->children) && !$appendOnly) {
             return;
+        }
+
+        if (!$appendOnly) {
+            $this->children = array();
         }
 
         /* Node is not saved, so DO NOT list children */
@@ -454,8 +459,11 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $children = $this->getMidgard2Node()->list();
-        $this->children = array();
+
         foreach ($children as $child) {
+            if ($appendOnly && isset($this->children[$child->name])) {
+                continue;
+            }
             $this->children[$child->name] = new Node($child, $this, $this->getSession());
         }
     }
