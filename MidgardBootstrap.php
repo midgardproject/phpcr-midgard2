@@ -90,6 +90,14 @@ class MidgardBootstrap
             }
         }
 
+        // Set up default workspace
+        $ws = new midgard_workspace();
+        $wmanager = new midgard_workspace_manager(midgard_connection::get_instance());
+        if (!$wmanager->path_exists('default')) {
+            $ws->name = 'default';
+            $wmanager->create_workspace($ws, "");
+        }
+
         /* Create required root node */
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
         $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));

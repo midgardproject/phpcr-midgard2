@@ -28,7 +28,7 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         static $instance;
         if (!is_object($instance))
         {
-            $instance = new ImplementationLoader('Midgard\PHPCR\RepositoryFactory', 'tests');
+            $instance = new ImplementationLoader('Midgard\PHPCR\RepositoryFactory', 'default');
         }
         return $instance;
     }
@@ -57,7 +57,7 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
 
     public function getUserId()
     {
-        
+        return $GLOBALS['phpcr.user'];
     }
 
     public function getFixtureLoader()
