@@ -58,7 +58,9 @@ class QueryManager implements \PHPCR\Query\QueryManagerInterface
         $statement = $node->getPropertyValue('jcr:statement');
         $language = $node->getPropertyValue('jcr:language');
 
-        return $this->createQuery($statement, $language);
+        $query = $this->createQuery($statement, $language);
+        $query->setNode($node);
+        return $query;
     }
 
     public function getSupportedQueryLanguages()
