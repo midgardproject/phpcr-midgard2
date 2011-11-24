@@ -85,10 +85,15 @@ abstract class Item implements ItemInterface
         $prop->parent = $this->getMidgard2Node()->id;
         $prop->parentguid = $this->getMidgard2Node()->guid;
         $prop->multiple = $multiple;
+
+        if ($this instanceof Property) {
+            $prop->type = $this->getType();
+        }
+
         return $prop;
     }
 
-    protected function getMidgard2PropertyStorage($name, $multiple, $checkContentObject = true)
+    protected function getMidgard2PropertyStorage($name, $multiple, $checkContentObject = true, $prepareNew = true)
     {
         $midgardName = NodeMapper::getMidgardPropertyName($name);
 
@@ -122,6 +127,9 @@ abstract class Item implements ItemInterface
         $q->set_constraint($cg);
         $q->execute();
         if ($q->get_results_count() < 1) {
+            if (!$prepareNew) {
+                return null;
+            }
             $prop = $this->prepareMidgard2PropertyObject($name, $multiple);
             if ($multiple) {
                 return array($prop);
@@ -132,8 +140,24 @@ abstract class Item implements ItemInterface
         if ($multiple) {
             return $objects;
         }
-        // TODO: Remove other property objects?
         return $objects[0];
+    }
+
+    protected function removeMidgard2PropertyStorage($name, $multiple)
+    {
+        $storage = $this->getMidgard2PropertyStorage($name, $multiple, true);
+        if ($multiple) {
+            foreach ($storage as $propStorage) {
+                $propStorage->purge_attachments(true);
+                $propStorage->purge();
+            }
+            return;
+        }
+
+        if ($storage instanceof midgard_node_property) {
+            $storage->purge_attachments(true);
+            $storage->purge();
+        }
     }
 
     protected function getMidgard2PropertyValue($name, $multiple, $checkContentObject = true)

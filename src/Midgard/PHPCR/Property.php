@@ -6,12 +6,15 @@ use PHPCR\ItemInterface;
 use PHPCR\PropertyType;
 use PHPCR\NodeType\PropertyDefinitionInterface; 
 use PHPCR\ValueFormatException;
+use PHPCR\RepositoryException;
 use IteratorAggregate;
 use DateTime;
 use Midgard\PHPCR\Utils\NodeMapper;
 use Midgard\PHPCR\Utils\ValueFactory;
 use Midgard\PHPCR\Utils\StringValue;
+use Midgard\PHPCR\Utils\Value;
 use midgard_blob;
+use midgard_node_property;
 
 class Property extends Item implements IteratorAggregate, PropertyInterface
 {
@@ -19,12 +22,18 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     protected $type = PropertyType::UNDEFINED;
     protected $definition = null;
 
-    public function __construct(Node $node, $propertyName, PropertyDefinitionInterface $definition = null)
+    public function __construct(Node $node, $propertyName, PropertyDefinitionInterface $definition = null, $type = null)
     {
         $this->propertyName = $propertyName; 
         $this->parent = $node;
         $this->session = $node->getSession();
         $this->definition = $definition;
+
+        if ($definition) {
+            $this->type = $definition->getRequiredType();
+        } elseif ($type) {
+            $this->type = $type;
+        }
     }
 
     protected function populateParent()
@@ -99,16 +108,13 @@ xdebug_print_function_stack();
          * Thus, passing a Node object without an explicit type (REFERENCE or WEAKREFERENCE) will create a REFERENCE property. 
          * If the specified node is not referenceable, a ValueFormatException is thrown.
          */ 
-        if (is_a($value, '\Midgard\PHPCR\Node'))
-        {
-            if (!$value->isReferenceable())
-            {
-                throw new \PHPCR\ValueFormatException("Node " . $value->getPath() . " is not referencable"); 
+        if (is_a($value, 'Node')) {
+            if (!$value->isReferenceable()) {
+                throw new ValueFormatException("Node " . $value->getPath() . " is not referencable"); 
             }
 
-            if ($type == null)
-            {
-                $type = \PHPCR\PropertyType::REFERENCE;
+            if ($type == null) {
+                $type = PropertyType::REFERENCE;
             }
 
             return $value->getProperty('jcr:uuid')->getString();
@@ -131,9 +137,7 @@ xdebug_print_function_stack();
 
         /* Check if property is registered.
          * If it is, we need to validate if conversion follows the spec: "3.6.4 Property Type Conversion" */
-        $nt = $this->parent->getPrimaryNodeType();
-        if ($nt->hasRegisteredProperty($this->getName()) && $type != null)
-        {
+        if ($this->definition && $type) {
             Value::checkTransformable($this->getType(), $type);
         }
 
@@ -146,6 +150,7 @@ xdebug_print_function_stack();
          */ 
 
         $normalizedValue = $this->normalizePropertyValue($value, $type);
+        $this->type = $type;
         $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
     }
     
@@ -207,15 +212,26 @@ xdebug_print_function_stack();
         $attachments = array();
         if (is_array($object)) {
             foreach ($object as $propertyObject) {
+                if (!is_object($object)) {
+                    continue;
+                }
+                if (!$object->guid) {
+                    continue;
+                }
                 $attachments = array_merge($attachments, $propertyObject->find_attachments($constraints));
             }
-        } else {
+        } elseif ($object->guid) {
             $attachments = $object->find_attachments($constraints);
         }
 
         foreach ($attachments as $att) {
             $blob = new midgard_blob($att);
             $ret[] = $blob->get_handler('r');
+        }
+
+        if (empty($ret)) {
+            // FIXME: We should use temporary files in this case
+            throw new RepositoryException('Unable to load attachments of non-persistent object');
         }
 
         if ($this->isMultiple()) {
@@ -424,11 +440,16 @@ xdebug_print_function_stack();
 
     public function getType()
     {
-        if ($this->definition) {
-            return $this->definition->getRequiredType();
+        if ($this->type) {
+            // Type either given at instantiation or from definition
+            return $this->type;
         }
 
-        $object = $this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple());
+        $object = $this->getMidgard2PropertyStorage($this->getName(), false, true, false);
+        if (!$object) {
+            return PropertyType::UNDEFINED;
+        }
+
         if (is_array($object)) {
             $object = $object[0];
         }
@@ -491,6 +512,10 @@ xdebug_print_function_stack();
                 $propertyObject->create();
             }
             $this->setUnmodified();
+            return;
+        }
+
+        if (!is_a($object, 'midgard_node_property')) {
             return;
         }
 
