@@ -122,22 +122,7 @@ class Session implements \PHPCR\SessionInterface
         }
 
         $midgardNode = current($q->list_objects());
-
-        try 
-        { 
-            $midgard_path = \Midgard\PHPCR\Node::getMidgardPath($midgardNode);
-            /* Convert to JCR path */
-            $midgard_path = str_replace('/jackalope', '', $midgard_path);
-            $midgard_path = str_replace('/root', '', $midgard_path);
-            $node = $this->getNode($midgard_path);
-            return $node;
-        }
-        catch (\midgard_error_exception $e)
-        {
-             throw new \PHPCR\ItemNotFoundException("Storage node identified by {$id} not found : " . $e->getMessage()); 
-        }
-
-        throw new \PHPCR\RepositoryException("Answer the question three and the node you will see");
+        return new Node($midgardNode, null, $this);
     }
 
     public function getNodesByIdentifier($ids)
