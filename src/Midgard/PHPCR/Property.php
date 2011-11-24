@@ -210,17 +210,20 @@ xdebug_print_function_stack();
 
         $ret = array();
         $attachments = array();
+        $persistent = false;
         if (is_array($object)) {
             foreach ($object as $propertyObject) {
-                if (!is_object($object)) {
+                if (!is_object($propertyObject)) {
                     continue;
                 }
-                if (!$object->guid) {
+                if (!$propertyObject->guid) {
                     continue;
                 }
+                $persistent = true;
                 $attachments = array_merge($attachments, $propertyObject->find_attachments($constraints));
             }
         } elseif ($object->guid) {
+            $persistent = true;
             $attachments = $object->find_attachments($constraints);
         }
 
@@ -229,7 +232,7 @@ xdebug_print_function_stack();
             $ret[] = $blob->get_handler('r');
         }
 
-        if (empty($ret)) {
+        if (empty($ret) && !$persistent) {
             // FIXME: We should use temporary files in this case
             throw new RepositoryException('Unable to load attachments of non-persistent object');
         }
