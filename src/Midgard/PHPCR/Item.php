@@ -31,6 +31,11 @@ abstract class Item implements ItemInterface
             return;
         }
 
+        if ($this instanceof Property) {
+            $this->contentObject = $this->getParent()->getMidgard2ContentObject();
+            return;
+        }
+
         $midgardType = '\\' . NodeMapper::getMidgardName($this->getTypeName(false));
         if ($this->midgardNode->objectguid) {
             $this->contentObject = new $midgardType($this->midgardNode->objectguid);
@@ -57,6 +62,9 @@ abstract class Item implements ItemInterface
 
     public function getMidgard2Node()
     {
+        if ($this instanceof Property && !$this->midgardNode) {
+            $this->setMidgard2Node($this->getParent()->getMidgard2Node());
+        }
         return $this->midgardNode;
     }
 
@@ -89,6 +97,10 @@ abstract class Item implements ItemInterface
             if (property_exists($contentObject, $midgardName)) {
                 return $contentObject;
             }
+        }
+
+        if (!$this->getMidgard2Node() || !$this->getMidgard2Node()->guid) {
+            return null;
         }
 
         $q = new midgard_query_select(new midgard_query_storage('midgard_node_property'));
@@ -127,6 +139,10 @@ abstract class Item implements ItemInterface
     protected function getMidgard2PropertyValue($name, $multiple, $checkContentObject = true)
     {
         $object = $this->getMidgard2PropertyStorage($name, $multiple, $checkContentObject);
+        if (!$object) {
+            return null;
+        }
+
         if ($multiple) {
             $values = array();
             foreach ($object as $property) {

@@ -7,8 +7,10 @@ use PHPCR\PropertyType;
 use PHPCR\NodeType\PropertyDefinitionInterface; 
 use PHPCR\ValueFormatException;
 use IteratorAggregate;
+use DateTime;
 use Midgard\PHPCR\Utils\NodeMapper;
 use Midgard\PHPCR\Utils\ValueFactory;
+use Midgard\PHPCR\Utils\StringValue;
 use midgard_blob;
 
 class Property extends Item implements IteratorAggregate, PropertyInterface
@@ -111,7 +113,7 @@ xdebug_print_function_stack();
 
             return $value->getProperty('jcr:uuid')->getString();
         }
-        else if (is_a($value, '\DateTime'))
+        else if (is_a($value, 'DateTime'))
         {
             return $value->format("c");
         }
@@ -269,17 +271,17 @@ xdebug_print_function_stack();
                 {
                     foreach ($v as $value)
                     {
-                        $ret[] = new \DateTime($value);
+                        $ret[] = new DateTime($value);
                     }
                     return $ret;
                 }
-                if ($v instanceof \DateTime)
+                if ($v instanceof DateTime)
                 {
                     $date = $v;
                 }
                 else 
                 {
-                    $date = new \DateTime($this->getNativeValue());
+                    $date = new DateTime($this->getNativeValue());
                 }
                 return $date;
             }
@@ -287,7 +289,14 @@ xdebug_print_function_stack();
             {
                 /* Silently ignore */
             }
-        } 
+        }
+        /*
+        var_dump($this->getMidgard2Node());
+        var_dump($this->getParent()->getMidgard2Node());
+        var_dump($type);
+        var_dump($this->getNativeValue());
+        var_dump($this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple()));
+        die();*/
         throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type)  . ") to DateTime object.");
     }
     
@@ -299,18 +308,16 @@ xdebug_print_function_stack();
 
     public function getName()
     {
-        return $this->propertyFullName;
+        return $this->propertyName;
     }
 
     public function getNode()
     {
         $type = $this->getType();
-        if ($type == \PHPCR\PropertyType::PATH)
-        {
+        if ($type == \PHPCR\PropertyType::PATH) {
             $path = $this->getNativeValue();
-            if (is_array($path))
-            {
-                throw new \PHPCR\RepositoryException("Path array not implemented");
+            if (is_array($path)) {
+                return $this->getSession()->getNodes($path);
             }
             /* TODO, handle /./ path */
             if (strpos($path, ".") == false)
@@ -325,19 +332,16 @@ xdebug_print_function_stack();
                     throw new \PHPCR\ItemNotFoundException($e->getMessage());
                 }
             }
-            /* TODO */
-            throw new \PHPCR\RepositoryException("Not implemented");
+            return $this->getSession()->getNode($path);
         }
 
         if ($type == \PHPCR\PropertyType::REFERENCE || $type == \PHPCR\PropertyType::WEAKREFERENCE)
         {
             try {
                 $v = $this->getNativeValue();
-                if (is_array($v))
-                {
+                if (is_array($v)) {
                     $ret = array();
-                    foreach ($v as $id)
-                    {
+                    foreach ($v as $id) {
                         $ret[] = $this->parent->getSession()->getNodeByIdentifier($id);
                     } 
                     return $ret;
@@ -418,18 +422,6 @@ xdebug_print_function_stack();
         return $this->definition;
     }
 
-    private function getMGDType ()
-    {
-        return $this->getMidgard2ValueType();
-    }
-
-    public function getMidgard2ValueType()
-    {
-        $type_id = NodeMapper::getPHPCRPropertyType(get_class($this->parent->getMidgard2ContentObject()), $this->midgardPropertyName);
-        $this->type = $type_id;
-        return $this->type;
-    }
-
     public function getType()
     {
         if ($this->definition) {
@@ -437,25 +429,15 @@ xdebug_print_function_stack();
         }
 
         $object = $this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple());
-
-        if ($this->isMidgardProperty == true)
-        { 
-            return $this->getMGDType();
-        }
- 
-        $pNodes = $this->getMidgardPropertyNodes(); 
-        if (!empty($pNodes))
-        {
-            foreach ($pNodes as $pNode) {
-                if (!is_object($pNode)) { 
-                    continue;
-                }
-                $this->type = $pNode->type;
-                break;
-            }
+        if (is_array($object)) {
+            $object = $object[0];
         }
 
-        return $this->type;
+        if (is_a($object, 'midgard_node_property')) {
+            // Unknown additional property, read type from storage object
+            return $object->type;
+        }
+        return NodeMapper::getPHPCRPropertyType(get_class($object), NodeMapper::getMidgardPropertyName($this->getName()));
     }
     
     public function isMultiple()
@@ -463,6 +445,11 @@ xdebug_print_function_stack();
         if ($this->definition) {
             return $this->definition->isMultiple();
         }
+        $object = $this->getMidgard2PropertyStorage($this->getName(), false);
+        if ($object && $object->multiple) {
+            return true;
+        }
+
         return false;
     }
 

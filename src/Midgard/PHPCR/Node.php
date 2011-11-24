@@ -425,37 +425,30 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     private function getItemsFiltered($items, $filter = null, $isNode)
     {
-        if ($filter == null)
-        {
-            return $items;
+        if ($filter == null) {
+            return new ArrayIterator($items);
         } 
 
         $filteredItems = array();
 
-        if (is_string($filter))
-        {
+        if (is_string($filter)) {
             $filters = $this->getFiltersFromString($filter);
         }
 
-        if(is_array($filter))
-        {
+        if(is_array($filter)) {
             $filters = $this->getFiltersFromArray($filter);
         } 
 
-        foreach ($filters as $i => $f)
-        {
-            if (strpos($f[0], '*') !== false 
-                || strpos($f[1], '*') !== false)
-            { 
+        foreach ($filters as $i => $f) {
+            if (strpos($f[0], '*') !== false || strpos($f[1], '*') !== false) { 
                 $filteredItems = array_merge($filteredItems, $this->getItemsSimilar($items, $f, $isNode));
             }
-            else 
-            { 
+            else  { 
                 $filteredItems = array_merge($filteredItems, $this->getItemsEqual($items, $f, $isNode));
             }
         }
 
-        return new \ArrayIterator($filteredItems);   
+        return new ArrayIterator($filteredItems);   
     }
 
     public function getNodes($filter = null)
@@ -504,6 +497,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     private function populatePropertiesUndefined()
     {
+        if (!$this->getMidgard2Node()->id) {
+            return;
+        }
         $q = new midgard_query_select(new midgard_query_storage('midgard_node_property'));
         $cg = new midgard_query_constraint_group('AND');
         $cg->add_constraint(
@@ -640,20 +636,13 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     {
         $ret = array();
         $this->populateProperties();
-        /* If node has jcr:uuid property */
-        if (!$this->hasProperty('jcr:uuid'))
-        {
+
+        $uuid = $this->getIdentifier();
+        if (!$uuid) {
+            // No referenceable identifier, skip
             return new \ArrayIterator($ret);
         }
          
-        /* get its value */
-        $uuid = $this->getPropertyValue('jcr:uuid');
-
-        if ($uuid === null || $uuid === "")
-        {
-            throw new \PHPCR\RepositoryException("Invalid empty uuid value");
-        }
-
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node_property'));
         $group = new \midgard_query_constraint_group('AND');
         $group->add_constraint(
@@ -670,13 +659,12 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             )
         );
 
-        if ($name != null)
-        {
+        if ($name != null) {
             $group->add_constraint(
                 new \midgard_query_constraint(
-                    new \midgard_query_property('title'),
+                    new \midgard_query_property('name'),
                     '=',
-                    new \midgard_query_value($name)
+                    new \midgard_query_value(NodeMapper::getMidgardPropertyName($name))
                 )
             );
         }
