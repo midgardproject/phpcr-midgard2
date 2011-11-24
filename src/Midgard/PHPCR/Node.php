@@ -228,6 +228,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         catch (PathNotFoundException $e)
         { 
             $this->properties[$name] = new Property($this, $name, $propertyDef);
+            $property = $this->properties[$name];
         }
         $property->setValue($value, $type);
        
@@ -499,17 +500,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $this->properties[$propertyName] = new Property($this, $propertyName, $definition);
-
-        /*
-        $midgardName = NodeMapper::getMidgardName($propertyName);
-        if ($this->contentObject && $midgardName && isset($this->contentObject->$midgardName)) {
-            // Direct property of content object
-
-            return;
-        }
-
-        // midgard_node_property
-        $this->properties[$propertyName] = new Property($this, $propertyName, $definition);*/
     }
 
     private function populatePropertiesUndefined()

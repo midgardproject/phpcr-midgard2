@@ -52,11 +52,7 @@ class NodeMapper
     {
         if (strpos($property, '-') === false)
         {
-            if (strpos($property, ':') !== false)
-            {
-                return $property;
-            }
-            return null;
+            return $property;
         }
         /* TODO, determine uper cases */
         return str_replace('-', ':', $property);
@@ -69,11 +65,7 @@ class NodeMapper
     {
         if (strpos($property, ':') === false)
         {
-            if (strpos($property, '-') !== false)
-            {
-                return $property;
-            }
-            return null;
+            return $property;
         }
         /* TODO, determine uper cases */
         return str_replace(':', '-', $property);
