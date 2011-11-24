@@ -133,7 +133,7 @@ class Midgard2XMLImporter extends \DomDocument
         {
             $vnode = $property->getElementsByTagName('value')->item($i);
             $midgardNodeProperty = new \midgard_node_property();
-
+            $midgardNodeProperty->name = str_replace(':', '-', $propertyName);
             $midgardNodeProperty->title = $propertyName;
             $midgardNodeProperty->multiple = $isMultiple;
             $midgardNodeProperty->type = \PHPCR\PropertyType::valueFromName($propertyType);

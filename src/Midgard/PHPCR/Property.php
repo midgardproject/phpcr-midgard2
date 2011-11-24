@@ -446,6 +446,9 @@ xdebug_print_function_stack();
 
     public function getType()
     {
+        if ($this->definition) {
+            return $this->definition->getRequiredType();
+        }
         if ($this->isMidgardProperty == true)
         { 
             return $this->getMGDType();

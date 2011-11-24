@@ -534,7 +534,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $q->execute();
         $properties = $q->list_objects();
         foreach ($properties as $property) {
-            $this->properties[$property->name] = new Property($this, $property->name);
+            $crName = NodeMapper::getPHPCRProperty($property->name);
+            $this->properties[$crName] = new Property($this, $crName);
         }
     }
 
@@ -788,8 +789,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     public function getMixinNodeTypes()
     {
         $mixins = $this->getMidgard2PropertyValue('jcr:mixinTypes', true);
+        $ret = array();
         if (!$mixins) {
-            return array();
+            return $ret;
         }
 
         $ntm = $this->session->getWorkspace()->getNodeTypeManager();
