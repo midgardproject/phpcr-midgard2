@@ -766,7 +766,11 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             if (!$mixin) {
                 continue;
             }
-            $ret[] = $ntm->getNodeType($mixin);
+            try {
+                $ret[] = $ntm->getNodeType($mixin);
+            } catch (NoSuchNodeTypeException $e) {
+                continue;
+            }
         }
 
         return $ret;
