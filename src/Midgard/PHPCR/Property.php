@@ -470,7 +470,7 @@ xdebug_print_function_stack();
             return $this->definition->isMultiple();
         }
         $object = $this->getMidgard2PropertyStorage($this->getName(), false);
-        if ($object && $object->multiple) {
+        if ($object && $object instanceof midgard_node_property && $object->multiple) {
             return true;
         }
 
