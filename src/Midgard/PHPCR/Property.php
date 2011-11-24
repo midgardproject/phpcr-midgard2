@@ -9,6 +9,7 @@ use PHPCR\ValueFormatException;
 use IteratorAggregate;
 use Midgard\PHPCR\Utils\NodeMapper;
 use Midgard\PHPCR\Utils\ValueFactory;
+use midgard_blob;
 
 class Property extends Item implements IteratorAggregate, PropertyInterface
 {
@@ -194,46 +195,31 @@ xdebug_print_function_stack();
             return ValueFactory::transformValue($this->getNativeValue(), $this->type, PropertyType::BINARY);
         }
 
+        $object = $this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple());
+
+        $constraints = array(
+            'name' => $this->getName(),
+        );
+
         $ret = array();
-        $pNodes = $this->getMidgardPropertyNodes();
-        if (empty($pNodes))
-        {
-            return null;
-        }
-
         $attachments = array();
-        foreach ($pNodes as $prop)
-        {
-            if (!$prop->guid)
-            {
-                continue;
+        if (is_array($object)) {
+            foreach ($object as $propertyObject) {
+                $attachments = array_merge($attachments, $propertyObject->find_attachments($constraints));
             }
-            $attachments = array_merge($attachments, $prop->list_attachments());
+        } else {
+            $attachments = $object->find_attachments($constraints);
         }
 
-        if (empty($attachments))
-        {
-            if(empty($pNodes))
-            {
-                return null;
-            }
-            foreach ($pNodes as $mnp)
-            {
-                $ret[] = ValueFactory::transformValue($mnp->value, \PHPCR\PropertyType::STRING, \PHPCR\PropertyType::BINARY);
-            }
+        foreach ($attachments as $att) {
+            $blob = new midgard_blob($att);
+            $ret[] = $blob->get_handler('r');
         }
 
-        $name = $this->getName();
-        foreach ($attachments as $att)
-        {
-            if ($name == $att->name)
-            {
-                $blob = new \midgard_blob($att);
-                $ret[] = $blob->get_handler('r');
-            }
+        if ($this->isMultiple()) {
+            return $ret;
         }
-
-        return count($ret) == 1 ? $ret[0] : $ret;
+        return $ret[0];
     }
     
     public function getLong()
@@ -449,6 +435,9 @@ xdebug_print_function_stack();
         if ($this->definition) {
             return $this->definition->getRequiredType();
         }
+
+        $object = $this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple());
+
         if ($this->isMidgardProperty == true)
         { 
             return $this->getMGDType();
