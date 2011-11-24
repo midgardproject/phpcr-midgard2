@@ -5,22 +5,52 @@ require __DIR__ . '/../MidgardBootstrap.php';
 class ImplementationLoader extends \PHPCR\Test\AbstractLoader
 {
     protected $unsupportedChapters = array(
+        // Features we don't support in the Midgard provider
         'Versioning',
         'Transactions',
     );
 
     protected $unsupportedCases = array(
+        // Queries still need a lot of work
+        'Query\\QOM',
+        'Query\QuerySql2OperationsTest',
+        'Query\RowTest',
     );
 
     protected $unsupportedTests = array(
-        'Query\QOM\Sql2ToQomConverterTest',
+        // Queries still need a lot of work
+        'Query\QueryManagerTest::testGetQOMFactory',
+        'Query\QueryObjectSql2Test::testGetStoredQueryPath',
+        'Query\QueryResultsTest::testIterateOverQueryResult',
+        'Query\QueryResultsTest::testReadPropertyContentFromResults',
+
+        // Workspace functionality isn't fully implemented
         'Connecting\WorkspaceReadMethodsTest::testGetAccessibleWorkspaceNames',
-        'Query\QOM\ConvertQueriesBackAndForthTest::testBackAndForth',
+        'Connecting\WorkspaceReadMethodsTest::testGetAccessibleWorkspaceNames',
+        'Writing\CopyMethodsTest::testWorkspaceCopy',
+        'Writing\CopyMethodsTest::testCopyNoSuchWorkspace',
+        'Writing\CopyMethodsTest::testCopySrcNotFound',
+        'Writing\CopyMethodsTest::testCopyDstParentNotFound',
+        'Writing\CopyMethodsTest::testCopyNoUpdateOnCopy',
+        'Writing\CopyMethodsTest::testCopyUpdateOnCopy',
+        'Writing\MoveMethodsTest::testWorkspaceMove',
+
+        // ACLs and impersonation are not yet supported
         'Reading\SessionReadMethodsTest::testImpersonate',
         'Reading\SessionReadMethodsTest::testCheckPermission',
         'Reading\SessionReadMethodsTest::testCheckPermissionAccessControlException',
-        'Connecting\WorkspaceReadMethodsTest::testGetAccessibleWorkspaceNames',
-        'Writing\MoveMethodsTest::testWorkspaceMove',
+
+        // Ignore tests that rely on mix:versionable
+        // see https://github.com/phpcr/phpcr-api-tests/issues/37
+        'NodeTypeDiscovery\NodeNodeTypeReadMethodsTest::testIsMixin',
+        'NodeTypeDiscovery\NodeNodeTypeReadMethodsTest::testIsParentMixin',
+        'NodeTypeDiscovery\NodeTypeTest::testGetChildNodeDefinitions',
+
+        // Waiting of various bug fixes
+        'Writing\DeleteMethodsTest::testDeleteCascade',
+        'Writing\DeleteMethodsTest::testDeleteReferencedNodeException',
+        'Writing\DeleteMethodsTest::testDeletePreviouslyReferencedNode',
+        'Writing\DeleteMethodsTest::testDeleteWeakReferencedNode',
     );
 
     public static function getInstance()   
