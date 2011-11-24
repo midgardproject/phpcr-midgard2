@@ -529,9 +529,8 @@ class Session implements SessionInterface
     
     public function logout()
     {
-        if ($this->user)
-        {
-            $this->user->logout();
+        if ($this->connection->get_user()) {
+            $this->connection->get_user()->logout();
             $this->user = null;
         }
     }
