@@ -107,8 +107,8 @@ xdebug_print_function_stack();
          * The type detection follows PropertyType::determineType. 
          * Thus, passing a Node object without an explicit type (REFERENCE or WEAKREFERENCE) will create a REFERENCE property. 
          * If the specified node is not referenceable, a ValueFormatException is thrown.
-         */ 
-        if (is_a($value, 'Node')) {
+         */
+        if (is_a($value, '\Midgard\PHPCR\Node')) {
             if (!$value->isReferenceable()) {
                 throw new ValueFormatException("Node " . $value->getPath() . " is not referencable"); 
             }
@@ -119,12 +119,10 @@ xdebug_print_function_stack();
 
             return $value->getProperty('jcr:uuid')->getString();
         }
-        else if (is_a($value, 'DateTime'))
-        {
+        elseif (is_a($value, 'DateTime')) {
             return $value->format("c");
         }
-        else if (is_a($value, '\Midgard\PHPCR\Property'))
-        {
+        elseif (is_a($value, '\Midgard\PHPCR\Property')) {
             return $value->getString(); 
         }
         return $value;
@@ -150,13 +148,21 @@ xdebug_print_function_stack();
          */ 
 
         $normalizedValue = $this->normalizePropertyValue($value, $type);
+        if ($this->isMultiple() && !is_array($normalizedValue)) {
+            $normalizedValue = array($normalizedValue);
+        }
         $this->type = $type;
         $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
     }
     
     public function addValue($value)
     {
-        throw new \PHPCR\RepositoryException("Not allowed");
+        if (!$this->isMultiple()) {
+            throw new ValueFormatException("Can't add values to a non-multiple property");
+        }
+        $values = $this->getValue();
+        $values[] = $value;
+        $this->setValue($value);
     }
 
     public function getValue()
@@ -537,6 +543,7 @@ xdebug_print_function_stack();
         if ($keepChanges && ($this->isModified() || $this->isNew())) {
             return;
         }
+        parent::refresh($keepChanges);
     }
 
     public function remove()
