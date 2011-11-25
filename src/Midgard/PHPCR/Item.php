@@ -24,6 +24,7 @@ abstract class Item implements ItemInterface
     protected $contentObject = null;
     protected $midgardNode = null;
     protected $propertyManager = null;
+    private $propertyObjects = array();
 
     protected function populateContentObject()
     {
@@ -95,6 +96,14 @@ abstract class Item implements ItemInterface
 
     protected function getMidgard2PropertyStorage($name, $multiple, $checkContentObject = true, $prepareNew = true)
     {
+        if (!isset($this->propertyObjects[$name])) {
+            $this->propertyObjects[$name] = array();
+        }
+
+        if (isset($this->propertyObjects[$name][$multiple])) {
+            return $this->propertyObjects[$name][$multiple];
+        }
+
         $midgardName = NodeMapper::getMidgardPropertyName($name);
 
         if (!$multiple && $checkContentObject) {
@@ -132,15 +141,19 @@ abstract class Item implements ItemInterface
             }
             $prop = $this->prepareMidgard2PropertyObject($name, $multiple);
             if ($multiple) {
-                return array($prop);
+                $this->propertyObjects[$name][$multiple] = array($prop);
+                return $this->propertyObjects[$name][$multiple];
             }
-            return $prop;
+            $this->propertyObjects[$name][$multiple] = $prop;
+            return $this->propertyObjects[$name][$multiple];
         }
         $objects = $q->list_objects();
         if ($multiple) {
-            return $objects;
+            $this->propertyObjects[$name][$multiple] = $objects;
+            return $this->propertyObjects[$name][$multiple];
         }
-        return $objects[0];
+        $this->propertyObjects[$name][$multiple] = $objects[0];
+        return $this->propertyObjects[$name][$multiple];
     }
 
     protected function removeMidgard2PropertyStorage($name, $multiple)
@@ -188,6 +201,9 @@ abstract class Item implements ItemInterface
         $object = $this->getMidgard2PropertyStorage($name, $multiple);
         if ($multiple) {
             $storedValues = array();
+            if (!is_array($value)) {
+                $value = array($value);
+            }
             foreach ($object as $propertyObject) {
                 if (!in_array($propertyObject->value, $value)) {
                     $propertyObject->delete();
@@ -330,6 +346,10 @@ abstract class Item implements ItemInterface
 
     public function refresh($keepChanges)
     {
+        if ($keepChanges) {
+            return;
+        }
+        $this->propertyObjects = array();
     }
 
     public function remove()
