@@ -8,6 +8,7 @@ use Midgard\PHPCR\Utils\NodeMapper;
 use PHPCR\NodeInterface;
 use PHPCR\ItemInterface;
 use PHPCR\NodeType\ConstraintViolationException; 
+use PHPCR\NodeType\NodeTypeInterface;
 use PHPCR\PropertyType;
 use PHPCR\PathNotFoundException;
 use PHPCR\ItemExistsException;
@@ -508,6 +509,12 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
     }
 
+    private function populatePropertiesForNodeType(NodeTypeInterface $def) {
+        foreach ($def->getPropertyDefinitions() as $property) {
+            $this->populateProperty($property);
+        }
+    }
+
     private function populateProperties()
     {
         if ($this->contentObject == null) {
@@ -518,16 +525,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $this->properties = array();
         }
 
-        $primary = $this->getPrimaryNodeType();
-        foreach ($primary->getPropertyDefinitions() as $property) {
-            $this->populateProperty($property);
-        }
-
+        $this->populatePropertiesForNodeType($this->getPrimaryNodeType());
         $mixins = $this->getMixinNodeTypes();
         foreach ($mixins as $mixin) {
-            foreach ($mixin->getPropertyDefinitions() as $property) {
-                $this->populateProperty($property);
-            }
+            $this->populatePropertiesForNodeType($mixin);
         }
 
         $this->populatePropertiesUndefined();
@@ -812,19 +813,16 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             }
         }
 
-        $this->setProperty('jcr:mixinTypes', $mixinName);
-        $properties = \midgard_reflector_object::list_defined_properties ($midgardMixinName);
-        foreach ($properties as $name => $v)
-        {
-            $jcrName = NodeMapper::getPHPCRProperty($name);
-            if($this->hasProperty($jcrName))
-            {
-                continue;
-            }
-
-            /* FIXME, determine default value */
-            $this->setProperty($jcrName, ' ');
+        if ($this->hasProperty('jcr:mixinTypes')) {
+            $prop = $this->getProperty('jcr:mixinTypes');
+            $prop->addValue($mixinName);
+        } else {
+            $this->setProperty('jcr:mixinTypes', array($mixinName));
         }
+
+        $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+        $nt = $ntm->getNodeType($mixinName);
+        $this->populatePropertiesForNodeType($nt);
     }
     
     public function removeMixin($mixinName)
