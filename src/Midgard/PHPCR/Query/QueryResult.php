@@ -24,11 +24,19 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
         {
             $midgardType = NodeMapper::getMidgardName($name);
             $o = new $midgardType;
+            /* PropertyDefinition requires valid node instance which is not available at this moment.
+             * So get reflector directly and save resources */
+            $mrp = new \midgard_reflection_property($midgardType);
             foreach ($o as $k => $v)
             {
                 if (strpos($k, '-') !== false)
                 {
-                    $ret[] = $name . "." . NodeMapper::getPHPCRProperty($k);
+                    /* Add column, only if property is not multiple.
+                     * Can not find this either in the API or in spec, but at least 
+                     * jackrabbit implementation mentions multiple property as invalid in query result. */
+                    $mvp = $mrp->get_user_value($k, 'isMultiple');
+                    if ($mvp != 'true')
+                        $ret[] = $name . "." . NodeMapper::getPHPCRProperty($k);
                 }
             }
 
