@@ -26,7 +26,7 @@ $repository = Midgard\PHPCR\RepositoryFactory::getRepository($parameters);
 
 // Log in
 $credentials = new \PHPCR\SimpleCredentials('admin', 'password');
-$session = $repository->login($credentials, 'default');
+$session = $repository->login($credentials);
 
 $mgr = $session->getWorkspace()->getNodeTypeManager();
 $nodeTypes = $mgr->getAllNodeTypes();
