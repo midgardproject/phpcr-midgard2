@@ -7,10 +7,18 @@ namespace Midgard\PHPCR\Query\QOM;
  */
 class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
 {
+    protected $source = null;
+    protected $constraint = null;
+    protected $orderings = null;
+    protected $columns = null;
+
     public function __construct(\PHPCR\Query\QOM\SourceInterface $source,
         \PHPCR\Query\QOM\ConstraintInterface $constraint = null, array $orderings, array $columns)    
     {
-
+        $this->source = $source;
+        $this->constraint = $constraint;
+        $this->orderings = $orderings;
+        $this->columns = $columns;
     }
 
     /**
@@ -18,7 +26,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
     */
     public function getSource()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return $this->source;
     }
 
     /**
@@ -26,7 +34,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
     */
     public function getConstraint() 
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return $this->constraint;
     }
 
     /**
@@ -34,7 +42,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
     */
     public function getOrderings()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return $this->orderings;
     }
 
     /**
@@ -42,7 +50,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
     */
     public function getColumns()
     {
-        throw new \PHPCR\RepositoryException("Not supported"); 
+        return $this->columns;
     }
 
     /**
