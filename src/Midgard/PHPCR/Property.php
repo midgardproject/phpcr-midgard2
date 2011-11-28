@@ -117,7 +117,7 @@ xdebug_print_function_stack();
                 $type = PropertyType::REFERENCE;
             }
 
-            return $value->getProperty('jcr:uuid')->getString();
+            return $value->getIdentifier();
         }
         elseif (is_a($value, 'DateTime')) {
             return $value->format("c");
@@ -153,6 +153,8 @@ xdebug_print_function_stack();
         }
         $this->type = $type;
         $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
+        $this->is_modified = true;
+        $this->parent->is_modified = true;
     }
     
     public function addValue($value)
@@ -509,6 +511,27 @@ xdebug_print_function_stack();
         return false;
     }
 
+    private function savePropertyObject($propertyObject)
+    {
+        if (!$propertyObject->name) {
+            $midgardName = NodeMapper::getMidgardPropertyName($this->getName());
+            $propertyObject->name = $midgardName;
+        }
+        if (!$propertyObject->title) {
+            $propertyObject->title = $this->getName();
+        }
+        $propertyObject->type = $this->getType();
+        if (!$propertyObject->parent) {
+            $propertyObject->parent = $this->getMidgard2Node()->id;
+            $propertyObject->parentguid = $this->getMidgard2Node()->guid;
+        }
+        if ($propertyObject->guid) {
+            $propertyObject->update();
+            return;
+        }
+        $propertyObject->create();
+    }
+
     public function save()
     {
         if (!$this->is_modified && !$this->is_new) {
@@ -518,15 +541,7 @@ xdebug_print_function_stack();
         $object = $this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple());
         if (is_array($object)) {
             foreach ($object as $propertyObject) {
-                if (!$propertyObject->parent) {
-                    $propertyObject->parent = $this->getMidgard2Node()->id;
-                    $propertyObject->parentguid = $this->getMidgard2Node()->guid;
-                }
-                if ($propertyObject->guid) {
-                    $propertyObject->update();
-                    continue;
-                }
-                $propertyObject->create();
+                $this->savePropertyObject($propertyObject);
             }
             $this->setUnmodified();
             return;
@@ -536,18 +551,7 @@ xdebug_print_function_stack();
             return;
         }
 
-        if (!$object->parent) {
-            $object->parent = $this->getMidgard2Node()->id;
-            $object->parentguid = $this->getMidgard2Node()->guid;
-        }
-
-        if ($object->guid) {
-            $object->update();
-            $this->setUnmodified();
-            return;
-        }
-
-        $object->create();
+        $this->savePropertyObject($object);
         $this->setUnmodified();
     }
 
