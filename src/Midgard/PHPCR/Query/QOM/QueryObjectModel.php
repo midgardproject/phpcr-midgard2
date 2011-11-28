@@ -18,7 +18,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
     */
     public function getSource()
     {
-        throw new PHPCR\RepositoryException("Not supported");
+        throw new \PHPCR\RepositoryException("Not supported");
     }
 
     /**
@@ -26,7 +26,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
     */
     public function getConstraint() 
     {
-        throw new PHPCR\RepositoryException("Not supported");
+        throw new \PHPCR\RepositoryException("Not supported");
     }
 
     /**
@@ -34,7 +34,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
     */
     public function getOrderings()
     {
-        throw new PHPCR\RepositoryException("Not supported");
+        throw new \PHPCR\RepositoryException("Not supported");
     }
 
     /**
@@ -42,7 +42,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
     */
     public function getColumns()
     {
-        throw new PHPCR\RepositoryException("Not supported"); 
+        throw new \PHPCR\RepositoryException("Not supported"); 
     }
 
     /**
@@ -50,7 +50,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
      */
     public function bindValue($varName, $value)
     {
-        throw new PHPCR\RepositoryException("Not supported"); 
+        throw new \PHPCR\RepositoryException("Not supported"); 
     }
 
     /**
@@ -58,7 +58,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
      */
     public function execute()
     {
-        throw new PHPCR\RepositoryException("Not supported"); 
+        throw new \PHPCR\RepositoryException("Not supported"); 
     }
 
     /**
@@ -66,7 +66,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
      */
     public function getBindVariableNames()
     {
-        throw new PHPCR\RepositoryException("Not supported"); 
+        throw new \PHPCR\RepositoryException("Not supported"); 
     }
 
     /**
@@ -74,7 +74,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
      */
     public function setLimit($limit)
     {
-        throw new PHPCR\RepositoryException("Not supported"); 
+        throw new \PHPCR\RepositoryException("Not supported"); 
     }
 
     /**
@@ -82,7 +82,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
      */
     public function setOffset($offset)
     {
-        throw new PHPCR\RepositoryException("Not supported"); 
+        throw new \PHPCR\RepositoryException("Not supported"); 
     }
 
     /**
@@ -90,7 +90,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
      */
     public function getStatement()
     {
-        throw new PHPCR\RepositoryException("Not supported"); 
+        throw new \PHPCR\RepositoryException("Not supported"); 
     }
 
     /**
@@ -98,7 +98,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
      */
     public function getLanguage()
     {
-        throw new PHPCR\RepositoryException("Not supported"); 
+        throw new \PHPCR\RepositoryException("Not supported"); 
     }
 
     /**
@@ -106,7 +106,7 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
      */
     public function getStoredQuerypath()
     {
-        throw new PHPCR\RepositoryException("Not supported"); 
+        throw new \PHPCR\RepositoryException("Not supported"); 
     }
 
     /**
@@ -114,6 +114,6 @@ class QueryObjectModel implements \PHPCR\Query\QOM\QueryObjectModelInterface
      */
     public function storeAsNode($absPath)
     {
-        throw new PHPCR\RepositoryException("Not supported"); 
+        throw new \PHPCR\RepositoryException("Not supported"); 
     }
 }
