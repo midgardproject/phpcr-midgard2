@@ -160,7 +160,7 @@ xdebug_print_function_stack();
         if (!$this->isMultiple()) {
             throw new ValueFormatException("Can't add values to a non-multiple property");
         }
-        $values = $this->getValue();
+        $values = $this->getNativeValue();
         $values[] = $value;
         $this->setValue($value);
     }
@@ -514,6 +514,10 @@ xdebug_print_function_stack();
         $object = $this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple());
         if (is_array($object)) {
             foreach ($object as $propertyObject) {
+                if (!$propertyObject->parent) {
+                    $propertyObject->parent = $this->getMidgard2Node()->id;
+                    $propertyObject->parentguid = $this->getMidgard2Node()->guid;
+                }
                 if ($propertyObject->guid) {
                     $propertyObject->update();
                     continue;
@@ -526,6 +530,11 @@ xdebug_print_function_stack();
 
         if (!is_a($object, 'midgard_node_property')) {
             return;
+        }
+
+        if (!$object->parent) {
+            $object->parent = $this->getMidgard2Node()->id;
+            $object->parentguid = $this->getMidgard2Node()->guid;
         }
 
         if ($object->guid) {

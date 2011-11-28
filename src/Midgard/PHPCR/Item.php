@@ -24,7 +24,7 @@ abstract class Item implements ItemInterface
     protected $contentObject = null;
     protected $midgardNode = null;
     protected $propertyManager = null;
-    private $propertyObjects = array();
+    protected $propertyObjects = array();
 
     protected function populateContentObject()
     {
@@ -94,6 +94,20 @@ abstract class Item implements ItemInterface
         return $prop;
     }
 
+    private function getMidgard2PropertyStorageEmpty($name, $multiple, $prepareNew)
+    {
+        if (!$prepareNew) {
+            return null;
+        }
+        $prop = $this->prepareMidgard2PropertyObject($name, $multiple);
+        if ($multiple) {
+            $this->propertyObjects[$name][$multiple] = array($prop);
+            return $this->propertyObjects[$name][$multiple];
+        }
+        $this->propertyObjects[$name][$multiple] = $prop;
+        return $this->propertyObjects[$name][$multiple];
+    }
+
     protected function getMidgard2PropertyStorage($name, $multiple, $checkContentObject = true, $prepareNew = true)
     {
         if (!isset($this->propertyObjects[$name])) {
@@ -114,7 +128,7 @@ abstract class Item implements ItemInterface
         }
 
         if (!$this->getMidgard2Node() || !$this->getMidgard2Node()->guid) {
-            return null;
+            return $this->getMidgard2PropertyStorageEmpty($name, $multiple, $prepareNew);
         }
 
         $q = new midgard_query_select(new midgard_query_storage('midgard_node_property'));
@@ -136,16 +150,7 @@ abstract class Item implements ItemInterface
         $q->set_constraint($cg);
         $q->execute();
         if ($q->get_results_count() < 1) {
-            if (!$prepareNew) {
-                return null;
-            }
-            $prop = $this->prepareMidgard2PropertyObject($name, $multiple);
-            if ($multiple) {
-                $this->propertyObjects[$name][$multiple] = array($prop);
-                return $this->propertyObjects[$name][$multiple];
-            }
-            $this->propertyObjects[$name][$multiple] = $prop;
-            return $this->propertyObjects[$name][$multiple];
+            return $this->getMidgard2PropertyStorageEmpty($name, $multiple, $prepareNew);
         }
         $objects = $q->list_objects();
         if ($multiple) {
@@ -209,13 +214,15 @@ abstract class Item implements ItemInterface
                     $propertyObject->delete();
                     continue;
                 }
-                $storedValues[] = $value;
+                $storedValues[] = $propertyObject;
             }
             $toStore = array_diff($value, $storedValues);
             foreach ($toStore as $val) {
                 $prop = $this->prepareMidgard2PropertyObject($name, $multiple);
                 $prop->value = $val;
+                $storedValues[] = $prop;
             }
+            $this->propertyObjects[$name][$multiple] = $storedValues;
             return;
         }
 
