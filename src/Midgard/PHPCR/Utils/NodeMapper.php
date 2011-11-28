@@ -12,20 +12,27 @@ class NodeMapper
      */ 
     public static function getMidgardName($type)
     {
+        static $midgardNames = array();
+        if (isset($midgardNames[$type])) {
+            return $midgardNames[$type];
+        }
         if (strpos($type, ':') === false)
         {
             if (strpos($type, '_') !== false)
             {
+                $midgardNames[$type] = $type;
                 return $type;
             }
             return null;
         }
 
         if (substr($type, 0, 4) == 'mgd:') {
-            return substr($type, 4);
+            $midgardNames[$type] = substr($type, 4);
+            return $midgardNames[$type];
         }
 
-        return str_replace(':', '_', $type);
+        $midgardNames[$type] = str_replace(':', '_', $type);
+        return $midgardNames[$type];
     }
 
     /**
