@@ -511,6 +511,10 @@ xdebug_print_function_stack();
 
     public function save()
     {
+        if (!$this->is_modified && !$this->is_new) {
+            return;
+        }
+
         $object = $this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple());
         if (is_array($object)) {
             foreach ($object as $propertyObject) {

@@ -1028,6 +1028,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             }
         }
 
+        if (!$this->is_modified && !$this->is_new) {
+            return;
+        }
+
         if (!$midgardNode->guid) {
             $midgardNode->create();
         }
