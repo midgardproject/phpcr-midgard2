@@ -104,21 +104,30 @@ class Session implements SessionInterface
             new \midgard_query_property('id'),
             new \midgard_query_property('parent', $propertyStorage)
         );
-        $group = new \midgard_query_constraint_group('AND');
+        $group = new \midgard_query_constraint_group('OR');
         $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('guid'),
+                '=',
+                new \midgard_query_value($id)
+            )
+        );
+        $uuidGroup = new \midgard_query_constraint_group('AND');
+        $uuidGroup->add_constraint(
             new \midgard_query_constraint(
                 new \midgard_query_property('value', $propertyStorage), 
                 '=', 
                 new \midgard_query_value($id)
             )
         );
-        $group->add_constraint(
+        $uuidGroup->add_constraint(
             new \midgard_query_constraint(
                 new \midgard_query_property('title', $propertyStorage), 
                 '=', 
                 new \midgard_query_value('jcr:uuid')
             )
         ); 
+        $group->add_constraint($uuidGroup);
         $q->set_constraint($group);
         $q->execute();
        

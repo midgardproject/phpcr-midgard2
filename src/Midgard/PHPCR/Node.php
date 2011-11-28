@@ -39,6 +39,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $this->session = $session;
 
         $this->setMidgard2Node($midgardNode);
+        if (!$midgardNode->guid) {
+            $this->is_new = true;
+        }
 
         if ($parent == null) {
             if ($midgardNode->guid && $midgardNode->parent == 0) {
@@ -603,11 +606,14 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     {
         $this->populateProperties();
         if ($this->hasProperty('jcr:uuid')) {
-            return $this->getPropertyValue('jcr:uuid');
+            $uuid = $this->getPropertyValue('jcr:uuid');
+            if ($uuid) {
+                return $uuid;
+            }
         }
 
         /* Return guid if uuid is not found */
-        return $this->contentObject->guid;
+        return $this->getMidgard2Node()->guid;
     }
     
     public function getIndex()
@@ -801,8 +807,12 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function addMixin($mixinName)
     {
-        if (!$this->canAddMixin($mixinName)) {
+        if (!$this->session->getWorkspace()->getNodeTypeManager()->hasNodeType($mixinName)) {
             throw new NoSuchNodeTypeException("{$mixinName} is not registered mixin type"); 
+        }
+
+        if (!$this->canAddMixin($mixinName)) {
+            throw new ConstraintViolationException("{$mixinName} is not registered mixin type"); 
         }
 
         // Check if we already have such a mixin
