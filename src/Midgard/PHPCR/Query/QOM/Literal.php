@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class Literal implements \PHPCR\Query\QOM\StaticOperandInterface
+class Literal implements \PHPCR\Query\QOM\LiteralInterface
 {
     protected $value = null;
 
