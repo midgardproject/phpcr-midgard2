@@ -206,6 +206,7 @@ abstract class Item implements ItemInterface
         $object = $this->getMidgard2PropertyStorage($name, $multiple);
         if ($multiple) {
             $storedValues = array();
+            $storedProperties = array();
             if (!is_array($value)) {
                 $value = array($value);
             }
@@ -214,15 +215,16 @@ abstract class Item implements ItemInterface
                     $propertyObject->delete();
                     continue;
                 }
-                $storedValues[] = $propertyObject;
+                $storedValues[] = $propertyObject->value;
+                $storedProperties[] = $propertyObject;
             }
             $toStore = array_diff($value, $storedValues);
             foreach ($toStore as $val) {
                 $prop = $this->prepareMidgard2PropertyObject($name, $multiple);
                 $prop->value = $val;
-                $storedValues[] = $prop;
+                $storedProperties[] = $prop;
             }
-            $this->propertyObjects[$name][$multiple] = $storedValues;
+            $this->propertyObjects[$name][$multiple] = $storedProperties;
             return;
         }
 
