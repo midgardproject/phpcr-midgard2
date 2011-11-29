@@ -19,7 +19,7 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
 
     protected $unsupportedTests = array(
         // Queries still need a lot of work
-        'Query\QueryManagerTest::testGetQOMFactory',
+        //'Query\QueryManagerTest::testGetQOMFactory',
         'Query\QueryObjectSql2Test::testGetStoredQueryPath',
         'Query\QueryResultsTest::testIterateOverQueryResult',
         'Query\QueryResultsTest::testReadPropertyContentFromResults',
@@ -97,9 +97,14 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     }
 
     public function getRepository()
-    {
-        $mb = new MidgardBootstrap (__DIR__  . "/../data");
-        $mb->execute ();
+    {   
+        static $initialized = false;
+
+        if ($initialized == false) {
+            $mb = new MidgardBootstrap (__DIR__  . "/../data");
+            $mb->execute ();
+            $initialized = true;
+        }
         return Midgard\PHPCR\RepositoryFactory::getRepository();
     }
 }

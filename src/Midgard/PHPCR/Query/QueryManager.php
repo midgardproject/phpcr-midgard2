@@ -7,6 +7,7 @@ class QueryManager implements \PHPCR\Query\QueryManagerInterface
     protected $session = null;
     protected $query = null;
     protected $supportedLanguages = null;
+    protected $QOMFactory = null;
 
     public function __construct (\Midgard\PHPCR\Session $session)
     {
@@ -32,8 +33,11 @@ class QueryManager implements \PHPCR\Query\QueryManagerInterface
     }
 
     public function getQOMFactory()
-    {
-        throw new \PHPCR\RepositoryException("Not supported");
+    {   
+        if ($this->QOMFactory == null)
+            $this->QOMFactory = new QOM\QueryObjectModelFactory ();
+
+        return $this->QOMFactory;
     }
 
     public function getQuery($node)
