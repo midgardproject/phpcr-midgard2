@@ -21,6 +21,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     protected $propertyName = null;
     protected $type = PropertyType::UNDEFINED;
     protected $definition = null;
+    protected $multiple = null;
 
     public function __construct(Node $node, $propertyName, PropertyDefinitionInterface $definition = null, $type = null)
     {
@@ -31,6 +32,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
         if ($definition) {
             $this->type = $definition->getRequiredType();
+            $this->multiple = $definition->isMultiple();
         } elseif ($type) {
             $this->type = $type;
         }
@@ -47,6 +49,10 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     private function determineType($value)
     {
+        if (is_array($value)) {
+            return $this->determineType($value[0]);
+        }
+
         if (is_long($value)) {
             return PropertyType::LONG;
         }
@@ -62,14 +68,15 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         if (is_bool($value)) {
             return PropertyType::BOOLEAN;
         }
-
-        if (is_array($value)) {
-            return $this->determineType($value[0]);
-        }
     }
 
     private function validateValue($value, $type)
     {
+        if ($this->isMultiple() && is_array($value)) {
+            foreach ($value as $val) {
+                $this->validateValue($val, $type);
+            }
+        }
         /*
         if (is_array($value) && !$this->isMultiple()) {
 xdebug_print_function_stack();
@@ -103,6 +110,13 @@ xdebug_print_function_stack();
 
     private function normalizePropertyValue($value, $type)
     {
+        if ($this->isMultiple() && is_array($value)) {
+            $normalized = array();
+            foreach ($value as $val) {
+                $normalized[] = $this->normalizePropertyValue($val, $type);
+            }
+            return $normalized;
+        }
         /*
          * The type detection follows PropertyType::determineType. 
          * Thus, passing a Node object without an explicit type (REFERENCE or WEAKREFERENCE) will create a REFERENCE property. 
@@ -129,7 +143,13 @@ xdebug_print_function_stack();
     }
 
     public function setValue($value, $type = null, $weak = FALSE)
-    { 
+    {
+        if ($type) {
+            $this->type = $type;
+        } elseif (!$this->type) {
+            $this->type = $this->determineType($value);
+        }
+
         /* \PHPCR\ValueFormatException */
         $this->validateValue($value, $type);
 
@@ -147,11 +167,15 @@ xdebug_print_function_stack();
          * \InvalidArgumentException
          */ 
 
+        if (is_null($this->multiple) && is_array($value)) {
+            $this->multiple = true;
+        }
+
         $normalizedValue = $this->normalizePropertyValue($value, $type);
         if ($this->isMultiple() && !is_array($normalizedValue)) {
             $normalizedValue = array($normalizedValue);
         }
-        $this->type = $type;
+
         $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
         $this->is_modified = true;
         $this->parent->is_modified = true;
@@ -164,7 +188,7 @@ xdebug_print_function_stack();
         }
         $values = $this->getNativeValue();
         $values[] = $value;
-        $this->setValue($value);
+        $this->setValue($values);
     }
 
     public function getValue()
@@ -474,8 +498,8 @@ xdebug_print_function_stack();
     
     public function isMultiple()
     {
-        if ($this->definition) {
-            return $this->definition->isMultiple();
+        if (!is_null($this->multiple)) {
+            return $this->multiple;
         }
         $object = $this->getMidgard2PropertyStorage($this->getName(), false);
         if ($object && $object instanceof midgard_node_property && $object->multiple) {
