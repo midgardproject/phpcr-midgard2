@@ -99,7 +99,7 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
     public function getChildNodeDefinitions()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return $this->getDeclaredChildNodeDefinitions();
     }
 
     public function canSetProperty($propertyName, $value)
@@ -109,7 +109,21 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
     public function canAddChildNode($childNodeName, $nodeTypeName = NULL)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        if (!$nodeTypeName) {
+            // FIXME: We need a list of allowed child node names
+            return true;
+        }
+        $childNodeDefs = $this->getDeclaredChildNodeDefinitions();
+        if (!$childNodeDefs) {
+            return true;
+        }
+
+        foreach ($childNodeDefs as $def) {
+            if ($def->isNodeType($nodeTypeName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function canRemoveNode($nodeName)

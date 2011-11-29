@@ -6,6 +6,7 @@ use PHPCR\NodeType\NodeTypeDefinitionInterface;
 use ReflectionClass;
 use midgard_reflector_object;
 use midgard_reflection_property;
+use midgard_reflection_class;
 
 class NodeTypeDefinition implements NodeTypeDefinitionInterface
 {
@@ -28,7 +29,19 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
 
     public function getDeclaredChildNodeDefinitions() 
     {
+        if (!is_null($this->childNodeDefinitions)) {
+            return $this->childNodeDefinitions;
+        }
 
+        $midgardName = NodeMapper::getMidgardName($this->name);
+        $this->childNodeDefinitions = array();
+        $reflector = new midgard_reflection_class($midgardName);
+        $primaryTypes = $reflector->get_user_value('RequiredPrimaryTypes');
+        if (empty($primaryTypes)) {
+            return null;
+        }
+
+        return array($this->nodeTypeManager->getNodeType($primaryTypes));
     }
 
     public function getDeclaredPropertyDefinitions()
