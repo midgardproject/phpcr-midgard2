@@ -33,7 +33,7 @@ class QueryObjectModelFactory implements \PHPCR\Query\QOM\QueryObjectModelFactor
 
     public function sameNodeJoinCondition($selector1Name, $selector2Name, $selector2Path = null)
     {
-        return new SameNodeJoinCondition($selector1Name, $selector2Name, $selector2Path = null); 
+        return new SameNodeJoinCondition($selector1Name, $selector2Name, $selector2Path); 
     }
 
     public function childNodeJoinCondition($childSelectorName, $parentSelectorName)
@@ -98,27 +98,27 @@ class QueryObjectModelFactory implements \PHPCR\Query\QOM\QueryObjectModelFactor
 
     public function sameNode($path, $selectorName = null)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new SameNode($path, $selectorName); 
     }
 
     public function childNode($path, $selectorName = null)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new ChildNode($path, $selectorName); 
     }
 
     public function descendantNode($path, $selectorName = null)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new DescendantNode($path, $selectorName); 
     }
 
     public function propertyValue($propertyName, $selectorName = null)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new PropertyValue($propertyName, $selectorName); 
     }
 
     public function length(\PHPCR\Query\QOM\PropertyValueInterface $propertyValue)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new Length($propertyValue); 
     }
 
     public function nodeName($selectorName = null)
@@ -128,27 +128,27 @@ class QueryObjectModelFactory implements \PHPCR\Query\QOM\QueryObjectModelFactor
 
     public function nodeLocalName($selectorName = null)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new NodeLocalName($selectorName); 
     }
 
     public function fullTextSearchScore($selectorName = null)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new FullTextSearchScore($selectorName); 
     }
 
     public function lowerCase(\PHPCR\Query\QOM\DynamicOperandInterface $operand)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new LowerCase($operand); 
     }
 
     public function upperCase(\PHPCR\Query\QOM\DynamicOperandInterface $operand)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new UpperCase($operand); 
     }
 
     public function bindVariable($bindVariableName)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new BindVariableValue($bindVariableName); 
     }
 
     public function literal($literalValue)
@@ -158,16 +158,16 @@ class QueryObjectModelFactory implements \PHPCR\Query\QOM\QueryObjectModelFactor
 
     public function ascending(\PHPCR\Query\QOM\DynamicOperandInterface $operand)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new Ordering($operand, self::JCR_ORDER_ASCENDING); 
     }
 
     public function descending(\PHPCR\Query\QOM\DynamicOperandInterface $operand)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new Ordering($operand, self::JCR_ORDER_DESCENDING);
     }
 
     public function column($propertyName, $columnName = null, $selectorName = null)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return new Column($propertyName, $columnName, $selectorName); 
     }
 }
