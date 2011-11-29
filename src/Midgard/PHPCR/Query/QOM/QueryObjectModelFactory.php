@@ -33,7 +33,7 @@ class QueryObjectModelFactory implements \PHPCR\Query\QOM\QueryObjectModelFactor
 
     public function sameNodeJoinCondition($selector1Name, $selector2Name, $selector2Path = null)
     {
-        return new SameNodeJoinCondition($selector1Name, $selector2Name, $selector2Path = null); 
+        return new SameNodeJoinCondition($selector1Name, $selector2Name, $selector2Path); 
     }
 
     public function childNodeJoinCondition($childSelectorName, $parentSelectorName)
