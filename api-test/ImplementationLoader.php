@@ -13,13 +13,14 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     protected $unsupportedCases = array(
         // Queries still need a lot of work
         'Query\\QOM',
+        'Query\QueryObjectQOMTest',
         'Query\QuerySql2OperationsTest',
         'Query\RowTest',
     );
 
     protected $unsupportedTests = array(
         // Queries still need a lot of work
-        //'Query\QueryManagerTest::testGetQOMFactory',
+        'Query\QueryManagerTest::testGetQOMFactory',
         'Query\QueryObjectSql2Test::testGetStoredQueryPath',
         'Query\QueryResultsTest::testIterateOverQueryResult',
         'Query\QueryResultsTest::testReadPropertyContentFromResults',
