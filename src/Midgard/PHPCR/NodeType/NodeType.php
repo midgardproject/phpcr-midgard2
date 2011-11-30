@@ -4,6 +4,7 @@ namespace Midgard\PHPCR\NodeType;
 use Midgard\PHPCR\Utils\NodeMapper;
 use PHPCR\NodeType\NodeTypeInterface;
 use PHPCR\NodeType\NodeTypeDefinitionInterface;
+use PHPCR\PropertyType;
 use midgard_reflector_object;
 
 class NodeType extends NodeTypeDefinition implements NodeTypeInterface
@@ -104,7 +105,19 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
     public function canSetProperty($propertyName, $value)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        $definitions = $this->getPropertyDefinitions();
+        if (!isset($definitions[$propertyName])) {
+            return true;
+        }
+
+        $requiredType = $definitions[$propertyName]->getRequiredType();
+        if ($requiredType) {
+            if (PropertyType::determineType($value) != $requiredType) {
+                return false;
+            }
+        }
+        // FIXME: We need a list of allowed property names
+        return true;
     }
 
     public function canAddChildNode($childNodeName, $nodeTypeName = NULL)
@@ -128,7 +141,8 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
     public function canRemoveNode($nodeName)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        // FIXME: We need list of mandatory child nodes
+        return true;
     }
 
     public function canRemoveProperty($propertyName)
