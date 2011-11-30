@@ -9,6 +9,8 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     protected $qs = null;
     protected $statement = null;
     protected $selectors = array();
+    protected $converter = null;
+    protected $query = null;
 
     protected $storageType = null;
     
@@ -16,6 +18,9 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     {
         $this->session = $session;
         $this->statement = $statement;
+        $this->converter = new \PHPCR\Util\QOM\Sql2ToQomQueryConverter(new QOM\QueryObjectModelFactory());
+        $this->query = $this->converter->parse($statement);
+        print_r($this->query);
         $this->QBFromStatement();
     }
 
@@ -55,8 +60,8 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
             throw new \PHPCR\Query\InvalidQueryException('No content types defined in query');
         }
 
-        $this->selectors[] = str_replace(array('[', ']'), '', $type);
-        $this->storageType = NodeMapper::getMidgardName($this->selectors[0]);
+        $this->storageType = NodeMapper::getMidgardName($this->query->getSource()->getNodeTypeName()); 
+        $this->selectors[] = $this->query->getSource()->getNodeTypeName();
 
         $storage = new \midgard_query_storage('midgard_node');
         $this->qs = new \midgard_query_select($storage);
