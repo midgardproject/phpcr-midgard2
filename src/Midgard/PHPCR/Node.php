@@ -117,7 +117,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                     /* ConstraintViolationException - if a node type or implementation-specific constraint 
                     * is violated or if an attempt is made to add a node as the child of a property and 
                     * this implementation performs this validation immediately.*/ 
-                    throw new ConstraintViolationException("Can not determine default node type name for " . $this->getName() . "when trying to add '{$relPath}'");
+                    throw new ConstraintViolationException("Can not determine default node type name for " . $this->getName() . " when trying to add '{$relPath}'");
                 }
             }
         }
