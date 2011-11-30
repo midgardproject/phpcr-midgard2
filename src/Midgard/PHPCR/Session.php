@@ -449,7 +449,7 @@ class Session implements SessionInterface
     
     public function hasCapability($methodName, $target, array $arguments)
     {
-        return false;
+        return true;
     }
     
     public function getImportContentHandler($parentAbsPath, $uuidBehavior)
