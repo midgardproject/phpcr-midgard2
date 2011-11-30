@@ -8,23 +8,14 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         // Features we don't support in the Midgard provider
         'Versioning',
         'Transactions',
+        // Queries need to be rewritten
+        'Query',
     );
 
     protected $unsupportedCases = array(
-        // Queries still need a lot of work
-        'Query\\QOM',
-        'Query\QueryObjectQOMTest',
-        'Query\QuerySql2OperationsTest',
-        'Query\RowTest',
     );
 
     protected $unsupportedTests = array(
-        // Queries still need a lot of work
-        'Query\QueryManagerTest::testGetQOMFactory',
-        'Query\QueryObjectSql2Test::testGetStoredQueryPath',
-        'Query\QueryResultsTest::testIterateOverQueryResult',
-        'Query\QueryResultsTest::testReadPropertyContentFromResults',
-
         // Workspace functionality isn't fully implemented
         'Connecting\WorkspaceReadMethodsTest::testGetAccessibleWorkspaceNames',
         'Connecting\WorkspaceReadMethodsTest::testGetAccessibleWorkspaceNames',
