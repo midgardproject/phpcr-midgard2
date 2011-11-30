@@ -297,7 +297,27 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             return;
         }
 
-        $children = $this->midgardNode->list();
+        /* Replace this with midgardNode->list().
+         * Once, workspace bug is fixed:
+         * https://github.com/midgardproject/midgard-core/issues/129
+         */ 
+        $qst = new \midgard_query_storage("midgard_node");
+        $select = new \midgard_query_select($qst);
+        $select->toggle_readonly(false);
+        $select->set_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property("parent"),
+                "=",
+                new \midgard_query_value($this->midgardNode->id)
+            )
+        );
+        
+        $select->execute ();
+        /* No children. Ignore. */
+        if ($select->resultscount == 0)
+            return;
+
+        $children = $select->list_objects();
         $this->children = array();
         foreach ($children as $child)
         {
