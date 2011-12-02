@@ -60,6 +60,13 @@ class ValueFactory
 
     public static function transformValue($value, $srcType, $dstType)
     {
+        if (is_array($value)) {
+            $ret = array();
+            foreach ($value as $val) {
+                $ret[] = self::transformValue($val, $srcType, $dstType);
+            }
+            return $ret;
+        }
         $valueClass = "Value";
         $valueMethod = "toString";
 
@@ -92,12 +99,6 @@ class ValueFactory
             case \PHPCR\PropertyType::BOOLEAN:
                 $valueMethod = 'toBoolean';
                 break;
-        }
-
-        if (is_array($value))
-        {
-            $func = '\\' . $valueClass . '::fromArray';
-            return call_user_func(__NAMESPACE__ . $func, $value, $valueMethod); 
         }
 
         $func = '\\' . $valueClass . '::' . $valueMethod;
