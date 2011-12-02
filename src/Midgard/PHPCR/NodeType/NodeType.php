@@ -6,6 +6,7 @@ use PHPCR\NodeType\NodeTypeInterface;
 use PHPCR\NodeType\NodeTypeDefinitionInterface;
 use PHPCR\PropertyType;
 use midgard_reflector_object;
+use ArrayIterator;
 
 class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 {
@@ -57,7 +58,7 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
             $childDefinition = new NodeTypeDefinition($childName, $this->nodeTypeManager);
             $this->subTypeDefinitions[$childName] = $childDefinition;
         }
-        return $this->subTypeDefinitions;
+        return new ArrayIterator($this->subTypeDefinitions);
     }
 
     public function getSubtypes()
