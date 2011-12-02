@@ -97,8 +97,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function addNode($relPath, $primaryNodeTypeName = NULL)
     {
-        $pos = strpos('/', $relPath);
-        if ($pos === 0) {
+        if (substr($relPath, 0, 1) == '/') {
             throw new InvalidArgumentException("Can not add Node at absolute path"); 
         }
 
@@ -142,8 +141,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         if (!$this->hasNode($parts[0])) {
             $node = $this->appendNode(array_shift($parts));
-            return $node->addNode(implode('/', $parts), $primaryNodeTypeName);
+        } else {
+            $node = $this->getNode(array_shift($parts));
         }
+        return $node->addNode(implode('/', $parts), $primaryNodeTypeName);
     }
 
     public function orderBefore($srcChildRelPath, $destChildRelPath)
@@ -425,11 +426,11 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $this->populateChildren();
         $nodes = array();
         if ($this->children) {
-            foreach ($this->children as $child) {
+            foreach ($this->children as $name => $child) {
                 if ($child->is_removed) {
                     continue;
                 }
-                $nodes[] = $child;
+                $nodes[$name] = $child;
             }
         }
         return $this->getItemsFiltered($nodes, $filter, true); 
@@ -696,22 +697,16 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function hasNode($relPath)
     {
-        /* FIXME, optimize this.
-         * Do not get node, check children array instead */
-        $pos = strpos($relPath, '/');
-        if ($pos === 0)
-        {
+        if (substr($relPath, 0, 1) == '/') {
             throw new \InvalidArgumentException("Expected relative path. Absolute given");
             /* Take few glasses if Absolute given ;) */
         }
 
-        try 
-        {
+        try {
             $this->getNode($relPath);
             return true;
         }
-        catch (PathNotFoundException $e) 
-        {
+        catch (PathNotFoundException $e){
             return false;
         }
     }
