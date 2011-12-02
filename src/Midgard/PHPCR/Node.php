@@ -463,8 +463,29 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             return;
         }
 
-        $children = $this->getMidgard2Node()->list();
+        /* Replace this with midgardNode->list().
+         * Once, workspace bug is fixed:
+         * https://github.com/midgardproject/midgard-core/issues/129
+         */ 
+        $qst = new \midgard_query_storage("midgard_node");
+        $select = new \midgard_query_select($qst);
+        $select->toggle_readonly(false);
+        $select->set_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property("parent"),
+                "=",
+                new \midgard_query_value($this->midgardNode->id)
+            )
+        );
+        $select->execute();
 
+        /* No children. Ignore. */
+        if ($select->resultscount == 0) {
+            return;
+        }
+
+        $children = $select->list_objects();
+        $this->children = array();
         foreach ($children as $child) {
             if ($appendOnly && isset($this->children[$child->name])) {
                 continue;
@@ -1110,11 +1131,55 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     {
         self::removeFromStorage($this);
     }
+    
+    private function isReferenced()
+    {
+        $this->populateProperties();
+        if (!$this->hasProperty('jcr:uuid'))
+        {
+            return false;
+        }
+        
+        $uuid = $this->getPropertyValue('jcr:uuid');
+        if ($uuid === null || $uuid === "") 
+        {
+            return false;
+        }
+        $q = new \midgard_query_select(new \midgard_query_storage('midgard_node_property'));
+        $group = new \midgard_query_constraint_group('AND');
+        $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('value'),
+                '=',
+                new \midgard_query_value($uuid)
+            )
+        );
+        
+        $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('type'),
+                '=',
+                new \midgard_query_value(\PHPCR\PropertyType::REFERENCE)
+            )
+        );
+        $q->set_constraint($group);
+        $q->execute();
+        if ($q->get_results_count() > 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
 
     private function removeFromStorage($node)
     { 
         $mobject = $node->getMidgard2ContentObject();
         $midgardNode = $node->getMidgard2Node();
+        
+        /* \PHPCR\ReferentialIntegrityException */
+        if ($this->isReferenced())
+            throw new \PHPCR\ReferentialIntegrityException("Node " . $node->getName() . " is referenced by other nodes");
 
         /* Remove properties first */
         $node->populateProperties();
