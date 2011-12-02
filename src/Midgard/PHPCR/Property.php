@@ -47,42 +47,18 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         return $this->parent;
     }
 
-    private function determineType($value)
-    {
-        if (is_array($value)) {
-            return $this->determineType($value[0]);
-        }
-
-        if (is_long($value)) {
-            return PropertyType::LONG;
-        }
-
-        if (is_double($value)) {
-            return PropertyType::DOUBLE;
-        }
-
-        if (is_string($value)) {
-            return PropertyType::STRING;
-        }
-
-        if (is_bool($value)) {
-            return PropertyType::BOOLEAN;
-        }
-    }
-
     private function validateValue($value, $type)
     {
+        /*
+        if (is_array($value) && !$this->isNew() && !$this->isMultiple()) {
+            throw new ValueFormatException("Attempted to set array as value to a non-multivalued property");
+        }*/
+
         if ($this->isMultiple() && is_array($value)) {
             foreach ($value as $val) {
                 $this->validateValue($val, $type);
             }
         }
-        /*
-        if (is_array($value) && !$this->isMultiple()) {
-xdebug_print_function_stack();
-            throw new \PHPCR\ValueFormatException("Attempted to set array as value to a non-multivalued property");
-        }
-        */
 
         if ($type == PropertyType::PATH) {
             if (strpos($value, ' ') !== false) {
@@ -147,7 +123,7 @@ xdebug_print_function_stack();
         if ($type) {
             $this->type = $type;
         } elseif (!$this->type) {
-            $this->type = $this->determineType($value);
+            $this->type = PropertyType::determineType(is_array($value) ? reset($value) : $value);
         }
 
         /* \PHPCR\ValueFormatException */
