@@ -98,6 +98,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function addNode($relPath, $primaryNodeTypeName = NULL)
     {
+        if (!$relPath) {
+            throw new InvalidArgumentException("Path for new node required");
+        }
+
         if (substr($relPath, 0, 1) == '/') {
             throw new InvalidArgumentException("Can not add Node at absolute path"); 
         }
