@@ -735,6 +735,11 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function hasProperty($relPath)
     {
+        if (substr($relPath, 0, 1) == '/') {
+            throw new \InvalidArgumentException("Expected relative path. Absolute given");
+            /* Take few glasses if Absolute given ;) */
+        }
+
         $this->populateProperties();
         return isset($this->properties[$relPath]);
     }
@@ -1132,7 +1137,31 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function removeMidgard2Node()
     {
-        self::removeFromStorage($this);
+        $mobject = $this->getMidgard2ContentObject();
+        $midgardNode = $this->getMidgard2Node();
+        
+        /* \PHPCR\ReferentialIntegrityException */
+        if ($this->isReferenced()) {
+            throw new \PHPCR\ReferentialIntegrityException("Node " . $this->getPath() . " is referenced by other nodes");
+        }
+
+        /* Remove properties first */
+        $this->populateProperties();
+        foreach ($this->getProperties() as $property) {
+            $property->removeMidgard2Property();
+        }
+
+        /* Remove child objects */
+        $children = $this->getNodes();
+        foreach ($children as $child) {
+            $child->removeMidgard2Node();
+        }
+
+        if ($mobject->purge()) {
+            $midgardNode->purge();
+            /* TODO, FIXME, Remove properties from Propertymanager */
+        }
+        Repository::checkMidgard2Exception($midgardNode);
     }
     
     private function isReferenced()
@@ -1173,59 +1202,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         return false;
-    }
-
-    private function removeFromStorage($node)
-    { 
-        $mobject = $node->getMidgard2ContentObject();
-        $midgardNode = $node->getMidgard2Node();
-        
-        /* \PHPCR\ReferentialIntegrityException */
-        if ($this->isReferenced())
-            throw new \PHPCR\ReferentialIntegrityException("Node " . $node->getName() . " is referenced by other nodes");
-
-        /* Remove properties first */
-        $node->populateProperties();
-        if (!empty($node->midgardPropertyNodes))
-        {
-            foreach ($node->midgardPropertyNodes as $properties)
-            {
-                foreach ($properties as $mnp)
-                {
-                    if (!$mnp->guid) {
-                        continue;
-                    }
-
-                    $mnp->purge_attachments(true);
-                    Repository::checkMidgard2Exception($mnp);
-                    if (!$mnp->purge()) {
-                        // Object's connection was somehow lost, refresh
-                        try {
-                            $mnp = new \midgard_node_property($mnp->guid);
-                        } catch (\midgard_error_exception $e) {
-                            // Object isn't in DB any longer, just skip
-                            continue;
-                        }
-                        $mnp->purge();
-                        Repository::checkMidgard2Exception($mnp);
-                    }
-                }
-            }
-        }
-
-        /* Remove child objects */
-        $children = $node->getNodes();
-        foreach ($children as $child)
-        {
-            $this->removeFromStorage($child);
-        }
-
-        if ($mobject->purge() == true)
-        {
-            $midgardNode->purge();
-            Repository::checkMidgard2Exception($midgardNode);
-            /* TODO, FIXME, Remove properties from Propertymanager */
-        }
     }
 
     private function removeProperty($name)

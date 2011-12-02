@@ -109,7 +109,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
             return $value->getIdentifier();
         }
-        elseif (is_a($value, 'DateTime')) {
+        elseif (is_a($value, '\DateTime')) {
             return $value->format("c");
         }
         elseif (is_a($value, '\Midgard\PHPCR\Property')) {
@@ -557,6 +557,30 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return;
         }
         parent::refresh($keepChanges);
+    }
+
+    public function removeMidgard2Property()
+    {
+        $object = $this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple(), true, false);
+        if (!$object || $object instanceof midgard_node) {
+            return;
+        }
+
+        if (is_array($object)) {
+            foreach ($object as $propertyObject) {
+                if (!$propertyObject->guid) {
+                    continue;
+                }
+                $propertyObject->purge_attachments(true);
+                $propertyObject->purge();
+            }
+            return;
+        }
+        if (!$object->guid) {
+            return;
+        }
+        $object->purge_attachments(true);
+        $object->purge();
     }
 
     public function remove()
