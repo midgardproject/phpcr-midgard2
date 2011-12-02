@@ -4,7 +4,7 @@
 		<property name="id" type="unsigned integer" primaryfield="id">
 			<description>Local non-replication-safe database identifier</description>
 		</property>
-		<property name="name" type="string" unique="yes">
+		<property name="name" type="string" unique="yes" index="yes">
 			<description>The name of a node</description>
 		</property>
 		<property name="title" type="string">
@@ -31,7 +31,7 @@
 		<property name="id" type="unsigned integer" primaryfield="id">
 			<description>Local non-replication-safe database identifier</description>
 		</property>
-		<property name="name" type="string" unique="yes">
+		<property name="name" type="string" index="yes">
 			<description>The name of a node</description>
 		</property>
 		<property name="title" type="string">
