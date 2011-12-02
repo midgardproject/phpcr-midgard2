@@ -212,7 +212,9 @@ abstract class Item implements ItemInterface
             }
             foreach ($object as $propertyObject) {
                 if (!in_array($propertyObject->value, $value)) {
-                    $propertyObject->delete();
+                    if ($propertyObject->guid) {
+                        $propertyObject->delete();
+                    }
                     continue;
                 }
                 $storedValues[] = $propertyObject->value;
