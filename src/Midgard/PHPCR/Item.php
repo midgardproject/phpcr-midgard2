@@ -77,6 +77,14 @@ abstract class Item implements ItemInterface
         $this->midgardNode = $node;
     }
 
+    protected function refreshMidgard2Node()
+    {
+        if (!$this->midgardNode || !$this->midgardNode->guid) {
+            return;
+        }
+        $this->midgardNode = new midgard_node($this->midgardNode->guid);
+    }
+
     private function prepareMidgard2PropertyObject($name, $multiple)
     {
         $midgardName = NodeMapper::getMidgardPropertyName($name);
@@ -249,20 +257,26 @@ abstract class Item implements ItemInterface
                 return '/';
             }
         }
-        $parent_path = $this->parent->getPath();
-        if ($parent_path == '/')
-        {
+        $parentPath = $this->parent->getPath();
+        if ($parentPath == '/') {
             return "/{$this->getName()}";
         }
-        return "{$this->parent->getPath()}/{$this->getName()}";
+        return "{$parentPath}/{$this->getName()}";
     }
     
     public function getName()
     {
         if (!$this->parent) {
-            // Root node
-            return '';
+            $this->populateParent();
+            if (!$this->parent) {
+                // Root node
+                return '';
+            }
         }
+        if (!$this->midgardNode->name) {
+            $this->refreshMidgard2Node();
+        }
+
         return $this->midgardNode->name;
     }
 
