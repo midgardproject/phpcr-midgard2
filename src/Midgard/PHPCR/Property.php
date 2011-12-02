@@ -194,7 +194,6 @@ xdebug_print_function_stack();
     public function getValue()
     {
         $type = $this->getType();
-
         switch ($type) 
         {
         case \PHPCR\PropertyType::DATE:
@@ -413,16 +412,13 @@ xdebug_print_function_stack();
     public function getProperty()
     {
         $type = $this->getType();
-        if ($type != \PHPCR\PropertyType::PATH)
-        {
+        if ($type != \PHPCR\PropertyType::PATH) {
             throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to PATH type.");
         } 
 
         $path = $this->getValue();
-        if (is_array($path))
-        {
-            foreach ($path as $v)
-            {
+        if (is_array($path)) {
+            foreach ($path as $v) {
                 $ret[] = $this->parent->getProperty($v);
             }
             return $ret;
@@ -430,7 +426,7 @@ xdebug_print_function_stack();
 
         return $this->parent->getProperty($path);
     }
-    
+
     public function getLength()
     {
         $v = $this->getNativeValue();
