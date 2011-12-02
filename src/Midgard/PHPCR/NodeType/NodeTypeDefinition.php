@@ -70,20 +70,29 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
             return $this->supertypeNames;
         }
 
+        $this->supertypeNames = array();
+        if ($this->name != 'nt:base' && !$this->isMixin()) {
+            $this->supertypeNames[] = 'nt:base';
+        }
+
+        // Get supertypes based on PHP hierarchy
         $midgardName = NodeMapper::getMidgardName($this->name);
         $reflector = new ReflectionClass($midgardName);
         $parentReflector = $reflector->getParentClass();
-        if (!$parentReflector) {
-            $this->supertypeNames = array();
-            return $this->supertypeNames;
+        if ($parentReflector) {
+            $crName = NodeMapper::getPHPCRName($parentReflector->getName());
+            if ($crName) {
+                $this->supertypeNames[] = $crName;
+            }
         }
 
-        $this->supertypeNames = array();
-        $crName = NodeMapper::getPHPCRName($parentReflector->getName());
-        if (!$crName) {
-            return $this->supertypeNames;
+        $reflector = new midgard_reflection_class($midgardName);
+        $superTypes = explode(' ', $reflector->get_user_value('Supertypes'));
+        foreach ($superTypes as $superType) {
+            if ($superType && !in_array($superType, $this->supertypeNames)) {
+                $this->supertypeNames[] = $superType;
+            }
         }
-        $this->supertypeNames[] = $crName;
         return $this->supertypeNames;
     }
 
