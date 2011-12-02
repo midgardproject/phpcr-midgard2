@@ -42,7 +42,7 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
     public function getDeclaredSubtypes()
     {
         if (!is_null($this->subTypeDefinitions)) {
-            return $this->subTypeDefinitions;
+            return new ArrayIterator($this->subTypeDefinitions);
         }
 
         $midgardName = NodeMapper::getMidgardName($this->name);
@@ -50,7 +50,7 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
         $this->subTypeDefinitions = array();
 
         if (!$children) {
-            return $this->childNodeDefinitions;
+            return new ArrayIterator($this->subTypeDefinitions);
         }
 
         foreach ($children as $name => $v) {
@@ -81,8 +81,11 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
             return true;
         }
 
-        if (in_array($nodeTypeName, $this->getDeclaredSupertypeNames())) {
-            return true;
+        $superTypes = $this->getSupertypes();
+        foreach ($superTypes as $superType) {
+            if ($superType->getName() == $nodeTypeName) {
+                return true;
+            }
         }
 
         return false;
