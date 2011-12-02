@@ -27,6 +27,14 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'Writing\CopyMethodsTest::testCopyUpdateOnCopy',
         'Writing\MoveMethodsTest::testWorkspaceMove',
 
+        // Ordering is not implemented
+        'Writing\MoveMethodsTest::testNodeOrderBeforeUp',
+        'Writing\MoveMethodsTest::testNodeOrderBeforeDown',
+        'Writing\MoveMethodsTest::testNodeOrderBeforeEnd',
+        'Writing\MoveMethodsTest::testNodeOrderBeforeNoop',
+        'Writing\MoveMethodsTest::testNodeOrderBeforeSrcNotFound',
+        'Writing\MoveMethodsTest::testNodeOrderBeforeDestNotFound',
+
         // ACLs and impersonation are not yet supported
         'Reading\SessionReadMethodsTest::testImpersonate',
         'Reading\SessionReadMethodsTest::testCheckPermission',
