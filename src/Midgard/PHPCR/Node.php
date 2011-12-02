@@ -23,6 +23,7 @@ use midgard_query_storage;
 use midgard_query_property;
 use midgard_query_value;
 use Midgard\PHPCR\NodeType\PropertyDefinition;
+use Midgard\PHPCR\NodeType\NodeDefinition;
 
 class Node extends Item implements IteratorAggregate, NodeInterface
 {
@@ -108,7 +109,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         if ($primaryNodeTypeName == null) {
             $def = $this->getDefinition();
-            //$primaryNodeTypeName = $def->getDefaultPrimaryTypeName();
+            $primaryNodeTypeName = $def->getDefaultPrimaryTypeName();
             if ($primaryNodeTypeName == null) {
                 if ($this->getPath() == '/') {
                     $primaryNodeTypeName = 'nt:unstructured';
@@ -871,7 +872,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function getDefinition()
     {
-        return $this->getPrimaryNodeType();
+        return new NodeDefinition($this);
     }
     
     public function update($srcWorkspace)

@@ -1,7 +1,9 @@
 <?php
 namespace Midgard\PHPCR\NodeType;
 
-class NodeDefinition implements \PHPCR\NodeType\NodeDefinitionInterface
+use PHPCR\NodeType\NodeDefinitionInterface;
+
+class NodeDefinition implements NodeDefinitionInterface
 {
     protected $node = null;
     protected $midgardNode = null;
