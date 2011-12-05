@@ -107,7 +107,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $value->getIdentifier();
         }
         elseif (is_a($value, '\DateTime')) {
-            return $value->format("c");
+            return $value->format('c');
         }
         elseif (is_a($value, '\Midgard\PHPCR\Property')) {
             return $value->getString(); 
@@ -169,14 +169,14 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         $type = $this->getType();
         switch ($type) 
         {
-        case \PHPCR\PropertyType::DATE:
+        case PropertyType::DATE:
             return $this->getDate();
 
-        case \PHPCR\PropertyType::BINARY:
+        case PropertyType::BINARY:
             return $this->getBinary();
 
-        case \PHPCR\PropertyType::REFERENCE:
-        case \PHPCR\PropertyType::WEAKREFERENCE:
+        case PropertyType::REFERENCE:
+        case PropertyType::WEAKREFERENCE:
             return $this->getNode();
 
         default:
@@ -190,7 +190,31 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getBinary();
         } 
 
-        return $this->getMidgard2PropertyValue($this->getName(), $this->isMultiple(), true, false);
+        $value = $this->getMidgard2PropertyValue($this->getName(), $this->isMultiple(), true, false);
+
+        if ($this->getType() == PropertyType::DATE) {
+            if (!is_array($value)) {
+                $value = array($value);
+            }
+            $ret = array();
+            foreach ($value as $val) {
+                if (!is_a($val, '\DateTime')) {
+                    if (is_numeric($val)) {
+                        $timestamp = (int) $val;
+                        $val = new \DateTime();
+                        $val->setTimeStamp($timestamp);
+                    } else {
+                        $val = new \DateTime($val);
+                    }
+                }
+                $ret[] = $val;
+            }
+            $value = $ret;
+            if (!$this->isMultiple()) {
+                $value = $ret[0];
+            }
+        }
+        return $value;
     }
 
     public function getString()
@@ -278,7 +302,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     public function getNode()
     {
         $type = $this->getType();
-        if ($type == \PHPCR\PropertyType::PATH) {
+        if ($type == PropertyType::PATH) {
             $path = $this->getNativeValue();
             if (is_array($path)) {
                 return $this->getSession()->getNodes($path);
@@ -299,7 +323,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getSession()->getNode($path);
         }
 
-        if ($type == \PHPCR\PropertyType::REFERENCE || $type == \PHPCR\PropertyType::WEAKREFERENCE)
+        if ($type == PropertyType::REFERENCE || $type == PropertyType::WEAKREFERENCE)
         {
             try {
                 $v = $this->getNativeValue();
@@ -318,7 +342,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             }
         }
    
-        throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to Node type."); 
+        throw new ValueFormatException("Can not convert {$this->propertyName} (of type " . PropertyType::nameFromValue($type) . ") to Node type."); 
 
         return $this->parent;
     }
@@ -326,8 +350,8 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     public function getProperty()
     {
         $type = $this->getType();
-        if ($type != \PHPCR\PropertyType::PATH) {
-            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to PATH type.");
+        if ($type != PropertyType::PATH) {
+            throw new ValueFormatException("Can not convert {$this->propertyName} (of type " . PropertyType::nameFromValue($type) . ") to PATH type.");
         } 
 
         $path = $this->getValue();
@@ -349,7 +373,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getLengths();
         }
 
-        if ($this->type === \PHPCR\PropertyType::BINARY)
+        if ($this->type === PropertyType::BINARY)
         {
             $stat = fstat($v);
             return $stat['size'];
@@ -365,7 +389,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             /* Native values are always strings */
             foreach ($v as $values)
             {
-                if ($this->type == \PHPCR\PropertyType::BINARY)
+                if ($this->type == PropertyType::BINARY)
                 {
                     $stat = fstat($values);
                     $ret[] = $stat['size'];
