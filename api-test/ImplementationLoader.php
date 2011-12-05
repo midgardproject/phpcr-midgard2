@@ -41,12 +41,6 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'Reading\SessionReadMethodsTest::testCheckPermission',
         'Reading\SessionReadMethodsTest::testCheckPermissionAccessControlException',
 
-        // Ignore tests that rely on mix:versionable
-        // see https://github.com/phpcr/phpcr-api-tests/issues/37
-        'NodeTypeDiscovery\NodeNodeTypeReadMethodsTest::testIsMixin',
-        'NodeTypeDiscovery\NodeNodeTypeReadMethodsTest::testIsParentMixin',
-        'NodeTypeDiscovery\NodeTypeTest::testGetChildNodeDefinitions',
-
         // Waiting of various bug fixes
         'Writing\DeleteMethodsTest::testDeleteCascade',
         'Writing\DeleteMethodsTest::testDeleteReferencedNodeException',
