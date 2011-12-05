@@ -11,6 +11,7 @@ use midgard_query_constraint_group;
 use midgard_query_storage;
 use midgard_query_property;
 use midgard_query_value;
+use midgard_blob;
 use midgard_node;
 use midgard_node_property;
 use Midgard\PHPCR\Utils\NodeMapper;
@@ -21,6 +22,7 @@ abstract class Item implements ItemInterface
     protected $parent = null;
     protected $is_new = false;
     protected $is_modified = false;
+    protected $isRoot = false;
     protected $contentObject = null;
     protected $midgardNode = null;
     protected $propertyManager = null;
@@ -37,10 +39,17 @@ abstract class Item implements ItemInterface
             return;
         }
 
+        if (!$this->midgardNode->typename) {
+            return;
+        }
+
         $midgardType = '\\' . $this->midgardNode->typename;
         if ($this->midgardNode->objectguid) {
             $this->contentObject = new $midgardType($this->midgardNode->objectguid);
         } else {
+            if (!class_exists($midgardType)) {
+                throw \Exception("{$midgardType} not found");
+            }
             $this->contentObject = new $midgardType();
         }
         /*
@@ -130,7 +139,7 @@ abstract class Item implements ItemInterface
 
         if (!$multiple && $checkContentObject) {
             $contentObject = $this->getMidgard2ContentObject();
-            if (property_exists($contentObject, $midgardName)) {
+            if ($contentObject && property_exists($contentObject, $midgardName)) {
                 return $contentObject;
             }
         }
@@ -169,18 +178,63 @@ abstract class Item implements ItemInterface
         return $this->propertyObjects[$name][$multiple];
     }
 
+    protected function getMidgard2PropertyBinary($name, $multiple)
+    {
+        $object = $this->getMidgard2PropertyStorage($name, $multiple);
+        if (!is_array($object)) {
+            $object = array($object);
+        }
+
+        $ret = array();
+        foreach ($object as $propertyObject) {
+            if (isset($propertyObject->stream) && is_resource($propertyObject->stream)) {
+                rewind($propertyObject->stream);
+                $oldStream = $propertyObject->stream;
+                $propertyObject->stream = fopen('php://memory', 'rwb');
+                stream_copy_to_stream($oldStream, $propertyObject->stream);
+                rewind($propertyObject->stream);
+                $ret[] = $propertyObject->stream;
+                continue;
+            }
+
+            $propertyObject->stream = fopen('php://memory', 'rwb');
+            $ret[] = $propertyObject->stream;
+            if (!$propertyObject->guid) {
+                continue;
+            }
+
+            $attachments = $propertyObject->find_attachments(array('name' => $name));
+            if ($attachments) {
+                // Existing attachment, copy to a new in-memory stream
+                $blob = new midgard_blob($attachments[0]);
+                $source = $blob->get_handler('r');
+                rewind($source);
+                stream_copy_to_stream($source, $propertyObject->stream);
+                rewind($propertyObject->stream);
+            }
+        }
+
+        if ($multiple) {
+            return $ret;
+        }
+        return $ret[0];
+    }
+
     protected function removeMidgard2PropertyStorage($name, $multiple)
     {
         $storage = $this->getMidgard2PropertyStorage($name, $multiple, true);
         if ($multiple) {
             foreach ($storage as $propStorage) {
+                if (!$propStorage->guid) {
+                    continue;
+                }
                 $propStorage->purge_attachments(true);
                 $propStorage->purge();
             }
             return;
         }
 
-        if ($storage instanceof midgard_node_property) {
+        if ($storage instanceof midgard_node_property && $storage->guid) {
             $storage->purge_attachments(true);
             $storage->purge();
         }
@@ -328,6 +382,9 @@ abstract class Item implements ItemInterface
     {
         try {
             $parent = $this->getParent();
+            if (!$parent) {
+                return 1;
+            }
             return $parent->getDepth() + 1;
         } 
         catch (ItemNotFoundException $e) {

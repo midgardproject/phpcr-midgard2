@@ -98,6 +98,9 @@ class MidgardBootstrap
             $wmanager->create_workspace($ws, "");
         }
 
+        midgard_connection::get_instance()->enable_workspace(true);
+        midgard_connection::get_instance()->set_workspace($ws);
+
         /* Create required root node */
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
         $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
@@ -109,6 +112,7 @@ class MidgardBootstrap
             $root_object->parent = 0;
             $root_object->create();
         }
+        midgard_connection::get_instance()->enable_workspace(false);
     }
 
     private function makeDirs ()

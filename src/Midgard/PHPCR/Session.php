@@ -17,25 +17,30 @@ class Session implements SessionInterface
     protected $connection = null;
     protected $repository = null;
     protected $user = null;
-    protected $rootObject = null;
-    protected $rootNode = null;
     protected $workspace = null;
     protected $removeNodes = array();
     private $transaction = null;
     private $nsregistry = null;
     private $credentials = null;
     private $isAnonymous = true;
+    private $nodeRegistry = null;
 
     public function __construct(midgard_connection $connection, Repository $repository, midgard_user $user = null, midgard_object $rootObject, CredentialsInterface $credentials = null)
     {
         $this->connection = $connection;
         $this->repository = $repository;
         $this->user = $user;
-        $this->rootObject = $rootObject;
         $this->credentials = $credentials;
         if ($credentials && !($credentials instanceof GuestCredentials)) {
             $this->isAnonymous = false;
         }
+
+        $this->nodeRegistry = new NodeRegistry($rootObject, $this);
+    }
+
+    public function getNodeRegistry()
+    {
+        return $this->nodeRegistry;
     }
 
     public function getRepository()
@@ -81,10 +86,7 @@ class Session implements SessionInterface
     
     public function getRootNode()
     {
-        if ($this->rootNode === null) {
-            $this->rootNode = new Node($this->rootObject, null, $this);
-        }
-        return $this->rootNode;
+        return $this->nodeRegistry->getByPath('/');
     }
     
     public function impersonate(\PHPCR\CredentialsInterface $credentials)
@@ -94,62 +96,16 @@ class Session implements SessionInterface
     
     public function getNodeByIdentifier($id)
     {
-        /* TODO
-         * Try to get midgard object by guid if required */
-
-        $propertyStorage = new \midgard_query_storage('midgard_node_property');
-        $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
-        $q->add_join(
-            'INNER',
-            new \midgard_query_property('id'),
-            new \midgard_query_property('parent', $propertyStorage)
-        );
-        $group = new \midgard_query_constraint_group('OR');
-        $group->add_constraint(
-            new \midgard_query_constraint(
-                new \midgard_query_property('guid'),
-                '=',
-                new \midgard_query_value($id)
-            )
-        );
-        $uuidGroup = new \midgard_query_constraint_group('AND');
-        $uuidGroup->add_constraint(
-            new \midgard_query_constraint(
-                new \midgard_query_property('value', $propertyStorage), 
-                '=', 
-                new \midgard_query_value($id)
-            )
-        );
-        $uuidGroup->add_constraint(
-            new \midgard_query_constraint(
-                new \midgard_query_property('title', $propertyStorage), 
-                '=', 
-                new \midgard_query_value('jcr:uuid')
-            )
-        ); 
-        $group->add_constraint($uuidGroup);
-        $q->set_constraint($group);
-        $q->execute();
-       
-        if ($q->get_results_count() < 1)
-        {
-            throw new \PHPCR\ItemNotFoundException("Node identified by {$id} not found");
-        }
-
-        $midgardNode = current($q->list_objects());
-        $node = new Node($midgardNode, null, $this);
-        $nodePath = $node->getPath();
-        foreach ($this->removeNodes as $removeNode) {
-            if ($nodePath == $removeNode->getPath()) {
-                throw new \PHPCR\ItemNotFoundException("Node identified by {$id} not found");
-            }
-        }
-        return $node;
+        return $this->nodeRegistry->getByUuid($id);
     }
 
     public function getNodesByIdentifier($ids)
     {
-        return array();
+        $ret = array();
+        foreach ($ids as $id) {
+            $ret[] = $this->getNodeByIdentifier($id);
+        }
+        return $ret;
     }
 
     public function getItem($absPath)
@@ -317,8 +273,7 @@ class Session implements SessionInterface
 
         try {
             /* Remove nodes marked as removed */
-            foreach ($this->removeNodes as $node)
-            {
+            foreach ($this->removeNodes as $node) {
                 $node->removeMidgard2Node();
             }
 
@@ -333,8 +288,7 @@ class Session implements SessionInterface
         foreach ($children as $name => $child) 
         { 
             /* FIXME DO NOT EXPECT BOOLEAN, CATCH EXCEPTION */
-            if ($this->_node_save ($child) === false)
-            {
+            if ($this->_node_save ($child) === false) {
                 $midgard_errcode = \midgard_connection::get_instance()->get_error();
                 $midgard_errstr = \midgard_connection::get_instance()->get_error_string();
                 switch ($midgard_errcode) 
@@ -360,7 +314,7 @@ class Session implements SessionInterface
         }
 
         $t->commit();
-    
+
         //NoSuchNodeTypeException
         //ReferentialIntegrityException
     }

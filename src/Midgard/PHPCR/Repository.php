@@ -121,6 +121,10 @@ class Repository implements RepositoryInterface
             throw new RepositoryException('No initialized Midgard2 connection or configuration parameters available');
         }
 
+        if (isset($parameters['midgard2.configuration.blobdir'])) {
+            $config->blobdir = $parameters['midgard2.configuration.blobdir'];
+        }
+
         if (isset($parameters['midgard2.configuration.loglevel'])) {
             $config->loglevel = $parameters['midgard2.configuration.loglevel'];
         }
@@ -135,6 +139,7 @@ class Repository implements RepositoryInterface
 
         if (   isset($parameters['midgard2.configuration.db.init'])
             && $parameters['midgard2.configuration.db.init']) {
+            $config->create_blobdir();
             $this->midgard2InitDb($mgd);
         }
 
