@@ -39,9 +39,11 @@ foreach ($nodeTypes as $nodeType) {
     $superTypes = $nodeType->getDeclaredSuperTypes();
     if ($superTypes) {
         echo " > ";
+        $superTypeNames = array();
         foreach ($superTypes as $superType) {
-            echo $superType->getName();
+            $superTypeNames[] = $superType->getName();
         }
+        echo implode(', ', $superTypeNames);
     }
     echo "\n";
 
@@ -59,7 +61,7 @@ foreach ($nodeTypes as $nodeType) {
         echo "  " . implode(' ', $additionalInfo) . "\n";
     }
 
-    foreach ($nodeType->getPropertyDefinitions() as $property) {
+    foreach ($nodeType->getDeclaredPropertyDefinitions() as $property) {
         echo "  - " . $property->getName();
         $propertyInfo = array();
         if ($property->getRequiredType() !== null) {
