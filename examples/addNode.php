@@ -19,6 +19,7 @@ $parameters = array(
     'midgard2.configuration.db.type' => 'SQLite',
     'midgard2.configuration.db.name' => 'midgard2cr',
     'midgard2.configuration.db.dir' => __DIR__,
+    'midgard2.configuration.blobdir' => __DIR__ . '/blobs',
     // Let Midgard2 initialize the DB as needed
     'midgard2.configuration.db.init' => true,
     // Enable this if you want to see the actual database queries
@@ -37,13 +38,15 @@ if (!$session->nodeExists('/test')) {
     $root = $session->getRootNode();
     $node = $root->addNode('test', 'nt:unstructured');
     $node->setProperty('prop', 'value');
+    $node->setProperty('binProp', 'Hello, world!', PHPCR\PropertyType::BINARY);
     $session->save();
 }
 
 // Read the values we just saved
 $node = $session->getNode('/test');
 var_dump($node->getPropertyValue('prop'));
+var_dump($node->getProperty('binProp')->getString());
 
 // We can also export the contents via XML
-$session->exportDocumentView('/test', fopen('php://output', 'w'), true, true);
+$session->exportDocumentView('/test', fopen('php://output', 'w'), false, true);
 

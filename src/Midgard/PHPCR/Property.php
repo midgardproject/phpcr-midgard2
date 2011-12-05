@@ -10,9 +10,7 @@ use PHPCR\RepositoryException;
 use IteratorAggregate;
 use DateTime;
 use Midgard\PHPCR\Utils\NodeMapper;
-use Midgard\PHPCR\Utils\ValueFactory;
-use Midgard\PHPCR\Utils\StringValue;
-use Midgard\PHPCR\Utils\Value;
+use midgard_attachment;
 use midgard_blob;
 use midgard_node_property;
 
@@ -22,6 +20,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     protected $type = PropertyType::UNDEFINED;
     protected $definition = null;
     protected $multiple = null;
+    private $streams = array();
 
     public function __construct(Node $node, $propertyName, PropertyDefinitionInterface $definition = null, $type = null)
     {
@@ -78,7 +77,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
                 $nsregistry = $this->getSession()->getWorkspace()->getNamespaceRegistry();
                 $nsmanager = $nsregistry->getNamespaceManager();
                 if (!$nsmanager->getPrefix($value)) {
-                    throw new \PHPCR\ValueFormatException("Invalid '\' URI character");
+                    throw new ValueFormatException("Invalid '\' URI character");
                 }
             }
         }
@@ -110,7 +109,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $value->getIdentifier();
         }
         elseif (is_a($value, '\DateTime')) {
-            return $value->format("c");
+            return $value->format('c');
         }
         elseif (is_a($value, '\Midgard\PHPCR\Property')) {
             return $value->getString(); 
@@ -120,6 +119,10 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     public function setValue($value, $type = null, $weak = FALSE)
     {
+        if (is_null($value)) {
+            return $this->remove();
+        }
+
         if ($type) {
             $this->type = $type;
         } elseif (!$this->type) {
@@ -131,9 +134,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
         /* Check if property is registered.
          * If it is, we need to validate if conversion follows the spec: "3.6.4 Property Type Conversion" */
-        if ($this->definition && $type) {
-            Value::checkTransformable($this->getType(), $type);
-        }
+        $value = PropertyType::convertType($value, $this->getType());
 
         /* TODO, handle:
          * \PHPCR\Version\VersionException 
@@ -152,9 +153,34 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             $normalizedValue = array($normalizedValue);
         }
 
-        $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
+        if ($this->getType() == PropertyType::BINARY) {
+            $this->setBinaryValue($value);
+        } else {
+            $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
+        }
         $this->is_modified = true;
         $this->parent->is_modified = true;
+    }
+
+    private function writeToStream($source, $target)
+    {
+        rewind($source);
+        stream_copy_to_stream($source, $target);
+        rewind($target);
+    }
+
+    private function setBinaryValue($value)
+    {
+        $streams = $this->getMidgard2PropertyBinary($this->getName(), $this->isMultiple());
+        if ($this->isMultiple()) {
+            foreach ($streams as $stream) {
+                $val = array_shift($value);
+                $this->writeToStream($val, $stream);
+            }
+            return;
+        }
+        $this->writeToStream($value, $streams);
+        $this->is_modified = true;
     }
     
     public function addValue($value)
@@ -172,164 +198,90 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         $type = $this->getType();
         switch ($type) 
         {
-        case \PHPCR\PropertyType::DATE:
+        case PropertyType::DATE:
             return $this->getDate();
 
-        case \PHPCR\PropertyType::BINARY:
+        case PropertyType::BINARY:
             return $this->getBinary();
 
-        case \PHPCR\PropertyType::REFERENCE:
-        case \PHPCR\PropertyType::WEAKREFERENCE:
+        case PropertyType::REFERENCE:
+        case PropertyType::WEAKREFERENCE:
             return $this->getNode();
 
         default:
-            return ValueFactory::transformValue($this->getNativeValue(), \PHPCR\PropertyType::STRING, $type);
+            return PropertyType::convertType($this->getNativeValue(), $type, PropertyType::STRING);
         } 
     }
 
     public function getNativeValue()
     {
-        if ($this->type == PropertyType::BINARY) {
+        if ($this->getType() == PropertyType::BINARY) {
             return $this->getBinary();
         } 
 
-        return $this->getMidgard2PropertyValue($this->getName(), $this->isMultiple(), true, false);
+        $value = $this->getMidgard2PropertyValue($this->getName(), $this->isMultiple(), true, false);
+
+        if ($this->getType() == PropertyType::DATE) {
+            if (!is_array($value)) {
+                $value = array($value);
+            }
+            $ret = array();
+            foreach ($value as $val) {
+                if (!is_a($val, '\DateTime')) {
+                    if (is_numeric($val)) {
+                        $timestamp = (int) $val;
+                        $val = new \DateTime();
+                        $val->setTimeStamp($timestamp);
+                    } else {
+                        $val = new \DateTime($val);
+                    }
+                }
+                $ret[] = $val;
+            }
+            $value = $ret;
+            if (!$this->isMultiple()) {
+                $value = $ret[0];
+            }
+        }
+        return $value;
     }
 
     public function getString()
     {
-        $type = $this->getType();
-        return ValueFactory::transformValue($this->getNativeValue(), $type, \PHPCR\PropertyType::STRING);
+        return PropertyType::convertType($this->getNativeValue(), PropertyType::STRING, $this->getType());
     }
     
     public function getBinary()
     {
         if ($this->getType() != PropertyType::BINARY) {
-            $sv = new StringValue();
-            return ValueFactory::transformValue($this->getNativeValue(), $this->type, PropertyType::BINARY);
+            return PropertyType::convertType($this->getNativeValue(), PropertyType::BINARY, $this->getType());
         }
-
-        $object = $this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple());
-
-        $constraints = array(
-            'name' => $this->getName(),
-        );
-
-        $ret = array();
-        $attachments = array();
-        $persistent = false;
-        if (is_array($object)) {
-            foreach ($object as $propertyObject) {
-                if (!is_object($propertyObject)) {
-                    continue;
-                }
-                if (!$propertyObject->guid) {
-                    continue;
-                }
-                $persistent = true;
-                $attachments = array_merge($attachments, $propertyObject->find_attachments($constraints));
-            }
-        } elseif ($object->guid) {
-            $persistent = true;
-            $attachments = $object->find_attachments($constraints);
-        }
-
-        foreach ($attachments as $att) {
-            $blob = new midgard_blob($att);
-            $ret[] = $blob->get_handler('r');
-        }
-
-        if (empty($ret) && !$persistent) {
-            // FIXME: We should use temporary files in this case
-            throw new RepositoryException('Unable to load attachments of non-persistent object');
-        }
-
-        if ($this->isMultiple()) {
-            return $ret;
-        }
-        return $ret[0];
+        return $this->getMidgard2PropertyBinary($this->getName(), $this->isMultiple());
     }
     
     public function getLong()
     {
-        $type = $this->getType();
-        if ($type == \PHPCR\PropertyType::DATE
-            || $type == \PHPCR\PropertyType::BINARY
-            || $type == \PHPCR\PropertyType::DECIMAL
-            || $type == \PHPCR\PropertyType::REFERENCE
-            || $type == \PHPCR\PropertyType::WEAKREFERENCE)
-        {
-            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to LONG."); 
-        } 
-        
-        return ValueFactory::transformValue($this->getNativeValue(), $type, \PHPCR\PropertyType::LONG);
+        return PropertyType::convertType($this->getNativeValue(), PropertyType::LONG, $this->getType());
     }
     
     public function getDouble()
     {
-        $type = $this->getType();
-        if ($type == \PHPCR\PropertyType::DATE
-            || $type == \PHPCR\PropertyType::BINARY
-            || $type == \PHPCR\PropertyType::REFERENCE) 
-        {
-            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to DOUBLE."); 
-        } 
-
-        return ValueFactory::transformValue($this->getNativeValue(), $type, \PHPCR\PropertyType::DOUBLE);
+        return PropertyType::convertType($this->getNativeValue(), PropertyType::DOUBLE, $this->getType());  
     }
     
     public function getDecimal()
     {
-        $type = $this->getType();
-        return ValueFactory::transformValue($this->getNativeValue(), $type, \PHPCR\PropertyType::DECIMAL);
+        return PropertyType::convertType($this->getNativeValue(), PropertyType::DECIMAL, $this->getType()); 
     }
     
     public function getDate()
     {
-        $type = $this->getType();
-        if ($type == \PHPCR\PropertyType::DATE
-            || $type == \PHPCR\PropertyType::STRING)
-        {
-            try 
-            {
-                $v = $this->getNativeValue();
-                if (is_array($v))
-                {
-                    foreach ($v as $value)
-                    {
-                        $ret[] = new DateTime($value);
-                    }
-                    return $ret;
-                }
-                if ($v instanceof DateTime)
-                {
-                    $date = $v;
-                }
-                else 
-                {
-                    $date = new DateTime($this->getNativeValue());
-                }
-                return $date;
-            }
-            catch (\Exception $e)
-            {
-                /* Silently ignore */
-            }
-        }
-        /*
-        var_dump($this->getMidgard2Node());
-        var_dump($this->getParent()->getMidgard2Node());
-        var_dump($type);
-        var_dump($this->getNativeValue());
-        var_dump($this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple()));
-        die();*/
-        throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type)  . ") to DateTime object.");
+        return PropertyType::convertType($this->getNativeValue(), PropertyType::DATE, $this->getType()); 
     }
     
     public function getBoolean()
     {
-        $type = $this->getType();
-        return ValueFactory::transformValue($this->getNativeValue(), $type, \PHPCR\PropertyType::BOOLEAN);
+        return PropertyType::convertType($this->getNativeValue(), PropertyType::BOOLEAN, $this->getType()); 
     }
 
     public function getName()
@@ -340,7 +292,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     public function getNode()
     {
         $type = $this->getType();
-        if ($type == \PHPCR\PropertyType::PATH) {
+        if ($type == PropertyType::PATH) {
             $path = $this->getNativeValue();
             if (is_array($path)) {
                 return $this->getSession()->getNodes($path);
@@ -361,7 +313,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getSession()->getNode($path);
         }
 
-        if ($type == \PHPCR\PropertyType::REFERENCE || $type == \PHPCR\PropertyType::WEAKREFERENCE)
+        if ($type == PropertyType::REFERENCE || $type == PropertyType::WEAKREFERENCE)
         {
             try {
                 $v = $this->getNativeValue();
@@ -380,7 +332,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             }
         }
    
-        throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to Node type."); 
+        throw new ValueFormatException("Can not convert {$this->propertyName} (of type " . PropertyType::nameFromValue($type) . ") to Node type."); 
 
         return $this->parent;
     }
@@ -388,8 +340,8 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     public function getProperty()
     {
         $type = $this->getType();
-        if ($type != \PHPCR\PropertyType::PATH) {
-            throw new \PHPCR\ValueFormatException("Can not convert {$this->propertyName} (of type " . \PHPCR\PropertyType::nameFromValue($type) . ") to PATH type.");
+        if ($type != PropertyType::PATH) {
+            throw new ValueFormatException("Can not convert {$this->propertyName} (of type " . PropertyType::nameFromValue($type) . ") to PATH type.");
         } 
 
         $path = $this->getValue();
@@ -411,7 +363,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getLengths();
         }
 
-        if ($this->type === \PHPCR\PropertyType::BINARY)
+        if ($this->type === PropertyType::BINARY)
         {
             $stat = fstat($v);
             return $stat['size'];
@@ -422,13 +374,10 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     public function getLengths()
     {
         $v = $this->getNativeValue();
-        if (is_array($v))
-        {
+        if (is_array($v)) {
             /* Native values are always strings */
-            foreach ($v as $values)
-            {
-                if ($this->type == \PHPCR\PropertyType::BINARY)
-                {
+            foreach ($v as $values) {
+                if ($this->getType() == PropertyType::BINARY) {
                     $stat = fstat($values);
                     $ret[] = $stat['size'];
                     continue;
@@ -437,7 +386,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             }
             return $ret;
         }
-        throw new \PHPCR\ValueFormatException("Can not get lengths of single value");
+        throw new ValueFormatException("Can not get lengths of single value");
     }
     
     public function getDefinition()
@@ -509,13 +458,9 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     private function savePropertyObject($propertyObject)
     {
-        if (!$propertyObject->name) {
-            $midgardName = NodeMapper::getMidgardPropertyName($this->getName());
-            $propertyObject->name = $midgardName;
-        }
-        if (!$propertyObject->title) {
-            $propertyObject->title = $this->getName();
-        }
+        $midgardName = NodeMapper::getMidgardPropertyName($this->getName());
+        $propertyObject->name = $midgardName;
+        $propertyObject->title = $this->getName();
 
         $type = $this->getType();
         if (!$type && !$propertyObject->type) {
@@ -529,9 +474,33 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         }
         if ($propertyObject->guid) {
             $propertyObject->update();
-            return;
+        } else {
+            $propertyObject->create();
         }
-        $propertyObject->create();
+
+        if ($this->getType() == PropertyType::BINARY) {
+            if (!isset($propertyObject->stream)) {
+                return;
+            }
+            $attachments = $propertyObject->find_attachments(array('name' => $this->getName()));
+            if (!$attachments) {
+                $att = new midgard_attachment();
+                $att->name = $this->getName();
+                $att->parentguid = $propertyObject->guid;
+                $attachments = array($att);
+            }
+
+            $blob = new midgard_blob($attachments[0]);
+            rewind($propertyObject->stream);
+            $blob->write_content(stream_get_contents($propertyObject->stream));
+            rewind($propertyObject->stream);
+
+            if ($attachments[0]->guid) {
+                $attachments[0]->update();
+                return;
+            }
+            $attachments[0]->create();
+        }
     }
 
     public function save()
