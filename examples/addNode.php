@@ -45,7 +45,8 @@ if (!$session->nodeExists('/test')) {
 // Read the values we just saved
 $node = $session->getNode('/test');
 var_dump($node->getPropertyValue('prop'));
+var_dump($node->getProperty('binProp')->getString());
 
 // We can also export the contents via XML
-$session->exportDocumentView('/test', fopen('php://output', 'w'), true, true);
+$session->exportDocumentView('/test', fopen('php://output', 'w'), false, true);
 
