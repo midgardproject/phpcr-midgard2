@@ -93,7 +93,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $midgardNode->parent = $this->getMidgard2Node()->id;
         $midgardNode->parentguid = $this->getMidgard2Node()->guid;
 
-        $newNode = new Node($midgardNode, $this, $this->getSession());
+        $newNode = NodeRegistry::getByMidgardNode($midgardNode);
         $this->children[$relPath] = $newNode;
 
         $this->is_modified = true;
@@ -261,9 +261,14 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $this->populateChildren(true);
         }
         
-        if (!isset($this->children[$relPath]) || $this->children[$relPath]->is_removed) {
+        if (!isset($this->children[$relPath])) {
             throw new PathNotFoundException("Node at path '{$relPath}' not found under " . $this->getPath());
         }
+
+        if ($this->children[$relPath]->is_removed) {
+            throw new PathNotFoundException("Node at path '{$relPath}' not found under " . $this->getPath() . ' (has been removed)');
+        }
+
 
         if ($remainingPath != '') {
             return $this->children[$relPath]->getNode($remainingPath);
@@ -452,10 +457,11 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             return;
         }
 
-        $parentMidgardNode = new midgard_node($this->getMidgard2Node()->parent);
-        $this->parent = new Node($parentMidgardNode, null, $this->getSession());
-        $this->midgardNode->parent = $parentMidgardNode->id;
-        $this->midgardNode->parentguid = $parentMidgardNode->guid;
+        if (!$this->getMidgard2Node()->parentguid) {
+            return;
+        }
+
+        $this->parent = NodeRegistry::getByMidgardGuid($this->getMidgard2Node()->parentguid);
     }
 
     private function populateChildren($appendOnly = false)
@@ -500,13 +506,16 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             if ($appendOnly && isset($this->children[$child->name])) {
                 continue;
             }
-            $this->children[$child->name] = new Node($child, $this, $this->getSession());
+            $this->children[$child->name] = NodeRegistry::getByMidgardNode($child);
         }
     }
 
     private function populateProperty(PropertyDefinition $definition)
     {
         $propertyName = $definition->getName();
+        if (isset($this->removeProperties[$propertyName])) {
+            return;
+        }
         if (isset($this->properties[$propertyName])) {
             return;
         }
@@ -539,6 +548,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $q->execute();
         $properties = $q->list_objects();
         foreach ($properties as $property) {
+            if (isset($this->removeProperties[$property->name])) {
+                continue;
+            }
             $crName = NodeMapper::getPHPCRProperty($property->name);
             $this->properties[$crName] = new Property($this, $crName);
         }
@@ -1025,7 +1037,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     public function move($dstNode, $dstName)
     {
         /* Unset parent's child */
-        unset($this->parent->children[$this->getName()]);
+        unset($this->getParent()->children[$this->getName()]);
 
         /* Set new parent */
         $this->parent = $dstNode;
@@ -1073,16 +1085,16 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             return;
         }
 
-        if (!$midgardNode->parent && $this->parent) {
-            $midgardNode->parent = $this->parent->getMidgard2Node()->id;
-            $midgardNode->parentguid = $this->parent->getMidgard2Node()->guid;
+        if (!$midgardNode->parent && $this->getParent()) {
+            $midgardNode->parent = $this->getParent()->getMidgard2Node()->id;
+            $midgardNode->parentguid = $this->getParent()->getMidgard2Node()->guid;
         }
 
         if (!$midgardNode->guid) {
             if (!$midgardNode->create()) {
                 $error = \midgard_connection::get_instance()->get_error();
                 if ($error == \MGD_ERR_DUPLICATE) {
-                    throw new \PHPCR\ItemExistsException('Node ' . $this->parent->getPath() . ' already has a child named ' . $this->getName());
+                    throw new \PHPCR\ItemExistsException('Node ' . $this->getParent()->getPath() . ' already has a child named ' . $this->getName());
 
                 }
                 throw new \Exception(\midgard_connection::get_instance()->get_error_string());
@@ -1143,6 +1155,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             );
             $select->execute();
             $nodes = $select->list_objects();
+            if (!$nodes) {
+                throw new ItemNotFoundException("Node {$this->midgardNode->guid} not found: " . \midgard_connection::get_instance()->get_error_string());
+            }
             $this->midgardNode = $nodes[0];
         }
         $this->is_removed = false;
@@ -1194,8 +1209,13 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $child->removeMidgard2Node();
         }
 
-        $mobject->purge();
-        $midgardNode->purge();
+        if ($mobject->guid) {
+            $mobject->purge();
+        }
+
+        if ($midgardNode->guid) {
+            $midgardNode->purge();
+        }
     }
     
     private function isReferenced()
@@ -1243,7 +1263,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         if (!isset($this->properties[$name])) {
             return;
         } 
-        $this->removeProperties[] = $this->properties[$name];
+        $this->removeProperties[$name] = $this->properties[$name];
         unset($this->properties[$name]);
     }
 

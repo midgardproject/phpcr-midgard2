@@ -36,6 +36,8 @@ class Session implements SessionInterface
         if ($credentials && !($credentials instanceof GuestCredentials)) {
             $this->isAnonymous = false;
         }
+
+        NodeRegistry::registerNode(new Node($this->rootObject, null, $this));
     }
 
     public function getRepository()
@@ -81,10 +83,7 @@ class Session implements SessionInterface
     
     public function getRootNode()
     {
-        if ($this->rootNode === null) {
-            $this->rootNode = new Node($this->rootObject, null, $this);
-        }
-        return $this->rootNode;
+        return NodeRegistry::getByPath('/');
     }
     
     public function impersonate(\PHPCR\CredentialsInterface $credentials)
@@ -94,62 +93,16 @@ class Session implements SessionInterface
     
     public function getNodeByIdentifier($id)
     {
-        /* TODO
-         * Try to get midgard object by guid if required */
-
-        $propertyStorage = new \midgard_query_storage('midgard_node_property');
-        $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
-        $q->add_join(
-            'INNER',
-            new \midgard_query_property('id'),
-            new \midgard_query_property('parent', $propertyStorage)
-        );
-        $group = new \midgard_query_constraint_group('OR');
-        $group->add_constraint(
-            new \midgard_query_constraint(
-                new \midgard_query_property('guid'),
-                '=',
-                new \midgard_query_value($id)
-            )
-        );
-        $uuidGroup = new \midgard_query_constraint_group('AND');
-        $uuidGroup->add_constraint(
-            new \midgard_query_constraint(
-                new \midgard_query_property('value', $propertyStorage), 
-                '=', 
-                new \midgard_query_value($id)
-            )
-        );
-        $uuidGroup->add_constraint(
-            new \midgard_query_constraint(
-                new \midgard_query_property('title', $propertyStorage), 
-                '=', 
-                new \midgard_query_value('jcr:uuid')
-            )
-        ); 
-        $group->add_constraint($uuidGroup);
-        $q->set_constraint($group);
-        $q->execute();
-       
-        if ($q->get_results_count() < 1)
-        {
-            throw new \PHPCR\ItemNotFoundException("Node identified by {$id} not found");
-        }
-
-        $midgardNode = current($q->list_objects());
-        $node = new Node($midgardNode, null, $this);
-        $nodePath = $node->getPath();
-        foreach ($this->removeNodes as $removeNode) {
-            if ($nodePath == $removeNode->getPath()) {
-                throw new \PHPCR\ItemNotFoundException("Node identified by {$id} not found");
-            }
-        }
-        return $node;
+        return NodeRegistry::getByUuid($id);
     }
 
     public function getNodesByIdentifier($ids)
     {
-        return array();
+        $ret = array();
+        foreach ($ids as $id) {
+            $ret[] = $this->getNodeByIdentifier($id);
+        }
+        return $ret;
     }
 
     public function getItem($absPath)

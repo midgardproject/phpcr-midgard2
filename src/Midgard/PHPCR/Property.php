@@ -119,6 +119,10 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     public function setValue($value, $type = null, $weak = FALSE)
     {
+        if (is_null($value)) {
+            return $this->remove();
+        }
+
         if ($type) {
             $this->type = $type;
         } elseif (!$this->type) {

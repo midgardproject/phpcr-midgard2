@@ -217,13 +217,16 @@ abstract class Item implements ItemInterface
         $storage = $this->getMidgard2PropertyStorage($name, $multiple, true);
         if ($multiple) {
             foreach ($storage as $propStorage) {
+                if (!$propStorage->guid) {
+                    continue;
+                }
                 $propStorage->purge_attachments(true);
                 $propStorage->purge();
             }
             return;
         }
 
-        if ($storage instanceof midgard_node_property) {
+        if ($storage instanceof midgard_node_property && $storage->guid) {
             $storage->purge_attachments(true);
             $storage->purge();
         }
