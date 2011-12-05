@@ -1085,9 +1085,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             return;
         }
 
-        if (!$midgardNode->parent && $this->getParent()) {
-            $midgardNode->parent = $this->getParent()->getMidgard2Node()->id;
-            $midgardNode->parentguid = $this->getParent()->getMidgard2Node()->guid;
+        if (!$midgardNode->parent && $this->parent) {
+            $midgardNode->parent = $this->parent->getMidgard2Node()->id;
+            $midgardNode->parentguid = $this->parent->getMidgard2Node()->guid;
         }
 
         if (!$midgardNode->guid) {
