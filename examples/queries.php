@@ -26,7 +26,7 @@ $repository = Midgard\PHPCR\RepositoryFactory::getRepository($parameters);
 
 // Log in
 $credentials = new \PHPCR\SimpleCredentials('admin', 'password');
-$session = $repository->login($credentials, 'default');
+$session = $repository->login($credentials);
 
 // Add node unless it already exists
 if (!$session->nodeExists('/example')) {

@@ -32,30 +32,12 @@ abstract class XMLExporter
             return $ret;
         }
 
-        $ret[0] = ' ';
-        $ret[1] = ' ';
-
-        $hasMixin = false;
         foreach ($properties as $name => $property)
         {
-            if ($name == 'jcr:primaryType')
-            {
-                $ret[0] = $property;
+            if ($name == 'jcr:primaryType' || $name == 'jcr:mixinTypes') {
+                continue;
             }
-            else if ($name == 'mix:mixinTypes')
-            {
-                $ret[1] = $property;
-                $hasMixin = true;
-            }
-            else
-            {
-                $ret[] = $property;
-            }
-        }
-        
-        if (!$hasMixin)
-        {
-            unset($ret[1]);
+            $ret[] = $property;
         }
         return $ret;
     }

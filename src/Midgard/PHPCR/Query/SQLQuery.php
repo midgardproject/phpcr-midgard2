@@ -2,6 +2,7 @@
 namespace Midgard\PHPCR\Query;
 
 use Midgard\PHPCR\Utils\NodeMapper;
+use PHPCR\NodeInterface;
 
 class SQLQuery implements \PHPCR\Query\QueryInterface
 {
@@ -9,9 +10,9 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     protected $qs = null;
     protected $statement = null;
     protected $selectors = array();
+    protected $node = null;
     protected $converter = null;
     protected $query = null;
-
     protected $storageType = null;
     
     public function __construct (\Midgard\PHPCR\Session $session, $statement)
@@ -20,8 +21,12 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->statement = $statement;
         $this->converter = new \PHPCR\Util\QOM\Sql2ToQomQueryConverter(new QOM\QueryObjectModelFactory());
         $this->query = $this->converter->parse($statement);
-        print_r($this->query);
         $this->QBFromStatement();
+    }
+
+    public function setNode(NodeInterface $node)
+    {
+        $this->node = $node;
     }
 
     private function addConstraintSingle(\midgard_query_constraint $constraint)
@@ -31,8 +36,6 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     private function addConstraintMultiple(array $constraints)
     {
-        var_dump($constraints);
-        die();
         $cg = new \midgard_query_constraint_group('AND');
         foreach ($constraints as $constraint) {
             $cg->add_constraint($constraint);
@@ -128,7 +131,11 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
      
     public function getStoredQueryPath()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        if (!$this->node) {
+            throw new \PHPCR\ItemNotFoundException("Query not stored");
+ 
+        }
+        return $this->node->getPath();
     }
   
     public function storeAsNode($absPath)

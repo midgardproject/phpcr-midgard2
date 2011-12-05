@@ -44,12 +44,9 @@ class XMLDocumentViewExporter extends XMLExporter
             }
 
             $propertyAttr = $this->xmlDoc->createAttribute($propertyName);
-            if ($property->getType() == \PHPCR\PropertyType::BINARY)
-            {
+            if ($property->getType() == \PHPCR\PropertyType::BINARY) {
                 $propertyAttr->value = $skipBinary ? '' : base64_encode($property->getString());
-            }
-            else
-            {
+            } else {
                 $propertyAttr->value = $property->getString();
             }
             $xmlNode->appendChild($propertyAttr);
@@ -89,26 +86,37 @@ class XMLDocumentViewExporter extends XMLExporter
             $xmlNode->appendChild($this->xmlNode);
         }
 
+        $primaryType = $this->xmlDoc->createAttribute('jcr:primaryType');
+        $primaryType->value = $node->getPrimaryNodeType()->getName();
+        $this->addNamespaceAttribute('jcr:primaryType');
+        $this->xmlNode->appendChild($primaryType);
+
+        $mixins = array();
+        $mixinTypes = $node->getMixinNodeTypes();
+        foreach ($mixinTypes as $mixinType) {
+            $mixins[] = $mixinType->getName();
+        }
+        if ($mixins) {
+            $mixinTypes = $this->xmlDoc->createAttribute('jcr:mixinTypes');
+            $mixinTypes->value = implode(' ', $mixins);
+            $this->xmlNode->appendChild($mixinTypes);
+        }
+
         $this->serializeProperties($node, $this->xmlNode, $skipBinary);
 
         $this->addNamespaceAttribute($nodeName);    
 
-        if ($noRecurse)
-        {
+        if ($noRecurse) {
             return;
         }
 
         $nodes = $node->getNodes();
-        if (empty($nodes))
-        {
+        if (empty($nodes)) {
             return;
         }   
 
-        foreach ($nodes as $name => $child)
-        {
+        foreach ($nodes as $name => $child) {
             $this->serializeNode($child, $this->xmlNode, $skipBinary, $noRecurse);
         }
     }
 }
-
-?>

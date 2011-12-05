@@ -1,10 +1,26 @@
 <?php
 namespace Midgard\PHPCR;
 
-class Repository implements \PHPCR\RepositoryInterface
+use PHPCR\RepositoryInterface;
+use PHPCR\CredentialsInterface;
+use PHPCR\RepositoryException;
+use PHPCR\LoginException;
+use PHPCR\NoSuchWorkspaceException;
+use midgard_storage;
+use midgard_connection;
+use midgard_config;
+use midgard_user;
+use midgard_node;
+use midgard_workspace;
+use midgard_workspace_manager;
+use midgard_error_exception;
+use ReflectionExtension;
+use ReflectionClass;
+
+class Repository implements RepositoryInterface
 {
     protected $descriptors = array(
-        'identifier.stability' => \PHPCR\RepositoryInterface::IDENTIFIER_STABILITY_INDEFINITE_DURATION,
+        'identifier.stability' => RepositoryInterface::IDENTIFIER_STABILITY_INDEFINITE_DURATION,
         'jcr.repository.name' => 'Midgard2',
         'jcr.repository.vendor' => 'The Midgard Project',
         'jcr.repository.vendor.url' => 'http://www.midgard-project.org',
@@ -62,69 +78,55 @@ class Repository implements \PHPCR\RepositoryInterface
     {
         $this->descriptors['jcr.repository.version'] = mgd_version();
 
-        if (version_compare(mgd_version(), '10.05.4', '>'))
-        {
+        if (version_compare(mgd_version(), '10.05.4', '>')) {
             $this->descriptors['option.workspace.management.supported'] = true; 
         }
 
         $this->connection = $this->midgard2Connect($parameters);
     }
 
-    public function login(\PHPCR\CredentialsInterface $credentials = null, $workspaceName = null)
+    public function login(CredentialsInterface $credentials = null, $workspaceName = null)
     {
         $user = $this->midgard2Login($credentials);
 
         $rootObject = $this->getRootObject();
 
-        if ($workspaceName != null)
-        {
+        if ($workspaceName != null) {
             $this->midgard2SetWorkspace($workspaceName);
         }
 
-        /* if (   $credentials instanceof \PHPCR\GuestCredentials
-            || is_null($credentials))
-        {
-            // Anonymous session
-            return new Session($this->connection, $this, $user, $rootObject, $credentials);
-        } */
-        
         return new Session($this->connection, $this, $user, $rootObject, $credentials);
     }
     
     private function midgard2Connect(array $parameters = null)
     {
-        $mgd = \midgard_connection::get_instance();
+        $mgd = midgard_connection::get_instance();
         if ($mgd->is_connected())
         {
             return $mgd;
         }
 
-        $config = new \midgard_config();
-        if (isset($parameters['midgard2.configuration.file']))
-        {
+        $config = new midgard_config();
+        if (isset($parameters['midgard2.configuration.file'])) {
             $config->read_file_at_path($parameters['midgard2.configuration.file']);
         }
         elseif (   isset($parameters['midgard2.configuration.db.type'])
                 && isset($parameters['midgard2.configuration.db.name'])
-                && isset($parameters['midgard2.configuration.db.dir']))
-        {
+                && isset($parameters['midgard2.configuration.db.dir'])) {
             $config->dbtype = $parameters['midgard2.configuration.db.type'];
             $config->database = $parameters['midgard2.configuration.db.name'];
             $config->dbdir = $parameters['midgard2.configuration.db.dir'];
         }
-        else
-        {
-            throw new \PHPCR\RepositoryException('No initialized Midgard2 connection or configuration parameters available');
+        else {
+            throw new RepositoryException('No initialized Midgard2 connection or configuration parameters available');
         }
 
-        if (isset($parameters['midgard2.configuration.loglevel']))
-        {
+        if (isset($parameters['midgard2.configuration.loglevel'])) {
             $config->loglevel = $parameters['midgard2.configuration.loglevel'];
         }
 
-        $mgd = \midgard_connection::get_instance();
-        if (!$mgd->open_config($config))
-        {
+        $mgd = midgard_connection::get_instance();
+        if (!$mgd->open_config($config)) {
             throw new \PHPCR\RepositoryException($mgd->get_error_string());
         }
 
@@ -132,8 +134,7 @@ class Repository implements \PHPCR\RepositoryInterface
         $mgd->enable_quota(false);
 
         if (   isset($parameters['midgard2.configuration.db.init'])
-            && $parameters['midgard2.configuration.db.init'])
-        {
+            && $parameters['midgard2.configuration.db.init']) {
             $this->midgard2InitDb($mgd);
         }
 
@@ -146,10 +147,8 @@ class Repository implements \PHPCR\RepositoryInterface
             return null;
         }
 
-        if (   !method_exists($credentials, 'getUserID')
-            || !method_exists($credentials, 'getPassword'))
-        {
-            throw new \PHPCR\LoginException("Invalid credentials");
+        if (   !method_exists($credentials, 'getUserID') || !method_exists($credentials, 'getPassword')) {
+            throw new LoginException("Invalid credentials");
         }
 
         // TODO: Handle different authtypes
@@ -161,14 +160,12 @@ class Repository implements \PHPCR\RepositoryInterface
             'active' => true
         );
         
-        try
-        {
-            $user = new \midgard_user($tokens);
+        try {
+            $user = new midgard_user($tokens);
             $user->login();
         }
-        catch (\midgard_error_exception $e)
-        {
-            throw new \PHPCR\LoginException($e->getMessage());
+        catch (midgard_error_exception $e) {
+            throw new LoginException($e->getMessage());
         }
         
         return $user;
@@ -179,20 +176,16 @@ class Repository implements \PHPCR\RepositoryInterface
      */
     private function midgard2SetWorkspace($workspaceName)
     {
-        if (!$this->descriptors['option.workspace.management.supported'])
-        {
+        if (!$this->descriptors['option.workspace.management.supported']) {
             return;
         }
 
-        $ws = new \midgard_workspace();
-        $wmanager = new \midgard_workspace_manager($this->connection);
-        if ($wmanager->path_exists($workspaceName) == false)
-        {
-            $ws->name = $workspaceName;
-            $wmanager->create_workspace($ws, "");
+        $ws = new midgard_workspace();
+        $wmanager = new midgard_workspace_manager($this->connection);
+        if (!$wmanager->path_exists($workspaceName)) {
+            throw new NoSuchWorkspaceException("Workspace {$workspaceName} not defined");
         }
-        else 
-        {
+        else {
             $wmanager->get_workspace_by_path($ws, $workspaceName);   
         }
 
@@ -202,14 +195,13 @@ class Repository implements \PHPCR\RepositoryInterface
 
     private function midgard2InitDb($connection)
     {
-        if ($this->descriptors['option.workspace.management.supported'])
-        {
+        if ($this->descriptors['option.workspace.management.supported']) {
             $connection->enable_workspace(true);
         }
 
-        \midgard_storage::create_base_storage();
+        midgard_storage::create_base_storage();
 
-        $re = new \ReflectionExtension('midgard2');
+        $re = new ReflectionExtension('midgard2');
         $classes = $re->getClasses();
         foreach ($classes as $refclass) {
             if ($refclass->isAbstract() || $refclass->isInterface()) {
@@ -221,33 +213,31 @@ class Repository implements \PHPCR\RepositoryInterface
                 continue;
             }
 
-            if (\midgard_storage::class_storage_exists($type)) {
+            if (midgard_storage::class_storage_exists($type)) {
                 continue;
             }
 
-            \midgard_storage::create_class_storage($type);
+            midgard_storage::create_class_storage($type);
         }
 
         /* Prepare properties view */
-        \midgard_storage::create_class_storage("midgard_property_view");
+        midgard_storage::create_class_storage("midgard_property_view");
 
         /* Prepare namespace registry */
-        \midgard_storage::create_class_storage("midgard_namespace_registry");
+        midgard_storage::create_class_storage("midgard_namespace_registry");
 
         /* Create required root node */
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
         $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
         $q->execute();
-        if ($q->get_results_count() == 0)
-        {
-            $root_object = new \midgard_node();
+        if ($q->get_results_count() == 0) {
+            $root_object = new midgard_node();
             $root_object->name = "root";
             $root_object->parent = 0;
             $root_object->create();
         }
 
-        if ($this->descriptors['option.workspace.management.supported'])
-        {
+        if ($this->descriptors['option.workspace.management.supported']) {
             $connection->enable_workspace(false);
         }
     }
@@ -255,9 +245,8 @@ class Repository implements \PHPCR\RepositoryInterface
     private function getRootObject()
     {
         $rootnodes = $this->getRootNodes();
-        if (empty($rootnodes))
-        {
-            throw new \PHPCR\NoSuchWorkspaceException('No root nodes defined');
+        if (empty($rootnodes)) {
+            throw new NoSuchWorkspaceException('No root nodes defined');
         }
         return $rootnodes[0];
     }
@@ -278,7 +267,7 @@ class Repository implements \PHPCR\RepositoryInterface
     
     public function isStandardDescriptor($key)
     {
-        $ref = new \ReflectionClass('\PHPCR\RepositoryInterface');
+        $ref = new ReflectionClass('PHPCR\RepositoryInterface');
         $consts = $ref->getConstants();
         return in_array($key, $consts);
     }
@@ -290,14 +279,12 @@ class Repository implements \PHPCR\RepositoryInterface
 
     public static function checkMidgard2Exception($object = null)
     {
-        if (\midgard_connection::get_instance()->get_error() != MGD_ERR_OK)
-        {
+        if (midgard_connection::get_instance()->get_error() != MGD_ERR_OK) {
             $msg = "";
-            if ($object != null)
-            {
+            if ($object != null) {
                 $msg = get_class($object) . "." . $object->name . " : ";
             }
-            throw new \PHPCR\RepositoryException($msg . \midgard_connection::get_instance()->get_error_string());
+            throw new RepositoryException($msg . midgard_connection::get_instance()->get_error_string());
         }
     }
 }

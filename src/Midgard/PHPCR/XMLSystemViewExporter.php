@@ -29,12 +29,12 @@ class XMLSystemViewExporter extends XMLExporter
     public function serializeProperties(Node $node, \DOMNode $xmlNode, $skipBinary)
     {
         $properties = self::sortProperties($node);
-        if (empty($properties))
-        {
+        if (empty($properties)) {
             return;
         }
-        foreach ($properties as $property)
-        {
+        $properties[] = $node->getProperty('jcr:primaryType');
+        $properties[] = $node->getProperty('jcr:mixinTypes');
+        foreach ($properties as $property) {
             /* Create property node */
             $pNode = $this->xmlDoc->createElementNS($this->svUri, $this->svNS . ":" . 'property');
             
