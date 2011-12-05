@@ -41,7 +41,10 @@ if (!$session->nodeExists('/test')) {
 $session->exportDocumentView('/test', fopen('/tmp/exportedNode.xml', 'w'), true, true);
 
 if (!$repository->getDescriptor(\PHPCR\RepositoryInterface::OPTION_XML_IMPORT_SUPPORTED)) {
-    die("XML import not supported by repository\n");
+    echo "XML import not supported by repository\n";
+    echo "Exported XML was:\n\n";
+    echo file_get_contents('/tmp/exportedNode.xml');
+    die();
 }
 
 // Import the node into a new path
