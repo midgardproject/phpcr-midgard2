@@ -591,7 +591,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         if (!$this->hasProperty($relPath) || !isset($this->properties[$relPath])) {
-            throw new PathNotFoundException("Property at path '{$relPath}' not found at " . $this->getPath());
+            throw new PathNotFoundException("Property at path " . $this->getPath() . "/{$relPath} not found.");
         }
 
         return $this->properties[$relPath];
