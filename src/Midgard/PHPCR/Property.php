@@ -180,6 +180,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return;
         }
         $this->writeToStream($value, $streams);
+        $this->is_modified = true;
     }
     
     public function addValue($value)

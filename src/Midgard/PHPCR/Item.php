@@ -22,6 +22,7 @@ abstract class Item implements ItemInterface
     protected $parent = null;
     protected $is_new = false;
     protected $is_modified = false;
+    protected $isRoot = false;
     protected $contentObject = null;
     protected $midgardNode = null;
     protected $propertyManager = null;
@@ -35,6 +36,10 @@ abstract class Item implements ItemInterface
 
         if ($this instanceof Property) {
             $this->contentObject = $this->getParent()->getMidgard2ContentObject();
+            return;
+        }
+
+        if (!$this->midgardNode->typename) {
             return;
         }
 
@@ -134,7 +139,7 @@ abstract class Item implements ItemInterface
 
         if (!$multiple && $checkContentObject) {
             $contentObject = $this->getMidgard2ContentObject();
-            if (property_exists($contentObject, $midgardName)) {
+            if ($contentObject && property_exists($contentObject, $midgardName)) {
                 return $contentObject;
             }
         }
@@ -377,6 +382,9 @@ abstract class Item implements ItemInterface
     {
         try {
             $parent = $this->getParent();
+            if (!$parent) {
+                return 1;
+            }
             return $parent->getDepth() + 1;
         } 
         catch (ItemNotFoundException $e) {

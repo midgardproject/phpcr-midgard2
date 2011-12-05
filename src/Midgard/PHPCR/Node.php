@@ -32,7 +32,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     protected $midgardPropertyNodes = null;
     protected $is_removed = false;
     protected $removeProperties = array();
-    protected $isRoot = false;
 
     public function __construct(midgard_node $midgardNode = null, Node $parent = null, Session $session)
     {
@@ -93,7 +92,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $midgardNode->parent = $this->getMidgard2Node()->id;
         $midgardNode->parentguid = $this->getMidgard2Node()->guid;
 
-        $newNode = $this->getSession()->getNodeRegistry()->getByMidgardNode($midgardNode);
+        $newNode = $this->getSession()->getNodeRegistry()->getByMidgardNode($midgardNode, $this);
         $this->children[$relPath] = $newNode;
 
         $this->is_modified = true;
@@ -1094,7 +1093,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             if (!$midgardNode->create()) {
                 $error = \midgard_connection::get_instance()->get_error();
                 if ($error == \MGD_ERR_DUPLICATE) {
-                    throw new \PHPCR\ItemExistsException('Node ' . $this->getParent()->getPath() . ' already has a child named ' . $this->getName());
+                    throw new \PHPCR\ItemExistsException('Node ' . $this->getPath() . ' already exists');
 
                 }
                 throw new \Exception(\midgard_connection::get_instance()->get_error_string());

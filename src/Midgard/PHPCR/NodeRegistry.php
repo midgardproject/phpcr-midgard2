@@ -24,15 +24,14 @@ class NodeRegistry
         $this->getByMidgardNode($root);
     }
 
-    public function getByMidgardNode(midgard_node $node)
+    public function getByMidgardNode(midgard_node $node, Node $parent = null)
     {
         if ($node->guid && isset($this->byGuid[$node->guid])) {
             return $this->getByMidgardGuid($node->guid);
         }
 
-        $parent = null;
         $path = null;
-        if ($node->parentguid) {
+        if (!$parent && $node->parentguid) {
             $parent = $this->getByMidgardGuid($node->parentguid);
         }
 
