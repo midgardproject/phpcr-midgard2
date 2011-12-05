@@ -158,16 +158,24 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         $this->parent->is_modified = true;
     }
 
+    private function writeToStream($source, $target)
+    {
+        rewind($source);
+        stream_copy_to_stream($source, $target);
+        rewind($target);
+    }
+
     private function setBinaryValue($value)
     {
         $streams = $this->getMidgard2PropertyBinary($this->getName(), $this->isMultiple());
         if ($this->isMultiple()) {
-            // FIXME: Implement
+            foreach ($streams as $stream) {
+                $val = array_shift($value);
+                $this->writeToStream($val, $stream);
+            }
             return;
         }
-        rewind($value);
-        stream_copy_to_stream($value, $streams);
-        rewind($streams);
+        $this->writeToStream($value, $streams);
     }
     
     public function addValue($value)
@@ -361,13 +369,10 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     public function getLengths()
     {
         $v = $this->getNativeValue();
-        if (is_array($v))
-        {
+        if (is_array($v)) {
             /* Native values are always strings */
-            foreach ($v as $values)
-            {
-                if ($this->type == PropertyType::BINARY)
-                {
+            foreach ($v as $values) {
+                if ($this->getType() == PropertyType::BINARY) {
                     $stat = fstat($values);
                     $ret[] = $stat['size'];
                     continue;
@@ -376,7 +381,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             }
             return $ret;
         }
-        throw new \PHPCR\ValueFormatException("Can not get lengths of single value");
+        throw new ValueFormatException("Can not get lengths of single value");
     }
     
     public function getDefinition()

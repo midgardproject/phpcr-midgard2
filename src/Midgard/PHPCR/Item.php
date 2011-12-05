@@ -179,7 +179,11 @@ abstract class Item implements ItemInterface
 
         $ret = array();
         foreach ($object as $propertyObject) {
-            if (isset($propertyObject->stream)) {
+            if (isset($propertyObject->stream) && is_resource($propertyObject->stream)) {
+                rewind($propertyObject->stream);
+                $oldStream = $propertyObject->stream;
+                $propertyObject->stream = fopen('php://memory', 'rwb');
+                stream_copy_to_stream($oldStream, $propertyObject->stream);
                 rewind($propertyObject->stream);
                 $ret[] = $propertyObject->stream;
                 continue;
