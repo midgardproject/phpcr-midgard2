@@ -288,8 +288,7 @@ class Session implements SessionInterface
         foreach ($children as $name => $child) 
         { 
             /* FIXME DO NOT EXPECT BOOLEAN, CATCH EXCEPTION */
-            if ($this->_node_save ($child) === false)
-            {
+            if ($this->_node_save ($child) === false) {
                 $midgard_errcode = \midgard_connection::get_instance()->get_error();
                 $midgard_errstr = \midgard_connection::get_instance()->get_error_string();
                 switch ($midgard_errcode) 

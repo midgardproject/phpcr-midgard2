@@ -1102,20 +1102,17 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $midgardNode->update();
         }
 
-        if (!$mobject->guid) {
-            if ($mobject->create()) { 
-                $midgardNode->typename = get_class($mobject);
-                $midgardNode->objectguid = $mobject->guid;
-                $midgardNode->update();
-            }
-            else {
-                throw new \Exception(\midgard_connection::get_instance()->get_error_string());
-            }
-        } else {
-            if ($mobject->update()) {    
-                $midgardNode->update();
+        if ($mobject) {
+            if (!$mobject->guid) {
+                if ($mobject->create()) { 
+                    $midgardNode->typename = get_class($mobject);
+                    $midgardNode->objectguid = $mobject->guid;
+                    $midgardNode->update();
+                } else {
+                    throw new \Exception(\midgard_connection::get_instance()->get_error_string());
+                }
             } else {
-                throw new \PHPCR\RepositoryException(\midgard_connection::get_instance()->get_error_string());
+                $mobject->update();
             }
         }
 
