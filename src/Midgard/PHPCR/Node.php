@@ -1073,8 +1073,20 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             return;
         }
 
+        if (!$midgardNode->parent && $this->parent) {
+            $midgardNode->parent = $this->parent->getMidgard2Node()->id;
+            $midgardNode->parentguid = $this->parent->getMidgard2Node()->guid;
+        }
+
         if (!$midgardNode->guid) {
-            $midgardNode->create();
+            if (!$midgardNode->create()) {
+                $error = \midgard_connection::get_instance()->get_error();
+                if ($error == \MGD_ERR_DUPLICATE) {
+                    throw new \PHPCR\ItemExistsException('Node ' . $this->parent->getPath() . ' already has a child named ' . $this->getName());
+
+                }
+                throw new \Exception(\midgard_connection::get_instance()->get_error_string());
+            }
         } else {
             $midgardNode->update();
         }
