@@ -193,7 +193,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getBinary();
         } 
 
-        return $this->getMidgard2PropertyValue($this->getName(), $this->isMultiple());
+        return $this->getMidgard2PropertyValue($this->getName(), $this->isMultiple(), true, false);
     }
 
     public function getString()

@@ -186,10 +186,13 @@ abstract class Item implements ItemInterface
         }
     }
 
-    protected function getMidgard2PropertyValue($name, $multiple, $checkContentObject = true)
+    protected function getMidgard2PropertyValue($name, $multiple, $checkContentObject = true, $prepareNew = true)
     {
-        $object = $this->getMidgard2PropertyStorage($name, $multiple, $checkContentObject);
+        $object = $this->getMidgard2PropertyStorage($name, $multiple, $checkContentObject, $prepareNew);
         if (!$object) {
+            if ($multiple) {
+                return array();
+            }
             return null;
         }
 
