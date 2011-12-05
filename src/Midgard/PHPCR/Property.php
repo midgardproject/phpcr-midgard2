@@ -458,13 +458,9 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     private function savePropertyObject($propertyObject)
     {
-        if (!$propertyObject->name) {
-            $midgardName = NodeMapper::getMidgardPropertyName($this->getName());
-            $propertyObject->name = $midgardName;
-        }
-        if (!$propertyObject->title) {
-            $propertyObject->title = $this->getName();
-        }
+        $midgardName = NodeMapper::getMidgardPropertyName($this->getName());
+        $propertyObject->name = $midgardName;
+        $propertyObject->title = $this->getName();
 
         $type = $this->getType();
         if (!$type && !$propertyObject->type) {
