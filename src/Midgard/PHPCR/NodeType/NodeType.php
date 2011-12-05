@@ -21,7 +21,6 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
         $this->childNodeDefinitions = $ntt->getDeclaredChildNodeDefinitions();
         $this->propertyDefinitions = $ntt->getDeclaredPropertyDefinitions();
-        $this->supertypeNames = $ntt->getDeclaredSuperTypeNames();
         $this->primaryItemName = $ntt->getPrimaryItemName();
         $this->hasOrderableChildNodes = $ntt->hasOrderableChildNodes();
         $this->isAbstract = $ntt->isAbstract();
@@ -45,19 +44,15 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
             return new ArrayIterator($this->subTypeDefinitions);
         }
 
-        $midgardName = NodeMapper::getMidgardName($this->name);
-        $children = midgard_reflector_object::list_children($midgardName);
         $this->subTypeDefinitions = array();
-
-        if (!$children) {
-            return new ArrayIterator($this->subTypeDefinitions);
+        $types = $this->nodeTypeManager->getAllNodeTypes();
+        foreach ($types as $type) {
+            $superTypes = $type->getDeclaredSuperTypeNames();
+            if (in_array($this->getName(), $superTypes)) {
+                $this->subTypeDefinitions[$type->getName()] = $type;
+            }
         }
 
-        foreach ($children as $name => $v) {
-            $childName = NodeMapper::getPHPCRName($name);
-            $childDefinition = new NodeTypeDefinition($childName, $this->nodeTypeManager);
-            $this->subTypeDefinitions[$childName] = $childDefinition;
-        }
         return new ArrayIterator($this->subTypeDefinitions);
     }
 
@@ -79,6 +74,10 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
     {
         if ($this->name === $nodeTypeName) {
             return true;
+        }
+
+        if (!$this->nodeTypeManager->hasNodeType($nodeTypeName)) {
+            return false;
         }
 
         $superTypes = $this->getSupertypes();
