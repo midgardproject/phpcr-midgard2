@@ -49,6 +49,7 @@ class NodeRegistry
 
         if ($node->getMidgard2Node()->guid) {
             $this->byGuid[$node->getMidgard2Node()->guid] = $node;
+            $this->byUuid[$node->getMidgard2Node()->guid] = $node;
         }
 
         if ($node->hasProperty('jcr:uuid')) {
