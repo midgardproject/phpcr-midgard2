@@ -37,7 +37,7 @@ abstract class Item implements ItemInterface
             return;
         }
 
-        $midgardType = '\\' . NodeMapper::getMidgardName($this->getTypeName(false));
+        $midgardType = '\\' . $this->midgardNode->typename;
         if ($this->midgardNode->objectguid) {
             $this->contentObject = new $midgardType($this->midgardNode->objectguid);
         } else {
@@ -207,7 +207,6 @@ abstract class Item implements ItemInterface
         if ($object instanceof midgard_node_property) {
             return $object->value;
         }
-
         $midgardName = NodeMapper::getMidgardPropertyName($name);
         return $object->$midgardName;
     }
