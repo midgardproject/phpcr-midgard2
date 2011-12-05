@@ -10,6 +10,7 @@ use PHPCR\RepositoryException;
 use IteratorAggregate;
 use DateTime;
 use Midgard\PHPCR\Utils\NodeMapper;
+use midgard_attachment;
 use midgard_blob;
 use midgard_node_property;
 
@@ -19,6 +20,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     protected $type = PropertyType::UNDEFINED;
     protected $definition = null;
     protected $multiple = null;
+    private $streams = array();
 
     public function __construct(Node $node, $propertyName, PropertyDefinitionInterface $definition = null, $type = null)
     {
@@ -128,9 +130,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
         /* Check if property is registered.
          * If it is, we need to validate if conversion follows the spec: "3.6.4 Property Type Conversion" */
-        if ($this->definition && $type && $this->getType() != $type) {
-            $value = PropertyType::convertType($value, $this->getType(), $type);
-        }
+        $value = PropertyType::convertType($value, $this->getType());
 
         /* TODO, handle:
          * \PHPCR\Version\VersionException 
@@ -149,9 +149,25 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             $normalizedValue = array($normalizedValue);
         }
 
-        $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
+        if ($this->getType() == PropertyType::BINARY) {
+            $this->setBinaryValue($value);
+        } else {
+            $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
+        }
         $this->is_modified = true;
         $this->parent->is_modified = true;
+    }
+
+    private function setBinaryValue($value)
+    {
+        $streams = $this->getMidgard2PropertyBinary($this->getName(), $this->isMultiple());
+        if ($this->isMultiple()) {
+            // FIXME: Implement
+            return;
+        }
+        rewind($value);
+        stream_copy_to_stream($value, $streams);
+        rewind($streams);
     }
     
     public function addValue($value)
@@ -228,45 +244,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return PropertyType::convertType($this->getNativeValue(), PropertyType::BINARY, $this->getType());
         }
 
-        $object = $this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple());
-
-        $constraints = array(
-            'name' => $this->getName(),
-        );
-
-        $ret = array();
-        $attachments = array();
-        $persistent = false;
-        if (is_array($object)) {
-            foreach ($object as $propertyObject) {
-                if (!is_object($propertyObject)) {
-                    continue;
-                }
-                if (!$propertyObject->guid) {
-                    continue;
-                }
-                $persistent = true;
-                $attachments = array_merge($attachments, $propertyObject->find_attachments($constraints));
-            }
-        } elseif ($object->guid) {
-            $persistent = true;
-            $attachments = $object->find_attachments($constraints);
-        }
-
-        foreach ($attachments as $att) {
-            $blob = new midgard_blob($att);
-            $ret[] = $blob->get_handler('r');
-        }
-
-        if (empty($ret) && !$persistent) {
-            // FIXME: We should use temporary files in this case
-            throw new RepositoryException('Unable to load attachments of non-persistent object');
-        }
-
-        if ($this->isMultiple()) {
-            return $ret;
-        }
-        return $ret[0];
+        return $this->getMidgard2PropertyBinary($this->getName(), $this->isMultiple());
     }
     
     public function getLong()
@@ -491,9 +469,33 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         }
         if ($propertyObject->guid) {
             $propertyObject->update();
-            return;
+        } else {
+            $propertyObject->create();
         }
-        $propertyObject->create();
+
+        if ($this->getType() == PropertyType::BINARY) {
+            if (!isset($propertyObject->stream)) {
+                return;
+            }
+            $attachments = $propertyObject->find_attachments(array('name' => $this->getName()));
+            if (!$attachments) {
+                $att = new midgard_attachment();
+                $att->name = $this->getName();
+                $att->parentguid = $propertyObject->guid;
+                $attachments = array($att);
+            }
+
+            $blob = new midgard_blob($attachments[0]);
+            rewind($propertyObject->stream);
+            $blob->write_content(stream_get_contents($propertyObject->stream));
+            rewind($propertyObject->stream);
+
+            if ($attachments[0]->guid) {
+                $attachments[0]->update();
+                return;
+            }
+            $attachments[0]->create();
+        }
     }
 
     public function save()
