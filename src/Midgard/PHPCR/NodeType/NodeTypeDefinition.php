@@ -20,6 +20,16 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
     protected $isAbstract = false;
     protected $isMixin = false;
     protected $isQueryable = false;
+    protected $midgardInternalProps = array(
+        'connection',
+        'guid',
+        'metadata',
+        'action',
+        'id',
+        'name',
+        'parent',
+        'parentname',
+    );
 
     public function __construct($name = null, NodeTypeManager $mgr)
     {
@@ -54,6 +64,9 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         $this->propertyDefinitions = array();
         $properties = midgard_reflector_object::list_defined_properties($midgardName);
         foreach ($properties as $property => $value) {
+            if (in_array($property, $this->midgardInternalProps)) {
+                continue;
+            }
             $propertyPHPCR = NodeMapper::getPHPCRProperty($property);
             if (!$propertyPHPCR) {
                 continue;
