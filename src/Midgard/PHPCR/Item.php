@@ -11,6 +11,7 @@ use midgard_query_constraint_group;
 use midgard_query_storage;
 use midgard_query_property;
 use midgard_query_value;
+use midgard_blob;
 use midgard_node;
 use midgard_node_property;
 use Midgard\PHPCR\Utils\NodeMapper;
@@ -184,18 +185,18 @@ abstract class Item implements ItemInterface
                 continue;
             }
 
-            $propertyObject->stream = fopen('php://memory', 'rwb+');
+            $propertyObject->stream = fopen('php://memory', 'rwb');
             $ret[] = $propertyObject->stream;
             if (!$propertyObject->guid) {
                 continue;
             }
 
             $attachments = $propertyObject->find_attachments(array('name' => $name));
-            var_dump($attachments);
             if ($attachments) {
                 // Existing attachment, copy to a new in-memory stream
                 $blob = new midgard_blob($attachments[0]);
-                $source = $blob->get_handler('rwb+');
+                $source = $blob->get_handler('r');
+                rewind($source);
                 stream_copy_to_stream($source, $propertyObject->stream);
                 rewind($propertyObject->stream);
             }

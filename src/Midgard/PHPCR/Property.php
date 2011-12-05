@@ -202,7 +202,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     public function getNativeValue()
     {
-        if ($this->type == PropertyType::BINARY) {
+        if ($this->getType() == PropertyType::BINARY) {
             return $this->getBinary();
         } 
 
@@ -243,7 +243,6 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         if ($this->getType() != PropertyType::BINARY) {
             return PropertyType::convertType($this->getNativeValue(), PropertyType::BINARY, $this->getType());
         }
-
         return $this->getMidgard2PropertyBinary($this->getName(), $this->isMultiple());
     }
     
