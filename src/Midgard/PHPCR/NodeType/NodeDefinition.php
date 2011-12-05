@@ -2,18 +2,28 @@
 namespace Midgard\PHPCR\NodeType;
 
 use PHPCR\NodeType\NodeDefinitionInterface;
+use Midgard\PHPCR\Utils\NodeMapper;
 
 class NodeDefinition implements NodeDefinitionInterface
 {
+    protected $name = null;
     protected $node = null;
     protected $midgardNode = null;
     protected $typename = null;
 
-    public function __construct(\Midgard\PHPCR\Node $node)
+    public function __construct(\Midgard\PHPCR\Node $node = null, $name= null, $typename = null, NodeTypeManager $mgr)
     {
         $this->node = $node;
-        $this->midgardNode = $node->getMidgard2Node();
-        $this->typename = $this->midgardNode->typename;
+        if ($node) {
+            $this->midgardNode = $node->getMidgard2Node();
+            $this->typename = $this->midgardNode->typename;
+            $this->name = $node->getName();
+        } else {
+            $this->name = $name;
+            $this->typename = $typename;
+        }
+
+        $this->nodeTypeManager = $mgr;
     }
 
     private function getBooleanSchemaValue($name)
@@ -66,8 +76,7 @@ class NodeDefinition implements NodeDefinitionInterface
 
     public function getDeclaringNodeType()
     {
-        /* TODO */
-        return null;
+        return $this->nodeTypeManager->getNodeType(NodeMapper::getPHPCRName($this->typename));
     }
 
     public function getName()

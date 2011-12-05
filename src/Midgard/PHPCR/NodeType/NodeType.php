@@ -140,7 +140,7 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
         }
 
         foreach ($childNodeDefs as $def) {
-            if ($def->isNodeType($nodeTypeName)) {
+            if ($def->getDeclaringNodeType()->isNodeType($nodeTypeName)) {
                 return true;
             }
         }

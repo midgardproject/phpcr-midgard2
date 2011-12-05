@@ -48,10 +48,12 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         $reflector = new midgard_reflection_class($midgardName);
         $primaryTypes = $reflector->get_user_value('RequiredPrimaryTypes');
         if (empty($primaryTypes)) {
-            return null;
+            return array();
         }
 
-        return array($this->nodeTypeManager->getNodeType($primaryTypes));
+        $childName = $reflector->get_user_value('PrimaryItemName');
+
+        return array(new NodeDefinition(null, $childName, $primaryTypes, $this->nodeTypeManager));
     }
 
     public function getDeclaredPropertyDefinitions()
@@ -73,7 +75,6 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
             }
             $this->propertyDefinitions[$property] = new PropertyDefinition($this, $propertyPHPCR); 
         }
-
         return $this->propertyDefinitions;
     }
 

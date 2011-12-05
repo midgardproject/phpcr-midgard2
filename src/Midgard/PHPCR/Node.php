@@ -886,7 +886,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function getDefinition()
     {
-        return new NodeDefinition($this);
+        return new NodeDefinition($this, null, null, $this->session->getWorkspace()->getNodeTypeManager());
     }
     
     public function update($srcWorkspace)
