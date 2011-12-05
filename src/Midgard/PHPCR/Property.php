@@ -516,7 +516,13 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         if (!$propertyObject->title) {
             $propertyObject->title = $this->getName();
         }
-        $propertyObject->type = $this->getType();
+
+        $type = $this->getType();
+        if (!$type && !$propertyObject->type) {
+            $type = PropertyType::determineType($propertyObject->value);
+        }
+        $propertyObject->type = $type;
+
         if (!$propertyObject->parent) {
             $propertyObject->parent = $this->getMidgard2Node()->id;
             $propertyObject->parentguid = $this->getMidgard2Node()->guid;
