@@ -58,7 +58,12 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
     public function getSubtypes()
     {
-        return $this->getDeclaredSubTypes();
+        $subTypes = array();
+        foreach ($this->getDeclaredSubtypes() as $subType) {
+            $subTypes[$subType->getName()] = $subType;
+            $subTypes = array_merge($subTypes, iterator_to_array($subType->getSubtypes()));
+        }
+        return new ArrayIterator($subTypes);
     }
 
     public function getDeclaredSupertypes()
