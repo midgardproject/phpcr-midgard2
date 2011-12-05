@@ -84,9 +84,6 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         }
 
         $this->supertypeNames = array();
-        if ($this->name != 'nt:base' && !$this->isMixin()) {
-            $this->supertypeNames[] = 'nt:base';
-        }
 
         // Get supertypes based on PHP hierarchy
         $midgardName = NodeMapper::getMidgardName($this->name);
@@ -106,6 +103,23 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
                 $this->supertypeNames[] = $superType;
             }
         }
+
+        if (!$this->isMixin() && $this->getName() != 'nt:base' && !in_array('nt:base', $this->supertypeNames)) {
+            // Primary types extend nt:base automatically
+            // but only if they don't already extend another
+            // primary type
+            $extendsPrimary = false;
+            foreach ($this->supertypeNames as $superTypeName) {
+                $superType = $this->nodeTypeManager->getNodeType($superTypeName);
+                if (!$superType->isMixin()) {
+                    $extendsPrimary = true;
+                }
+            }
+            if (!$extendsPrimary) {
+                $this->supertypeNames[] = 'nt:base';
+            }
+        }
+
         return $this->supertypeNames;
     }
 
