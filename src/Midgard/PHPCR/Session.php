@@ -17,27 +17,30 @@ class Session implements SessionInterface
     protected $connection = null;
     protected $repository = null;
     protected $user = null;
-    protected $rootObject = null;
-    protected $rootNode = null;
     protected $workspace = null;
     protected $removeNodes = array();
     private $transaction = null;
     private $nsregistry = null;
     private $credentials = null;
     private $isAnonymous = true;
+    private $nodeRegistry = null;
 
     public function __construct(midgard_connection $connection, Repository $repository, midgard_user $user = null, midgard_object $rootObject, CredentialsInterface $credentials = null)
     {
         $this->connection = $connection;
         $this->repository = $repository;
         $this->user = $user;
-        $this->rootObject = $rootObject;
         $this->credentials = $credentials;
         if ($credentials && !($credentials instanceof GuestCredentials)) {
             $this->isAnonymous = false;
         }
 
-        NodeRegistry::registerNode(new Node($this->rootObject, null, $this));
+        $this->nodeRegistry = new NodeRegistry($rootObject, $this);
+    }
+
+    public function getNodeRegistry()
+    {
+        return $this->nodeRegistry;
     }
 
     public function getRepository()
@@ -83,7 +86,7 @@ class Session implements SessionInterface
     
     public function getRootNode()
     {
-        return NodeRegistry::getByPath('/');
+        return $this->nodeRegistry->getByPath('/');
     }
     
     public function impersonate(\PHPCR\CredentialsInterface $credentials)
@@ -93,7 +96,7 @@ class Session implements SessionInterface
     
     public function getNodeByIdentifier($id)
     {
-        return NodeRegistry::getByUuid($id);
+        return $this->nodeRegistry->getByUuid($id);
     }
 
     public function getNodesByIdentifier($ids)

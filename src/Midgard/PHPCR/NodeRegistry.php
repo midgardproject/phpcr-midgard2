@@ -13,52 +13,59 @@ use midgard_query_value;
 
 class NodeRegistry
 {
-    private static $byGuid = array();
-    private static $byUuid = array();
-    private static $byPath = array();
+    private $byGuid = array();
+    private $byUuid = array();
+    private $byPath = array();
+    private $session = null;
 
-    public static function getByMidgardNode(midgard_node $node)
+    public function __construct(midgard_node $root, Session $session)
     {
-        if ($node->guid && isset(self::$byGuid[$node->guid])) {
-            return self::getByMidgardGuid($node->guid);
+        $this->session = $session;
+        $this->getByMidgardNode($root);
+    }
+
+    public function getByMidgardNode(midgard_node $node)
+    {
+        if ($node->guid && isset($this->byGuid[$node->guid])) {
+            return $this->getByMidgardGuid($node->guid);
         }
 
         $parent = null;
         $path = null;
         if ($node->parentguid) {
-            $parent = self::getByMidgardGuid($node->parentguid);
+            $parent = $this->getByMidgardGuid($node->parentguid);
         }
 
-        $crNode = new Node($node, $parent, self::getByPath('/')->getSession());
-        self::registerNode($crNode);
+        $crNode = new Node($node, $parent, $this->session);
+        $this->registerNode($crNode);
         return $crNode;
     }
 
-    public static function registerNode(Node $node)
+    public function registerNode(Node $node)
     {
         $path = $node->getPath();
         if ($path) {
-            self::$byPath[$path] = $node;
+            $this->byPath[$path] = $node;
         }
 
         if ($node->getMidgard2Node()->guid) {
-            self::$byGuid[$node->getMidgard2Node()->guid] = $node;
+            $this->byGuid[$node->getMidgard2Node()->guid] = $node;
         }
 
         if ($node->hasProperty('jcr:uuid')) {
-            self::$byUuid[$node->getPropertyValue('jcr:uuid')] = $node;
+            $this->byUuid[$node->getPropertyValue('jcr:uuid')] = $node;
         }
     }
 
-    public static function getByPath($path)
+    public function getByPath($path)
     {
-        if (!isset(self::$byPath[$path])) {
-            self::fetchByPath($path);
+        if (!isset($this->byPath[$path])) {
+            $this->fetchByPath($path);
         }
-        return self::$byPath[$path];
+        return $this->byPath[$path];
     }
 
-    public static function fetchByPath($path)
+    public function fetchByPath($path)
     {
         if (substr($absPath, 0, 1) != '/') {
             throw new RepositoryException("Full path required. Given one is '{$absPath}'");
@@ -68,18 +75,20 @@ class NodeRegistry
             throw new RepositoryException("Invalid path '{$absPath}'");
         }
 
-        return self::getByPath('/')->getNode(substr($absPath, 1));
+        $node = $this->getByPath('/')->getNode(substr($absPath, 1));
+        $this->registerNode($node);
+        return $node;
     }
 
-    public static function getByMidgardGuid($guid)
+    public function getByMidgardGuid($guid)
     {
-        if (!isset(self::$byGuid[$guid])) {
-            self::fetchByMidgardGuid($guid);
+        if (!isset($this->byGuid[$guid])) {
+            $this->fetchByMidgardGuid($guid);
         }
-        return self::$byGuid[$guid];
+        return $this->byGuid[$guid];
     }
 
-    public static function fetchByMidgardGuid($guid)
+    public function fetchByMidgardGuid($guid)
     {
         /* Replace this with 'new midgard_node'
          * Once, workspace bug is fixed:
@@ -101,18 +110,18 @@ class NodeRegistry
         }
 
         $nodes = $select->list_objects();
-        return self::getByMidgardNode($nodes[0]);
+        return $this->getByMidgardNode($nodes[0]);
     }
 
-    public static function getByUuid($uuid)
+    public function getByUuid($uuid)
     {
-        if (!isset(self::$byUuid[$uuid])) {
-            self::fetchByUuid($uuid);
+        if (!isset($this->byUuid[$uuid])) {
+            $this->fetchByUuid($uuid);
         }
-        return self::$byUuid[$uuid];
+        return $this->byUuid[$uuid];
     }
 
-    public static function fetchByUuid($uuid)
+    public function fetchByUuid($uuid)
     {
         $propertyStorage = new midgard_query_storage('midgard_node_property');
         $q = new midgard_query_select(new midgard_query_storage('midgard_node'));
@@ -152,6 +161,6 @@ class NodeRegistry
         }
 
         $nodes = $q->list_objects();
-        return self::getByMidgardNode($nodes[0]);
+        return $this->getByMidgardNode($nodes[0]);
     }
 }

@@ -42,6 +42,9 @@ abstract class Item implements ItemInterface
         if ($this->midgardNode->objectguid) {
             $this->contentObject = new $midgardType($this->midgardNode->objectguid);
         } else {
+            if (!class_exists($midgardType)) {
+                throw \Exception("{$midgardType} not found");
+            }
             $this->contentObject = new $midgardType();
         }
         /*

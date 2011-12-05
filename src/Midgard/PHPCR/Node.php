@@ -93,7 +93,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $midgardNode->parent = $this->getMidgard2Node()->id;
         $midgardNode->parentguid = $this->getMidgard2Node()->guid;
 
-        $newNode = NodeRegistry::getByMidgardNode($midgardNode);
+        $newNode = $this->getSession()->getNodeRegistry()->getByMidgardNode($midgardNode);
         $this->children[$relPath] = $newNode;
 
         $this->is_modified = true;
@@ -461,7 +461,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             return;
         }
 
-        $this->parent = NodeRegistry::getByMidgardGuid($this->getMidgard2Node()->parentguid);
+        $this->parent = $this->getSession()->getNodeRegistry()->getByMidgardGuid($this->getMidgard2Node()->parentguid);
     }
 
     private function populateChildren($appendOnly = false)
@@ -506,7 +506,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             if ($appendOnly && isset($this->children[$child->name])) {
                 continue;
             }
-            $this->children[$child->name] = NodeRegistry::getByMidgardNode($child);
+            $this->children[$child->name] = $this->getSession()->getNodeRegistry()->getByMidgardNode($child);
         }
     }
 
@@ -592,7 +592,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         if (!$this->hasProperty($relPath) || !isset($this->properties[$relPath])) {
-            throw new PathNotFoundException("Property at path '{$relPath}' not found at node " . $this->getName() . " at path " . $this->getPath());
+            throw new PathNotFoundException("Property at path '{$relPath}' not found at " . $this->getPath());
         }
 
         return $this->properties[$relPath];
