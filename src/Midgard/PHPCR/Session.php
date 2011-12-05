@@ -317,8 +317,7 @@ class Session implements SessionInterface
 
         try {
             /* Remove nodes marked as removed */
-            foreach ($this->removeNodes as $node)
-            {
+            foreach ($this->removeNodes as $node) {
                 $node->removeMidgard2Node();
             }
 
@@ -360,7 +359,7 @@ class Session implements SessionInterface
         }
 
         $t->commit();
-    
+
         //NoSuchNodeTypeException
         //ReferentialIntegrityException
     }

@@ -1127,7 +1127,23 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         if ($this->midgardNode->guid) {
-            $this->midgardNode = new midgard_node($this->midgardNode->guid);
+            /* Replace this with 'new midgard_node'
+             * Once, workspace bug is fixed:
+             * https://github.com/midgardproject/midgard-core/issues/129
+             */ 
+            $qst = new \midgard_query_storage('midgard_node');
+            $select = new \midgard_query_select($qst);
+            $select->toggle_readonly(false);
+            $select->set_constraint(
+                new \midgard_query_constraint(
+                    new \midgard_query_property('guid'),
+                    '=',
+                    new \midgard_query_value($this->midgardNode->guid)
+                )
+            );
+            $select->execute();
+            $nodes = $select->list_objects();
+            $this->midgardNode = $nodes[0];
         }
         $this->is_removed = false;
         $this->removeProperties = array();
@@ -1178,11 +1194,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $child->removeMidgard2Node();
         }
 
-        if ($mobject->purge()) {
-            $midgardNode->purge();
-            /* TODO, FIXME, Remove properties from Propertymanager */
-        }
-        Repository::checkMidgard2Exception($midgardNode);
+        $mobject->purge();
+        $midgardNode->purge();
     }
     
     private function isReferenced()
