@@ -57,14 +57,19 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         if ($this->isRoot) {
             return 'nt:folder';
         }
-
         $typeName = $this->getMidgard2PropertyValue('jcr:primaryType', false, $checkContentObject);
         if ($typeName) {
             return $typeName;
         }
 
         if ($this->getMidgard2Node()->typename) {
-            return NodeMapper::getPHPCRNAME($this->getMidgard2Node()->typename);
+            $primaryType = NodeMapper::getPHPCRNAME($this->getMidgard2Node()->typename);
+            if (isset($this->properties['jcr:primaryType'])) {
+                $this->properties['jcr:primaryType']->setValue($primaryType);
+            } else {
+                $this->setMidgard2PropertyValue('jcr:primaryType', false, $primaryType);
+            }
+            return $primaryType;
         }
 
         return 'nt:unstructured';
