@@ -74,19 +74,20 @@ Midgard2 is able to access and manage content stored in various common relationa
 
 ## PHPCR and Midgard2
 
-There have been [some studies](http://bergie.iki.fi/blog/what_is_a_content_repository/) into the conceptual differences and similarities between the Midgard2 Content Repository model and the [Java Content Repository](http://en.wikipedia.org/wiki/Content_repository_API_for_Java) model used in PHPCR. Because of these differences, some conceptual mappings will be needed.
+There have been [some studies](http://bergie.iki.fi/blog/what_is_a_content_repository/) into the conceptual differences and similarities between the Midgard2 Content Repository model and the [Java Content Repository](http://en.wikipedia.org/wiki/Content_repository_API_for_Java) model used in PHPCR. Because of these differences, some conceptual mappings are needed.
 
-* Repository = Midgard config + root node
+* Repository = Midgard config
 * Session = Midgard connection
 * Node = Midgard object
+* Node Type = MgdSchema
 * Property = Property or Parameter of Midgard object
-* Workspace = Midgard root node or workspace
+* Workspace = Midgard workspace
 
 ### Making the Midgard tree single-rooted
 
-While both Midgard2 and JCR build on the tree concept, the tree in Midgard is multi-rooted. We work around this by making each rootlevel object its own repository.
+The Midgard PHPCR tree is built out of `midgard_node` objects. These objects are only used for building the tree, and are connected to the real content objects in the tree by their `objectguid` property.
 
-When user connects to a Midgard2 PHPCR repository, the connection will use configuration to map itself to a particular rootlevel object. A new PHPCR Session will be returned.
+Properties that are not managed by MgdSchemas (so, properties not registered to Node Types) are handled by `midgard_node_property` objects.
 
 ### Workspaces
 
@@ -98,16 +99,6 @@ When Midgard2's own [Workspaces implementation](http://www.midgard-project.org/d
 ### Namespace mappings
 
 The PHPCR API uses namespaces for node types and property names. The regular [Midgard2 MgdSchema RDF mappings](https://github.com/midgardproject/proposals/blob/master/Semantic%20Data/MgdSchemaRDF.md) should be used for this.
-
-Midgard's MgdSchema types (PHPCR Node types) have a fixed set of properties. To implement the full PHPCR model, additional properties should be implemented using Midgard Parameters.
-
-Basically setting value of Node property `foo:bar`, can mean depending on MgdSchema, either:
-
-    $node->bar = $value;
-
-or:
-
-    $node->set_parameter('foo', 'bar', $value);
 
 ## Projects using PHPCR
 
@@ -125,3 +116,9 @@ Contributions to the Midgard2 PHPCR provider are very much appreciated. The deve
 * [github.com/midgardproject/phpcr-midgard2](https://github.com/midgardproject/phpcr-midgard2)
 
 Feel free to watch the repository, make a fork and [submit pull requests](http://help.github.com/pull-requests/). Code reviews, testing and [bug reports](https://github.com/midgardproject/phpcr-midgard2/issues) are also very welcome.
+
+### Continuous Integration
+
+The Midgard2 PHPCR provider is using [Travis](http://travis-ci.org) for Continuous Integration.
+
+If you have a fork of this repository and want it tested, enable it on the Travis website. Each push will be automatically tested.

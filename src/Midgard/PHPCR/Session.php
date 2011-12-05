@@ -1,7 +1,18 @@
 <?php
 namespace Midgard\PHPCR;
 
-class Session implements \PHPCR\SessionInterface
+use PHPCR\SessionInterface;
+use PHPCR\CredentialsInterface;
+use PHPCR\GuestCredentials;
+use PHPCR\ItemNotFoundException;
+use PHPCR\PathNotFoundException;
+use PHPCR\RepositoryException;
+use midgard_connection;
+use midgard_object;
+use midgard_user;
+use Exception;
+
+class Session implements SessionInterface
 {
     protected $connection = null;
     protected $repository = null;
@@ -15,15 +26,14 @@ class Session implements \PHPCR\SessionInterface
     private $credentials = null;
     private $isAnonymous = true;
 
-    public function __construct(\midgard_connection $connection, Repository $repository, \midgard_user $user = null, \midgard_object $rootObject, \PHPCR\CredentialsInterface $credentials = null)
+    public function __construct(midgard_connection $connection, Repository $repository, midgard_user $user = null, midgard_object $rootObject, CredentialsInterface $credentials = null)
     {
         $this->connection = $connection;
         $this->repository = $repository;
         $this->user = $user;
         $this->rootObject = $rootObject;
         $this->credentials = $credentials;
-        if ($credentials && !($credentials instanceof \PHPCR\GuestCredentials))
-        {
+        if ($credentials && !($credentials instanceof GuestCredentials)) {
             $this->isAnonymous = false;
         }
     }
@@ -35,8 +45,7 @@ class Session implements \PHPCR\SessionInterface
    
     public function getTransactionManager()
     {
-        if ($this->transaction == null)
-        {
+        if ($this->transaction == null) {
             $this->transaction = new \Midgard\PHPCR\Transaction\Transaction();
         }
         return $this->transaction;
@@ -44,28 +53,26 @@ class Session implements \PHPCR\SessionInterface
 
     public function getUserID()
     {
-        if (!$this->user)
-        {
+        if (!$this->user) {
             return null;
         }
         
         return $this->user->login;
     }
-    
+
     public function getAttributeNames()
     {
-        return array();
+        return $this->credentials->getAttributeNames();
     }
     
     public function getAttribute($name)
     {
-        return '';
+        return $this->credentials->getAttribute($name);
     }
     
     public function getWorkspace()
     {
-        if ($this->workspace == null)
-        { 
+        if ($this->workspace == null) { 
             $this->workspace = new \Midgard\PHPCR\Workspace($this);
         }
 
@@ -74,8 +81,7 @@ class Session implements \PHPCR\SessionInterface
     
     public function getRootNode()
     {
-        if ($this->rootNode === null)
-        {
+        if ($this->rootNode === null) {
             $this->rootNode = new Node($this->rootObject, null, $this);
         }
         return $this->rootNode;
@@ -98,21 +104,30 @@ class Session implements \PHPCR\SessionInterface
             new \midgard_query_property('id'),
             new \midgard_query_property('parent', $propertyStorage)
         );
-        $group = new \midgard_query_constraint_group('AND');
+        $group = new \midgard_query_constraint_group('OR');
         $group->add_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property('guid'),
+                '=',
+                new \midgard_query_value($id)
+            )
+        );
+        $uuidGroup = new \midgard_query_constraint_group('AND');
+        $uuidGroup->add_constraint(
             new \midgard_query_constraint(
                 new \midgard_query_property('value', $propertyStorage), 
                 '=', 
                 new \midgard_query_value($id)
             )
         );
-        $group->add_constraint(
+        $uuidGroup->add_constraint(
             new \midgard_query_constraint(
                 new \midgard_query_property('title', $propertyStorage), 
                 '=', 
                 new \midgard_query_value('jcr:uuid')
             )
         ); 
+        $group->add_constraint($uuidGroup);
         $q->set_constraint($group);
         $q->execute();
        
@@ -122,22 +137,14 @@ class Session implements \PHPCR\SessionInterface
         }
 
         $midgardNode = current($q->list_objects());
-
-        try 
-        { 
-            $midgard_path = \Midgard\PHPCR\Node::getMidgardPath($midgardNode);
-            /* Convert to JCR path */
-            $midgard_path = str_replace('/jackalope', '', $midgard_path);
-            $midgard_path = str_replace('/root', '', $midgard_path);
-            $node = $this->getNode($midgard_path);
-            return $node;
+        $node = new Node($midgardNode, null, $this);
+        $nodePath = $node->getPath();
+        foreach ($this->removeNodes as $removeNode) {
+            if ($nodePath == $removeNode->getPath()) {
+                throw new \PHPCR\ItemNotFoundException("Node identified by {$id} not found");
+            }
         }
-        catch (\midgard_error_exception $e)
-        {
-             throw new \PHPCR\ItemNotFoundException("Storage node identified by {$id} not found : " . $e->getMessage()); 
-        }
-
-        throw new \PHPCR\RepositoryException("Answer the question three and the node you will see");
+        return $node;
     }
 
     public function getNodesByIdentifier($ids)
@@ -147,32 +154,27 @@ class Session implements \PHPCR\SessionInterface
 
     public function getItem($absPath)
     {
-        if (substr($absPath, 0, 1) != '/') 
-        {
-            throw new \PHPCR\PathNotFoundException("Expected absoulte path. Given one '{$absPath}' is relative");
+        if (substr($absPath, 0, 1) != '/') {
+            throw new PathNotFoundException("Expected absolute path. Given one '{$absPath}' is relative");
         }
 
-        if ($this->nodeExists($absPath))
-        {
+        if ($this->nodeExists($absPath)) {
             return $this->getNode($absPath);
         }
-        if ($this->propertyExists($absPath))
-        {
+        if ($this->propertyExists($absPath)) {
             return $this->getProperty($absPath);
         }
-        throw new \PHPCR\PathNotFoundException("No item matches path '{$absPath}'");
+        throw new PathNotFoundException("No item matches path '{$absPath}'");
     }
 
     private function validatePath($absPath)
     {
-        if (substr($absPath, 0, 1) != '/')
-        {
-            throw new \PHPCR\RepositoryException("Full path required. Given one is '{$absPath}'");
+        if (substr($absPath, 0, 1) != '/') {
+            throw new RepositoryException("Full path required. Given one is '{$absPath}'");
         }
 
-        if (strpos($absPath, '//') !== false)
-        {
-            throw new \PHPCR\RepositoryException("Invalid path '{$absPath}'");
+        if (strpos($absPath, '//') !== false) {
+            throw new RepositoryException("Invalid path '{$absPath}'");
         }
     }
     
@@ -195,7 +197,7 @@ class Session implements \PHPCR\SessionInterface
         foreach ($absPaths as $absPath) {
             try {
                 $nodes[] = $this->getNode($absPath);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 continue;
             }
         }
@@ -210,8 +212,7 @@ class Session implements \PHPCR\SessionInterface
     
     public function itemExists($absPath)
     {
-        if ($this->nodeExists($absPath))
-        {
+        if ($this->nodeExists($absPath)) {
             return true;
         }
         return $this->propertyExists($absPath);
@@ -219,26 +220,22 @@ class Session implements \PHPCR\SessionInterface
     
     public function nodeExists($absPath)
     {
-        try
-        {
+        try {
             $this->getNode($absPath);
             return true;
         }
-        catch (\PHPCR\PathNotFoundException $e)
-        {
+        catch (PathNotFoundException $e) {
             return false;
         }
     }
     
     public function propertyExists($absPath)
     {
-        try
-        {
+        try {
             $this->getProperty($absPath);
             return true;
         }
-        catch (\PHPCR\PathNotFoundException $e)
-        {
+        catch (PathNotFoundException $e) {
             return false;
         }
     }
@@ -274,13 +271,11 @@ class Session implements \PHPCR\SessionInterface
     public function removeItem($absPath)
     {
         /* Try property first */
-        try 
-        {
+        try {
             $property = $this->getProperty($absPath);
             $property->remove();
         }
-        catch (\PHPCR\PathNotFoundException $e) 
-        {
+        catch (\PHPCR\PathNotFoundException $e)  {
             $node = $this->getNode($absPath);
             $node->remove();
             $this->removeNode($node);
@@ -370,18 +365,10 @@ class Session implements \PHPCR\SessionInterface
         //ReferentialIntegrityException
     }
 
-    private function refreshNode(Node $node, $keepChanges)
-    {
-        $node->refresh($keepChanges);
-        $children = $node->getNodes();
-        foreach($children as $child) {
-            $this->refreshNode($child, $keepChanges);
-        }
-    }
-    
     public function refresh($keepChanges)
     {
-        $this->refreshNode($this->getRootNode(), $keepChanges);
+        $this->removeNodes = array();
+        $this->getRootNode()->refresh($keepChanges);
     }
     
     public function clear()
@@ -462,7 +449,7 @@ class Session implements \PHPCR\SessionInterface
     
     public function hasCapability($methodName, $target, array $arguments)
     {
-        return false;
+        return true;
     }
     
     public function getImportContentHandler($parentAbsPath, $uuidBehavior)
@@ -551,9 +538,8 @@ class Session implements \PHPCR\SessionInterface
     
     public function logout()
     {
-        if ($this->user)
-        {
-            $this->user->logout();
+        if ($this->connection->get_user()) {
+            $this->connection->get_user()->logout();
             $this->user = null;
         }
     }

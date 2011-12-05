@@ -30,7 +30,7 @@ $repository = Midgard\PHPCR\RepositoryFactory::getRepository($parameters);
 
 // Log in
 $credentials = new \PHPCR\SimpleCredentials('admin', 'password');
-$session = $repository->login($credentials, 'default');
+$session = $repository->login($credentials);
 
 // Add node unless it already exists
 if (!$session->nodeExists('/test')) {
@@ -39,6 +39,7 @@ if (!$session->nodeExists('/test')) {
     $node->setProperty('prop', 'value');
     $session->save();
 }
+
 // Read the values we just saved
 $node = $session->getNode('/test');
 var_dump($node->getPropertyValue('prop'));

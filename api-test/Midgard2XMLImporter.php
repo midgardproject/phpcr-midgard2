@@ -133,11 +133,22 @@ class Midgard2XMLImporter extends \DomDocument
         {
             $vnode = $property->getElementsByTagName('value')->item($i);
             $midgardNodeProperty = new \midgard_node_property();
-
+            $midgardNodeProperty->name = str_replace(':', '-', $propertyName);
             $midgardNodeProperty->title = $propertyName;
             $midgardNodeProperty->multiple = $isMultiple;
             $midgardNodeProperty->type = \PHPCR\PropertyType::valueFromName($propertyType);
-            $midgardNodeProperty->value = $isBinary ? '' : $vnode->nodeValue;
+
+            if ($isBinary) {
+                $value = '';
+            } elseif ($vnode->nodeValue == 'mix:versionable') {
+                // Quick-and-dirty fix to ensure fixtures that
+                // need to be referenceable are.
+                $value = 'mix:referenceable';
+            } else {
+                $value = $vnode->nodeValue;
+            }
+            $midgardNodeProperty->value = $value;
+
             if ($midgardNodeProperty->type == \PHPCR\PropertyType::BOOLEAN) 
             {
                 if ($midgardNodeProperty->value == 'false')
