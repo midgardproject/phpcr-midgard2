@@ -13,6 +13,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     protected $node = null;
     protected $converter = null;
     protected $query = null;
+    protected $holder = null;
     protected $storageType = null;
     
     public function __construct (\Midgard\PHPCR\Session $session, $statement)
@@ -21,77 +22,57 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->statement = $statement;
         $this->converter = new \PHPCR\Util\QOM\Sql2ToQomQueryConverter(new QOM\QueryObjectModelFactory());
         $this->query = $this->converter->parse($statement);
-        $this->QBFromStatement();
-    }
-
-    public function setNode(NodeInterface $node)
-    {
-        $this->node = $node;
-    }
-
-    private function addConstraintSingle(\midgard_query_constraint $constraint)
-    {
-        $this->qs->set_constraint($constraint);
-    }
-
-    private function addConstraintMultiple(array $constraints)
-    {
-        $cg = new \midgard_query_constraint_group('AND');
-        foreach ($constraints as $constraint) {
-            $cg->add_constraint($constraint);
-        }
-        $this->qs->set_constraint($cg);
-    }
-
-    private function QBFromStatement()
-    {
-        $scanner = new \PHPCR\Util\QOM\Sql2Scanner($this->statement);
-        $type = null;
-        $inTree = null;
-        do {
-            $token = $scanner->fetchNextToken(); 
-            if ($token == 'FROM') {
-                $type = $scanner->fetchNextToken();
-            }
-            if ($token == 'ISCHILDNODE') {
-                $scanner->fetchNextToken();
-                $inTree = substr($scanner->fetchNextToken(), 1, -1);
-            }
-        } while ($token != '');
-
-        if (is_null($type)) {
-            throw new \PHPCR\Query\InvalidQueryException('No content types defined in query');
-        }
-
-        $this->storageType = NodeMapper::getMidgardName($this->query->getSource()->getNodeTypeName()); 
         $this->selectors[] = $this->query->getSource()->getNodeTypeName();
+    }
 
-        $storage = new \midgard_query_storage('midgard_node');
-        $this->qs = new \midgard_query_select($storage);
-        $constraints = array();
+    private function getQuerySelectHolder()
+    {
+        if ($this->holder == null)
+            $this->holder = new Utils\QuerySelectHolder();
+        return $this->holder;
+    }
 
-        if ($this->storageType != null) {
-            $constraints[] = new \midgard_query_constraint(
-                new \midgard_query_property('typename'),
-                '=',
-                new \midgard_query_value($this->storageType)
+    /* Add implicit join.
+     * We join midgard_node_property.parent on midgard_node.id */
+    private function addJoinIDToParent()
+    {
+        static $joined = false;
+        if ($joined == true)
+            return;
+
+        $this->getQuerySelect()->add_join(
+            'INNER',
+            new \midgard_query_property('id'),
+            new \midgard_query_property('parent', $this->getPropertyStorage())
+        );
+        $joined = true;
+    }
+
+    private function addOrders()
+    {
+        $orderings = $this->query->getOrderings();
+        if (empty($orderings))
+            return;
+
+        //$this->addJoinIDToParent();
+
+        foreach ($orderings as $order) {
+            print_r($order->getOperand()->getPropertyName());
+            $constraint = new \midgard_query_constraint (
+                new \midgard_query_property ("value"),
+                "=",
+                new \midgard_query_value ($order->getOperand()->getPropertyName()),
+                $this->getQuerySelectHolder()->getPropertyStorage()
             );
-        }
-
-        if ($inTree) {
-            $parent = $this->session->getNode($inTree);
-            $constraints[] = new \midgard_query_constraint(
-                new \midgard_query_property('parent'),
-                '=',
-                new \midgard_query_value($parent->getMidgard2Node()->id)
+            $propertyStorage = new \midgard_query_storage ("midgard_node_property");
+            $this->getQuerySelectHolder()->getQuerySelect()->add_join(
+                'INNER',
+                new \midgard_query_property('id'),
+                new \midgard_query_property('parent', $propertyStorage)
             );
+            $this->getQuerySelectHolder()->getQuerySelect()->add_order (new \midgard_query_property('value', $propertyStorage));
         }
-
-        if (count($constraints) > 1) {
-            return $this->addConstraintMultiple($constraints);
-        }
-        $this->addConstraintSingle($constraints[0]);
-    } 
+    }
 
     public function bindValue($varName, $value)
     {
@@ -100,8 +81,20 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     public function execute()
     {
-        $this->qs->execute();
-        return new QueryResult($this->selectors, $this->qs, $this->session);
+        $this->storageType = NodeMapper::getMidgardName($this->query->getSource()->getNodeTypeName()); 
+        $this->selectors[] = $this->query->getSource()->getNodeTypeName();
+
+        $manager = Utils\ConstraintManagerBuilder::factory($this, $this->getQuerySelectHolder(), $this->query->getConstraint());
+        $manager->addConstraint();
+
+        $qs = $this->getQuerySelectHolder()->getQuerySelect();
+        $this->addOrders();
+        $qs->set_constraint($this->getQuerySelectHolder()->getDefaultConstraintGroup());
+
+        \midgard_connection::get_instance()->set_loglevel("debug");
+        $qs->execute();
+        \midgard_connection::get_instance()->set_loglevel("warn");
+        return new QueryResult($this->selectors, $qs, $this->session);
     }
 
     public function getBindVariableNames()
@@ -111,12 +104,12 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     public function setLimit($limit)
     {
-        $this->qs->set_limit($limit);
+        $this->getQuerySelectHolder()->getQuerySelect()->set_limit($limit);
     }
    
     public function setOffset($offset)
     {
-        $this->qs->set_offfset($offset);
+        $this->getQuerySelectHolder()->getQuerySelect()->set_offfset($offset);
     }
   
     public function getStatement()
@@ -132,8 +125,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     public function getStoredQueryPath()
     {
         if (!$this->node) {
-            throw new \PHPCR\ItemNotFoundException("Query not stored");
- 
+            throw new \PHPCR\ItemNotFoundException("Query not stored"); 
         }
         return $this->node->getPath();
     }
