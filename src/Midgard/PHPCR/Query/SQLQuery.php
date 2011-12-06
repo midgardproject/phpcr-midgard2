@@ -129,6 +129,11 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         }
         return $this->node->getPath();
     }
+
+    public function setNode(NodeInterface $node)
+    {
+        $this->node = $node;
+    }
   
     public function storeAsNode($absPath)
     {
