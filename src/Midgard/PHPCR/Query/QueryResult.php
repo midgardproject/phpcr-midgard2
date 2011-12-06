@@ -58,7 +58,6 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
             $node = new \Midgard\PHPCR\Node($midgardNode, null, $this->session);
             $ret[$node->getPath()] = $node;
         }
-
         return new \ArrayIterator($ret);
     }
 
