@@ -91,9 +91,9 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->addOrders();
         $qs->set_constraint($this->getQuerySelectHolder()->getDefaultConstraintGroup());
 
-        \midgard_connection::get_instance()->set_loglevel("debug");
+        //\midgard_connection::get_instance()->set_loglevel("debug");
         $qs->execute();
-        \midgard_connection::get_instance()->set_loglevel("warn");
+        //\midgard_connection::get_instance()->set_loglevel("warn");
         return new QueryResult($this->selectors, $qs, $this->session);
     }
 
