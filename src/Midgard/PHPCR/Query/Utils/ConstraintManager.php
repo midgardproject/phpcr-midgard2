@@ -19,4 +19,9 @@ class ConstraintManager
     {
         return;
     }
+
+    public function removeQuotes($value)
+    {
+        return str_replace('"', '', $value);        
+    }
 }

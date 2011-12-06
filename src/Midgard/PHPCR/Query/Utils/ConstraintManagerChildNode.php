@@ -12,7 +12,7 @@ class ConstraintManagerChildNode extends ConstraintManager
     public function addConstraint()
     {
         /* There's a path specified so we need to find node under parent's path */
-        $parentPath = $this->iface->getParentPath();
+        $parentPath = $this->removeQuotes($this->constraintIface->getParentPath());
         $parts = explode("/", $parentPath);
         if (empty($parts))
             return;
@@ -27,7 +27,7 @@ class ConstraintManagerChildNode extends ConstraintManager
                 $currentStorage == null ? new \midgard_query_property('parent') : new \midgard_query_property('parent', $currentStorage),
                 new \midgard_query_property('id', $nodeStorage)
             );
-            $name = str_replace('"', '', $name);
+            //$name = str_replace('"', '', $name);
             $constraint = new \midgard_query_constraint(
                 new \midgard_query_property("name", $nodeStorage),
                 "=",
