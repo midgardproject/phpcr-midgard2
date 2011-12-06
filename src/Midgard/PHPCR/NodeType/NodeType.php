@@ -2,183 +2,168 @@
 namespace Midgard\PHPCR\NodeType;
 
 use Midgard\PHPCR\Utils\NodeMapper;
+use PHPCR\NodeType\NodeTypeInterface;
+use PHPCR\NodeType\NodeTypeDefinitionInterface;
+use PHPCR\PropertyType;
+use midgard_reflector_object;
+use ArrayIterator;
 
-class NodeType extends NodeTypeDefinition implements \PHPCR\NodeType\NodeTypeInterface
+class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 {
-    protected $manager = null;
+    protected $subTypeDefinitions = null;
 
-    public function __construct(\PHPCR\NodeType\NodeTypeDefinitionInterface $ntt, NodeTypeManager $manager) {
-        $this->name = $ntt->getName();
-        if ($this->name === null
-            || $this->name === "")
-        {
+    public function __construct(NodeTypeDefinitionInterface $ntt, NodeTypeManager $manager)
+    {
+        if (!$ntt->getName()) {
             throw new \PHPCR\RepositoryException("Can not initialize NodeType for empty name");
         }
+        parent::__construct($ntt->getName(), $manager);
 
         $this->childNodeDefinitions = $ntt->getDeclaredChildNodeDefinitions();
         $this->propertyDefinitions = $ntt->getDeclaredPropertyDefinitions();
-        $this->supertypeNames = $ntt->getDeclaredSuperTypeNames();
         $this->primaryItemName = $ntt->getPrimaryItemName();
         $this->hasOrderableChildNodes = $ntt->hasOrderableChildNodes();
         $this->isAbstract = $ntt->isAbstract();
         $this->isMixin = $ntt->isMixin();
         $this->isQueryable = $ntt->isQueryable();
-
-        $this->manager = $manager;
     }
 
     public function getSupertypes()
     {
-        $rv = array();
-        $o = \midgard_schema_object::factory ($this->classname);
-        $parentname = $o->parent();
-
-        if ($parentname != null)
-        {
-            $rv[] = new NodeType ($parentname);
+        $superTypes = array();
+        foreach ($this->getDeclaredSupertypes() as $superType) {
+            $superTypes[] = $superType;
+            $superTypes = array_merge($superTypes, $superType->getSupertypes());
         }
-
-        return $rv;
-    }
-
-    public function getDeclaredSupertypes()
-    {
-        return $this->getSupertypes();
-    }
-
-    public function getSubtypes()
-    {
-        $rv = array();
-
-        $children = \midgard_reflector_object::list_children($this->classname);
-        if (!is_empty($children))
-        {
-            foreach ($children as $name => $v)
-            {
-                $children[$name] = new NodeType($name);
-            }
-        }
-
-        return $rv;
-
+        return $superTypes;
     }
 
     public function getDeclaredSubtypes()
     {
-        return $this->getSubtypes();
+        if (!is_null($this->subTypeDefinitions)) {
+            return new ArrayIterator($this->subTypeDefinitions);
+        }
+
+        $this->subTypeDefinitions = array();
+        $types = $this->nodeTypeManager->getAllNodeTypes();
+        foreach ($types as $type) {
+            $superTypes = $type->getDeclaredSuperTypeNames();
+            if (in_array($this->getName(), $superTypes)) {
+                $this->subTypeDefinitions[$type->getName()] = $type;
+            }
+        }
+
+        return new ArrayIterator($this->subTypeDefinitions);
+    }
+
+    public function getSubtypes()
+    {
+        $subTypes = array();
+        foreach ($this->getDeclaredSubtypes() as $subType) {
+            $subTypes[$subType->getName()] = $subType;
+            $subTypes = array_merge($subTypes, iterator_to_array($subType->getSubtypes()));
+        }
+        return new ArrayIterator($subTypes);
+    }
+
+    public function getDeclaredSupertypes()
+    {
+        $superTypes = array();
+        foreach ($this->getDeclaredSupertypeNames() as $superType) {
+            $superTypes[] = $this->nodeTypeManager->getNodeType($superType);
+        }
+        return $superTypes;
     }
 
     public function isNodeType($nodeTypeName)
     {
-        if ($this->classname === $nodeTypeName)
-        {
+        if ($this->name === $nodeTypeName) {
             return true;
         }
 
-        if (in_array ($nodeTypeName, $this->getSupertypes()))
-        {
-            return true;
+        if (!$this->nodeTypeManager->hasNodeType($nodeTypeName)) {
+            return false;
+        }
+
+        $superTypes = $this->getSupertypes();
+        foreach ($superTypes as $superType) {
+            if ($superType->getName() == $nodeTypeName) {
+                return true;
+            }
         }
 
         return false;
     }
 
-    private function getPropertyReflector($name)
-    {
-        /* If this is MidgardObject derived property, return null.
-         * We have no session available at this point, so check prefix
-         * directly */
-        if (strpos($name, ':') !== false)
-        {
-            $parts = explode(':', $name); 
-            if ($parts[0] == 'mgd')
-            {
-                return null;
-            }
-        }
-
-        $midgardName = NodeMapper::getMidgardName($this->name);
-        if (!$midgardName)
-        {
-            return null;
-        }
-
-        $reflector = new \midgard_reflection_property($midgardName);
-        if (!$reflector)
-        {
-            return null;
-        }
-
-        $midgardPropertyName = NodeMapper::getMidgardPropertyName($name);
-        if (!$midgardPropertyName)
-        {
-            return null;
-        }
-
-        $midgardType = $reflector->get_midgard_type($name);
-        /* Property is not registered for this type */
-        if ($midgardType == MGD_TYPE_NONE)
-        {
-            return null;
-        }
-
-        return $reflector;
-    }
-
     public function hasRegisteredProperty($name)
     {
-        $reflector = $this->getPropertyReflector($name);
-        if ($reflector == null)
-        {
-            return false;
-        }
-        return true;
-    }
-
-    public function getPropertyDefinition($name)
-    {
+        $properties = $this->getPropertyDefinitions();
+        return isset($properties[$name]);
     }
 
     public function getPropertyDefinitions()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return $this->getDeclaredPropertyDefinitions();
     }
 
     public function getChildNodeDefinitions()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        return $this->getDeclaredChildNodeDefinitions();
     }
 
     public function canSetProperty($propertyName, $value)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        $definitions = $this->getPropertyDefinitions();
+        if (!isset($definitions[$propertyName])) {
+            return true;
+        }
+
+        $requiredType = $definitions[$propertyName]->getRequiredType();
+        if ($requiredType) {
+            if (PropertyType::determineType($value) != $requiredType) {
+                return false;
+            }
+        }
+        // FIXME: We need a list of allowed property names
+        return true;
     }
 
     public function canAddChildNode($childNodeName, $nodeTypeName = NULL)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        if (!$nodeTypeName) {
+            // FIXME: We need a list of allowed child node names
+            return true;
+        }
+        $childNodeDefs = $this->getDeclaredChildNodeDefinitions();
+        if (!$childNodeDefs) {
+            return true;
+        }
+
+        foreach ($childNodeDefs as $def) {
+            if ($def->getDeclaringNodeType()->isNodeType($nodeTypeName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function canRemoveNode($nodeName)
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        // FIXME: We need list of mandatory child nodes
+        return true;
     }
 
     public function canRemoveProperty($propertyName)
     {
-        // Determine if property is registered for MgdSchema class
-        $mrp = $this->getPropertyReflector($propertyName);
-        if ($mrp) {
-            // Property is registered for GObject, so we can not remove it
-            $mtype = $mrp->get_midgard_type($propertyName);
-            if ($mtype > 0) 
-            {
-                return false;
-            }
+        $definitions = $this->getPropertyDefinitions();
+        if (!isset($definitions[$propertyName])) {
+            return true;
         }
 
-        // Otherwise we should be able to do this
-        // FIXME: Check whether the property is mandatory 
+        if ($definitions[propertyName]->isMandatory()) {
+            return false;
+        }
+
         return true;
     }
 }

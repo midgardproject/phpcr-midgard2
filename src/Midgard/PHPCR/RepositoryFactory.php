@@ -11,6 +11,7 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
         'midgard2.configuration.db.name' => 'string: database name',
         'midgard2.configuration.db.dir' => 'string: database directory path (when used with SQLite)',
         'midgard2.configuration.loglevel' => 'string: Midgard2 log level',
+        'midgard2.configuration.blobdir' => 'string: path of the attachment storage root directory',
         // Whether to enable automatic initialization of Midgard2 database
         'midgard2.configuration.db.init' => 'boolean: whether Midgard2 database should be initialized automatically',
     );

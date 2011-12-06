@@ -2,6 +2,7 @@
 namespace Midgard\PHPCR\Query;
 
 use Midgard\PHPCR\Utils\NodeMapper;
+use PHPCR\NodeInterface;
 
 class SQLQuery implements \PHPCR\Query\QueryInterface
 {
@@ -9,6 +10,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     protected $qs = null;
     protected $statement = null;
     protected $selectors = array();
+    protected $node = null;
     protected $converter = null;
     protected $query = null;
     protected $holder = null;
@@ -122,7 +124,10 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
      
     public function getStoredQueryPath()
     {
-        throw new \PHPCR\RepositoryException("Not supported");
+        if (!$this->node) {
+            throw new \PHPCR\ItemNotFoundException("Query not stored"); 
+        }
+        return $this->node->getPath();
     }
   
     public function storeAsNode($absPath)

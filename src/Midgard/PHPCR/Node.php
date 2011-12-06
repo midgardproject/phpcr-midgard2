@@ -2,104 +2,83 @@
 namespace Midgard\PHPCR;
 
 use ArrayIterator;
+use IteratorAggregate;
+use InvalidArgumentException;
 use Midgard\PHPCR\Utils\NodeMapper;
+use PHPCR\NodeInterface;
+use PHPCR\ItemInterface;
+use PHPCR\NodeType\ConstraintViolationException; 
+use PHPCR\NodeType\NodeTypeInterface;
+use PHPCR\PropertyType;
+use PHPCR\PathNotFoundException;
+use PHPCR\ItemExistsException;
+use PHPCR\RepositoryException;
+use PHPCR\NodeType\NoSuchNodeTypeException;
+use PHPCR\ItemNotFoundException;
+use midgard_node;
+use midgard_query_select;
+use midgard_query_constraint;
+use midgard_query_constraint_group;
+use midgard_query_storage;
+use midgard_query_property;
+use midgard_query_value;
+use Midgard\PHPCR\NodeType\PropertyDefinition;
+use Midgard\PHPCR\NodeType\NodeDefinition;
 
-class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
+class Node extends Item implements IteratorAggregate, NodeInterface
 {
     protected $children = null;
     protected $properties = null;
     protected $midgardPropertyNodes = null;
-    protected $primaryNodeTypeName = null;
-    protected $remove = false;
-    protected $removeProperties = null;
-    protected $isRoot = false;
+    protected $is_removed = false;
+    protected $removeProperties = array();
 
-    public function __construct(\midgard_node $midgardNode = null, Node $parent = null, Session $session)
+    public function __construct(midgard_node $midgardNode = null, Node $parent = null, Session $session)
     {
         $this->parent = $parent;
-        $this->midgardNode = $midgardNode;
         $this->session = $session;
 
-        if ($parent == null)
-        {
-            if (   $midgardNode->guid
-                && $midgardNode->parent == 0)
-            {
+        $this->setMidgard2Node($midgardNode);
+        if (!$midgardNode->guid) {
+            $this->is_new = true;
+        }
+
+        if ($parent == null) {
+            if ($midgardNode->guid && $midgardNode->parent == 0) {
                 $this->isRoot = true;
-                $this->contentObject = $midgardNode;
+                $this->setMidgard2ContentObject($midgardNode);
             }
         }
     }
 
-    public function getTypeName()
+    protected function getTypeName($checkContentObject = true)
     {
-        if ($this->isRoot)
-        {
+        if ($this->isRoot) {
             return 'nt:folder';
         }
-
-        if ($this->primaryNodeTypeName)
-        {
-            return $this->primaryNodeTypeName;
+        $typeName = $this->getMidgard2PropertyValue('jcr:primaryType', false, $checkContentObject);
+        if ($typeName) {
+            return $typeName;
         }
 
-        return $this->getPropertyValue('jcr:primaryType');
-    }
-
-    /* TODO, move this to ContentObjectFactory */
-    private function contentObjectFactory(\midgard_node $midgardNode,  $primaryNodeTypeName = null)
-    {
-        $guid = $midgardNode->objectguid;
-        /* FIXME, set proper type name */
-        if (!$midgardNode->typename)
-        {
-            $midgardNode->typename = 'nt_folder';
-        }
-        $this->contentObject = \midgard_object_class::factory($midgardNode->typename, $guid ? $guid : null);
-        if ($primaryNodeTypeName != null)
-        {
-            $this->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::NAME);
+        if ($this->getMidgard2Node()->typename) {
+            $primaryType = NodeMapper::getPHPCRNAME($this->getMidgard2Node()->typename);
+            if (isset($this->properties['jcr:primaryType'])) {
+                $this->properties['jcr:primaryType']->setValue($primaryType);
+            } else {
+                $this->setMidgard2PropertyValue('jcr:primaryType', false, $primaryType);
+            }
+            return $primaryType;
         }
 
-        if ($this->hasProperty('jcr:created'))
-        {
-            $this->setProperty('jcr:created',  new \DateTime('now'), \PHPCR\PropertyType::DATE);
-        }
-    }
-
-    protected function populateParent()
-    {
-        if ($this->isRoot)
-        {
-            return;
-        }
-
-        $parentMidgardNode = new \midgard_node($this->getMidgard2Node()->parent);
-        $this->parent = new Node($parentMidgardNode, null, $this->getSession());
+        return 'nt:unstructured';
     }
 
     private function appendNode($relPath, $primaryNodeTypeName = null)
     {
-        /* ItemExistsException, Node at given path exists.*/
-        try 
-        {
-            $node_exists = $this->getNode ($relPath);
-            throw new \PHPCR\ItemExistsException("Node at given path {$relPath} exists");
+        if ($this->hasNode($relPath)) {
+            throw new ItemExistsException("Node '{$relPath}' exists under " . $this->getPath());
         } 
-        catch (\PHPCR\PathNotFoundException $e) 
-        {
-            // Do nothing 
-        }
-
-        /* ConstraintViolationException:
-         * "if a node type or implementation-specific constraint is violated or 
-         *  if an attempt is made to add a node as the child of a property and 
-         *  this implementation performs this validation immediately." */
-        $this->populateProperties();
-        if (array_key_exists($relPath, $this->properties))
-        {
-            throw new \PHPCR\NodeType\ConstraintViolationException("Can not add node to '{$relPath}' Item which is a Property");
-        }
 
         // LockException
         // TODO
@@ -107,86 +86,74 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         // VersionException 
         // TODO
 
-        $midgardNode = new \midgard_node();
-        $midgardNode->typename = str_replace(':', '_', $primaryNodeTypeName);
+        $midgardNode = new midgard_node();
+        $midgardNode->typename = NodeMapper::getMidgardName($primaryNodeTypeName);
         $midgardNode->name = $relPath;
+        $midgardNode->parent = $this->getMidgard2Node()->id;
+        $midgardNode->parentguid = $this->getMidgard2Node()->guid;
 
-        $new_node = new \Midgard\PHPCR\Node($midgardNode, $this, $this->getSession());
-        $new_node->is_new = true; 
-        $new_node->primaryNodeTypeName = $primaryNodeTypeName;
-        $ptnProperty = 'jcr-primaryType';
-        $new_node->$ptnProperty = $primaryNodeTypeName;
-        $new_node->setProperty('jcr:primaryType', $primaryNodeTypeName, \PHPCR\PropertyType::NAME);
-        $this->children[$relPath] = $new_node;
+        $newNode = $this->getSession()->getNodeRegistry()->getByMidgardNode($midgardNode, $this);
+        $this->children[$relPath] = $newNode;
 
         $this->is_modified = true;
 
-        // FIXME, Catch exception before returning new node
-        return $new_node;
-
-        // RepositoryException
-        // Unspecified yet.
-        throw new \PHPCR\RepositoryException("Not supported");
+        return $newNode;
     }
 
     public function addNode($relPath, $primaryNodeTypeName = NULL)
     {
-        $pos = strpos('/', $relPath);
-        if ($pos === 0)
-        {
-            throw new \InvalidArgumentException("Can not add Node at absolute path"); 
+        if (!$relPath) {
+            throw new InvalidArgumentException("Path for new node required");
+        }
+
+        if (substr($relPath, 0, 1) == '/') {
+            throw new InvalidArgumentException("Can not add Node at absolute path"); 
         }
 
         /* RepositoryException - If the last element of relPath has an index or if another error occurs. */
-        if (strpos($relPath, '[') !== false)
-        {
-            throw new \PHPCR\RepositoryException("Index not allowed");
+        if (strpos($relPath, '[') !== false) {
+            throw new RepositoryException("Index not allowed");
         }
 
-        if ($primaryNodeTypeName == null)
-        {
+        if ($primaryNodeTypeName == null) {
             $def = $this->getDefinition();
             $primaryNodeTypeName = $def->getDefaultPrimaryTypeName();
-            if ($primaryNodeTypeName == null)
-            {
+            if ($primaryNodeTypeName == null) {
                 if ($this->getPath() == '/') {
                     $primaryNodeTypeName = 'nt:unstructured';
                 } else {
                     /* ConstraintViolationException - if a node type or implementation-specific constraint 
                     * is violated or if an attempt is made to add a node as the child of a property and 
                     * this implementation performs this validation immediately.*/ 
-                    throw new \PHPCR\NodeType\ConstraintViolationException("Can not determine default node type name for " . $this->getName() . "when trying to add '{$relPath}'");
+                    throw new ConstraintViolationException("Can not determine default node type name for " . $this->getName() . " when trying to add '{$relPath}'");
                 }
             }
         }
-        else
-        {
+        else {
             $ntm = $this->session->getWorkspace()->getNodeTypeManager();
             $nt = $ntm->getNodeType($primaryNodeTypeName);
         }
 
         $parts = explode('/', $relPath);
         $pathElements = count($parts);
-        if ($pathElements == 1)
-        {
-            return $this->appendNode($relPath, $primaryNodeTypeName);
+        if ($pathElements == 1) {
+            return $this->appendNode($parts[0], $primaryNodeTypeName);
         }
 
         /* ConstraintViolationException:
          * "if a node type or implementation-specific constraint is violated or 
          *  if an attempt is made to add a node as the child of a property and 
          *  this implementation performs this validation immediately." */
-        if ($this->hasProperty($parts[0]))
-        {
-            throw new \PHPCR\NodeType\ConstraintViolationException("Can not add node to '{$relPath}' Item which is a Property");
+        if ($this->hasProperty($parts[0])) {
+            throw new \PHPCR\NodeType\ConstraintViolationException("Can not add node to '{$relPath}' Item which is a Property under " . $this->getPath());
         }
 
-        $node = $this->getNode($parts[0]);
-        for ($i = 1; $i < $pathElements; $i++)
-        { 
-            $node = $node->appendNode($parts[$i], $primaryNodeTypeName);
+        if (!$this->hasNode($parts[0])) {
+            $node = $this->appendNode(array_shift($parts));
+        } else {
+            $node = $this->getNode(array_shift($parts));
         }
-        return $node;
+        return $node->addNode(implode('/', $parts), $primaryNodeTypeName);
     }
 
     public function orderBefore($srcChildRelPath, $destChildRelPath)
@@ -194,183 +161,115 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         throw new \PHPCR\UnsupportedRepositoryOperationException();
     }
 
+    private function getNodeDefinitionThatHasProperty($name)
+    {
+        $primary = $this->getPrimaryNodeType();
+        if ($primary->hasRegisteredProperty($name)) {
+            return $primary;
+        }
+
+        foreach ($this->getMixinNodeTypes() as $mixin) {
+            if ($mixin->hasRegisteredProperty($name)) {
+                return $mixin;
+            }
+        }
+        return null;
+    }
+
     public function setProperty($name, $value, $type = null)
     {
-        if (strpos($name, '/') !== false)
-        {
-            throw new \InvalidArgumentException("Can not set property name with '/' delimeter");
+        if (strpos($name, '/') !== false) {
+            throw new InvalidArgumentException("Can not set property name with '/' delimeter");
         }
 
-        $pDef = new \Midgard\PHPCR\NodeType\PropertyDefinition($this, $name);
-        if ($value == null)
-        {
-            /* Property is mandatory, can not remove */
-            if ($pDef->isMandatory())
-            {
-                throw new \PHPCR\NodeType\ConstraintViolationException("Can not remove property {$name} which is mandatory for {$this->primaryNodeTypeName }");
+        $nodeDef = $this->getNodeDefinitionThatHasProperty($name);
+        if (is_null($value)) {
+            if ($nodeDef && !$nodeDef->canRemoveProperty($name)) {
+                throw new ConstraintViolationException("Can not remove property {$name} which is mandatory for {$this->primaryNodeTypeName }");
             }
 
-            /* Protected */
-            /* TODO */
-
-            $this->removeProperty($name);
-            return;
+            return $this->removeProperty($name);
         }
 
-        if ($type != null)
-        {
-            $requiredType = $pDef->getRequiredType();
+        $propertyDef = null;
+        if ($type != null && $nodeDef) {
+            $propertyDefs = $nodeDef->getPropertyDefinitions();
+            if (isset($propertyDefs[$name])) {
+                $propertyDef = $propertyDefs[$name];
+                $requiredType = $propertyDefs[$name]->getRequiredType();
 
-            if ($requiredType != 0
-                && $requiredType != $type)
-            {
-                throw new \PHPCR\NodeType\ConstraintViolationException("Wrong type for {$name} property. " . \PHPCR\PropertyType::nameFromValue($type) . " given. Expected " . \PHPCR\PropertyType::nameFromValue($requiredType));
+                if ($requiredType != 0 && $requiredType != $type) {
+                    throw new ConstraintViolationException("Wrong type for {$name} property. " . PropertyType::nameFromValue($type) . " given. Expected " . PropertyType::nameFromValue($requiredType));
+                }
 
-            }
-
-            if ($requiredType != 0
-                && ($requiredType != null && $requiredType != $type)
-                && property_exists($this->getMidgard2ContentObject(), $name))
-            {
-                throw new \PHPCR\NodeType\ConstraintViolationException("Wrong type for {$name} property. " . \PHPCR\PropertyType::nameFromValue($type) . " given. Expected " . \PHPCR\PropertyType::nameFromValue($requiredType));
+                if ($requiredType != 0 && ($requiredType != null && $requiredType != $type) && property_exists($this->getMidgard2ContentObject(), $name)) {
+                    throw new ConstraintViolationException("Wrong type for {$name} property. " . PropertyType::nameFromValue($type) . " given. Expected " . PropertyType::nameFromValue($requiredType));
+                }
             }
         }
 
-        try 
-        {
+        $origValue = null;
+        try {
             $property = $this->getProperty($name);
+            $origValue = $property->getValue();
         } 
-        catch (\PHPCR\PathNotFoundException $e)
-        { 
-            $mnp = new \midgard_node_property();
-            $mnp->title = $name;
-            $mnp->type = $type;
-            if (!$type && is_array($value)) {
-                $mnp->multiple = true;
-            }
-            $this->setMidgardPropertyNode($name, $mnp);
-            $property = new Property($this, $name);
-            $this->properties[$name] = $property;
+        catch (PathNotFoundException $e) { 
+            $this->properties[$name] = new Property($this, $name, $propertyDef, $type);
+            $property = $this->properties[$name];
         }
         $property->setValue($value, $type);
-        
-        /* TODO, for performance reason, we could check if property's value has been changed.
-         * By default, it's modified */
-        $this->is_modified = true;
+       
+        if (is_null($origValue) || $value != $origValue) {
+            $this->is_modified = true;
+        }
 
         return $property;
     }
 
-    public function setMidgardPropertyNode($name, \midgard_node_property $property)
-    {
-        $this->midgardPropertyNodes[$name][] = $property;
-    }
-
-    public function getMidgardPropertyNodes($name = null)
-    {
-        if (empty($this->midgardPropertyNodes))
-        {
-            return null;
-        }
-        if ($name != null)
-        {
-            if (!array_key_exists($name, $this->midgardPropertyNodes))
-            {
-                return null;
-            }
-            return $this->midgardPropertyNodes[$name];
-        }
-
-        return $this->midgardPropertyNodes;
-    }
-
-    private function populateChildren()
-    {
-        if (!is_null($this->children))
-        {
-            return;
-        }
-
-        /* Node is not saved, so DO NOT list children of the same type */
-        if (!$this->midgardNode->guid)
-        {
-            return;
-        }
-
-        /* Replace this with midgardNode->list().
-         * Once, workspace bug is fixed:
-         * https://github.com/midgardproject/midgard-core/issues/129
-         */ 
-        $qst = new \midgard_query_storage("midgard_node");
-        $select = new \midgard_query_select($qst);
-        $select->toggle_readonly(false);
-        $select->set_constraint(
-            new \midgard_query_constraint(
-                new \midgard_query_property("parent"),
-                "=",
-                new \midgard_query_value($this->midgardNode->id)
-            )
-        );
-        
-        $select->execute ();
-        /* No children. Ignore. */
-        if ($select->resultscount == 0)
-            return;
-
-        $children = $select->list_objects();
-        $this->children = array();
-        foreach ($children as $child)
-        {
-            $this->children[$child->name] = new Node($child, $this, $this->getSession());
-        }
-    }
-
     public function getNode($relPath)
     {
-        $remainingPath = '';
-        $pos = strpos($relPath, '/');
-        
         /* Convert to relative path when absolute one has been given */
         /* FIXME, Remove this part once absolute path is considered invalid
          * https://github.com/phpcr/phpcr-api-tests/issues/9 */
-        if ($pos === 0)
-        {
+        $pos = strpos($relPath, '/');
+        if ($pos === 0) {
             $relPath = substr($relPath, 1);
             $pos = strpos($relPath, '/');
         }
 
-        if ($pos !== false)
-        {
+        $remainingPath = '';
+        if ($pos !== false) {
             $parts = explode('/', $relPath);
             $relPath = array_shift($parts);
             $remainingPath = implode('/', $parts);
         }
 
-        if (!isset($this->children[$relPath]))
-        {
-            $this->populateChildren();
-            if (!isset($this->children[$relPath]))
-            {
-                /* Try special case: '..' */
-                if ($relPath == '..')
-                {
-                    if ($remainingPath)
-                    {
-                        return $this->parent->getNode($remainingPath);
-                    } 
-                    return $this->parent;
-                }
-
-                $absPath = $this->getPath();
-                //$guid = $this->getMidgard2Object()->guid;
-                $guid = '';
-
-                throw new \PHPCR\PathNotFoundException("Node at path '{$relPath}' not found. ({$remainingPath}). Requested at node {$absPath} with possible guid identifier '{$guid}'." . print_r($this->children ? array_keys($this->children) : array(), true));
+        if ($relPath == '..') {
+            if (!$this->getParent()) {
+                throw new PathNotFoundException("Node at path '{$relPath}' not found under " . $this->getPath());
             }
+            if ($remainingPath) {
+                return $this->getParent()->getNode($remainingPath);
+            } 
+            return $this->getParent();
         }
 
-        if ($remainingPath != '') 
-        {
+        if (is_null($this->children)) {
+            $this->populateChildren();
+        } elseif (!isset($this->children[$relPath])) {
+            $this->populateChildren(true);
+        }
+        
+        if (!isset($this->children[$relPath])) {
+            throw new PathNotFoundException("Node at path '{$relPath}' not found under " . $this->getPath());
+        }
+
+        if ($this->children[$relPath]->is_removed) {
+            throw new PathNotFoundException("Node at path '{$relPath}' not found under " . $this->getPath() . ' (has been removed)');
+        }
+
+
+        if ($remainingPath != '') {
             return $this->children[$relPath]->getNode($remainingPath);
         }
 
@@ -443,8 +342,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $prefix = $nsnames[0];
         $name = $nsnames[1];
 
-        if (array_key_exists($name, $this->children))
-        {
+        if (array_key_exists($name, $items)) {
             $ret[$name] = $items[$name];
         }
             
@@ -509,114 +407,191 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $allFilters;
     }
 
-    private function getItemsFiltered($items, $filter, $isNode)
+    private function getItemsFiltered($items, $filter = null, $isNode)
     {
-        if ($filter == null)
-        {
-            return $items;
+        if ($filter == null) {
+            return new ArrayIterator($items);
         } 
 
         $filteredItems = array();
 
-        if (is_string($filter))
-        {
+        if (is_string($filter)) {
             $filters = $this->getFiltersFromString($filter);
         }
 
-        if(is_array($filter))
-        {
+        if(is_array($filter)) {
             $filters = $this->getFiltersFromArray($filter);
         } 
 
-        foreach ($filters as $i => $f)
-        {
-            if (strpos($f[0], '*') !== false 
-                || strpos($f[1], '*') !== false)
-            { 
+        foreach ($filters as $i => $f) {
+            if (strpos($f[0], '*') !== false || strpos($f[1], '*') !== false) { 
                 $filteredItems = array_merge($filteredItems, $this->getItemsSimilar($items, $f, $isNode));
             }
-            else 
-            { 
+            else  { 
                 $filteredItems = array_merge($filteredItems, $this->getItemsEqual($items, $f, $isNode));
             }
         }
 
-        return new \ArrayIterator($filteredItems);   
+        return new ArrayIterator($filteredItems);   
     }
 
     public function getNodes($filter = null)
     {
         $this->populateChildren();
+        $nodes = array();
+        if ($this->children) {
+            foreach ($this->children as $name => $child) {
+                if ($child->is_removed) {
+                    continue;
+                }
+                $nodes[$name] = $child;
+            }
+        }
+        return $this->getItemsFiltered($nodes, $filter, true); 
+    }
 
-        if ($filter == null) 
-        {
-            return new \ArrayIterator($this->children ? $this->children : array());
+    protected function populateParent()
+    {
+        if ($this->isRoot) {
+            return;
         }
 
-        return $this->getItemsFiltered($this->children ? $this->children : array(), $filter, true); 
+        if (!$this->getMidgard2Node()->parentguid) {
+            return;
+        }
+
+        $this->parent = $this->getSession()->getNodeRegistry()->getByMidgardGuid($this->getMidgard2Node()->parentguid);
+    }
+
+    private function populateChildren($appendOnly = false)
+    {
+        if (!is_null($this->children) && !$appendOnly) {
+            return;
+        }
+
+        if (!$appendOnly) {
+            $this->children = array();
+        }
+
+        /* Node is not saved, so DO NOT list children */
+        if (!$this->getMidgard2Node()->guid) {
+            return;
+        }
+
+        /* Replace this with midgardNode->list().
+         * Once, workspace bug is fixed:
+         * https://github.com/midgardproject/midgard-core/issues/129
+         */ 
+        $qst = new \midgard_query_storage("midgard_node");
+        $select = new \midgard_query_select($qst);
+        $select->toggle_readonly(false);
+        $select->set_constraint(
+            new \midgard_query_constraint(
+                new \midgard_query_property("parent"),
+                "=",
+                new \midgard_query_value($this->midgardNode->id)
+            )
+        );
+        $select->execute();
+
+        /* No children. Ignore. */
+        if ($select->resultscount == 0) {
+            return;
+        }
+
+        $children = $select->list_objects();
+        $this->children = array();
+        foreach ($children as $child) {
+            if ($appendOnly && isset($this->children[$child->name])) {
+                continue;
+            }
+            $this->children[$child->name] = $this->getSession()->getNodeRegistry()->getByMidgardNode($child);
+        }
+    }
+
+    private function populateProperty(PropertyDefinition $definition)
+    {
+        $propertyName = $definition->getName();
+        if (isset($this->removeProperties[$propertyName])) {
+            return;
+        }
+        if (isset($this->properties[$propertyName])) {
+            return;
+        }
+
+        $this->properties[$propertyName] = new Property($this, $propertyName, $definition);
+    }
+
+    private function populatePropertiesUndefined()
+    {
+        if (!$this->getMidgard2Node()->id) {
+            return;
+        }
+        $q = new midgard_query_select(new midgard_query_storage('midgard_node_property'));
+        $cg = new midgard_query_constraint_group('AND');
+        $cg->add_constraint(
+            new midgard_query_constraint(
+                new midgard_query_property('parent'),
+                '=',
+                new midgard_query_value($this->getMidgard2Node()->id)
+            )
+        );
+        $cg->add_constraint(
+            new midgard_query_constraint(
+                new midgard_query_property('name'),
+                'NOT IN',
+                new midgard_query_value(array_keys($this->properties))
+            )
+        );
+        $q->set_constraint($cg);
+        $q->execute();
+        $properties = $q->list_objects();
+        foreach ($properties as $property) {
+            if (isset($this->removeProperties[$property->name])) {
+                continue;
+            }
+            $crName = NodeMapper::getPHPCRProperty($property->name);
+            $this->properties[$crName] = new Property($this, $crName);
+        }
+    }
+
+    private function populatePropertiesForNodeType(NodeTypeInterface $def) {
+        foreach ($def->getPropertyDefinitions() as $property) {
+            $this->populateProperty($property);
+        }
     }
 
     private function populateProperties()
     {
-        if ($this->contentObject == null)
-        {
-            $this->contentObjectFactory($this->midgardNode, $this->primaryNodeTypeName);
+        if ($this->contentObject == null) {
+            $this->populateContentObject();
         }
 
-        if (!is_null($this->properties))
-        {
-            return;
+        if (is_null($this->properties)) {
+            $this->properties = array();
         }
 
-        foreach ($this->contentObject as $property => $value)
-        {
-            if (strpos($property, '-') === false)
-            {
-                $this->properties["mgd:{$property}"] = ' ';
-            }
-            else 
-            {
-                $parts = explode('-', $property);
-                $this->properties["{$parts[0]}:{$parts[1]}"] = ' ';
-            }
+        $this->populatePropertiesForNodeType($this->getPrimaryNodeType());
+        $mixins = $this->getMixinNodeTypes();
+        foreach ($mixins as $mixin) {
+            $this->populatePropertiesForNodeType($mixin);
         }
 
-        $nodeProperties = $this->midgardNode->list_children('midgard_node_property');
-        foreach ($nodeProperties as $property)
-        {
-            $this->midgardPropertyNodes[$property->title][] = $property;
-            $this->properties[$property->title] = ' ';
-        }
+        $this->populatePropertiesUndefined();
     }
 
     public function getProperty($relPath)
     {
         $remainingPath = '';
-        if (strpos($relPath, '/') !== false)
-        {
+        if (strpos($relPath, '/') !== false) {
             $parts = explode('/', $relPath);
             $property_name = array_pop($parts);
             $remainingPath = implode('/', $parts); 
             return $this->getNode($remainingPath)->getProperty($property_name);
         }
 
-        if (!isset($this->properties[$relPath]))
-        {
-            $this->populateProperties();
-            if (empty($this->properties) || !array_key_exists($relPath, $this->properties))
-            {
-                throw new \PHPCR\PathNotFoundException("Property at path '{$relPath}' not found at node " . $this->getName() . " at path " . $this->getPath());
-            }
-        }
-
-        if (!is_object($this->properties[$relPath]))
-        {
-            $midgardPropertyNodes = null;
-            if (isset($this->midgardPropertyNodes[$relPath]))
-            {
-                $midgardPropertyNodes = $this->midgardPropertyNodes[$relPath];
-            }
-            $this->properties[$relPath] = new Property($this, $relPath);
+        if (!$this->hasProperty($relPath) || !isset($this->properties[$relPath])) {
+            throw new PathNotFoundException("Property at path " . $this->getPath() . "/{$relPath} not found.");
         }
 
         return $this->properties[$relPath];
@@ -631,10 +606,6 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         $this->populateProperties();
         $ret = $this->getItemsFiltered($this->properties, $filter, false);
-        foreach ($ret as $name => $property)
-        {
-            $ret[$name] = is_object($this->properties[$name]) ? $this->properties[$name] : $this->getProperty($name); 
-        }
         return new \ArrayIterator($ret);
     }
 
@@ -642,25 +613,18 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         $properties = $this->getProperties($filter);
         $ret = array();
-        foreach ($properties as $name => $o)
-        {
-            $type = $this->getProperty($name)->getType();
-            if ($type == \PHPCR\PropertyType::WEAKREFERENCE
-                || $type == \PHPCR\PropertyType::REFERENCE
-                || $type == \PHPCR\PropertyType::PATH)
-            {
-                if ($dereference == true)
-                {
-                    $ret[$name] = $this->getProperty($name)->getNode();
+        foreach ($properties as $name => $property) {
+            $type = $property->getType();
+            if ($type == PropertyType::WEAKREFERENCE || $type == PropertyType::REFERENCE || $type == PropertyType::PATH) {
+                if ($dereference == true) {
+                    $ret[$name] = $property->getNode();
                 }
-                else
-                {
-                    $ret[$name] = $this->getProperty($name)->getString();
+                else {
+                    $ret[$name] = $property->getString();
                 }
             }
-            else 
-            {
-                $ret[$name] = $this->getProperty($name)->getValue(); 
+            else {
+                $ret[$name] = $property->getValue(); 
             }
         }
         return $ret;
@@ -668,23 +632,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getPrimaryItem()
     {
-        try
-        {
-            $primaryType = $this->getPropertyValue('jcr:primaryType');
-            $ntm = $this->session->getWorkspace()->getNodeTypeManager();
-            $nt = $ntm->getNodeType($primaryType);
-            $primaryItem = $nt->getPrimaryItemName();
-            if ($primaryItem == null)
-            {
-                throw new \PHPCR\ItemNotFoundException("PrimaryItem not found for {$this->getName()} node");
-            }
+        $nt = $this->getPrimaryNodeType();
+        $primaryItem = $nt->getPrimaryItemName();
+        if (!$primaryItem) {
+            throw new ItemNotFoundException("PrimaryItem not found for {$this->getName()} node");
         }
-        catch (\PHPCR\PathNotFoundException $e)
-        {
-                throw new \PHPCR\ItemNotFoundException("primaryType property not found for {$this->getName()} node");
-        }
-        if ($this->hasNode($primaryItem))
-        {
+
+        if ($this->hasNode($primaryItem)) {
             return $this->getNode($primaryItem);
         }
         
@@ -694,20 +648,15 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function getIdentifier()
     {
         $this->populateProperties();
-
-        /* Try uuid first */
-        try 
-        {
-            $uuidProperty = $this->getProperty('jcr:uuid');
-            return $uuidProperty->getValue();
-        }
-        catch (\PHPCR\PathNotFoundException $e)
-        {
-            /* Do notthing */
+        if ($this->hasProperty('jcr:uuid')) {
+            $uuid = $this->getPropertyValue('jcr:uuid');
+            if ($uuid) {
+                return $uuid;
+            }
         }
 
         /* Return guid if uuid is not found */
-        return $this->contentObject->guid;
+        return $this->getMidgard2Node()->guid;
     }
     
     public function getIndex()
@@ -720,20 +669,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     {
         $ret = array();
         $this->populateProperties();
-        /* If node has jcr:uuid property */
-        if (!$this->hasProperty('jcr:uuid'))
-        {
+
+        $uuid = $this->getIdentifier();
+        if (!$uuid) {
+            // No referenceable identifier, skip
             return new \ArrayIterator($ret);
         }
          
-        /* get its value */
-        $uuid = $this->getPropertyValue('jcr:uuid');
-
-        if ($uuid === null || $uuid === "")
-        {
-            throw new \PHPCR\RepositoryException("Invalid empty uuid value");
-        }
-
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node_property'));
         $group = new \midgard_query_constraint_group('AND');
         $group->add_constraint(
@@ -750,13 +692,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
             )
         );
 
-        if ($name != null)
-        {
+        if ($name != null) {
             $group->add_constraint(
                 new \midgard_query_constraint(
-                    new \midgard_query_property('title'),
+                    new \midgard_query_property('name'),
                     '=',
-                    new \midgard_query_value($name)
+                    new \midgard_query_value(NodeMapper::getMidgardPropertyName($name))
                 )
             );
         }
@@ -798,103 +739,46 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function hasNode($relPath)
     {
-        /* FIXME, optimize this.
-         * Do not get node, check children array instead */
-        $pos = strpos($relPath, '/');
-        if ($pos === 0)
-        {
+        if (substr($relPath, 0, 1) == '/') {
             throw new \InvalidArgumentException("Expected relative path. Absolute given");
             /* Take few glasses if Absolute given ;) */
         }
 
-        try 
-        {
+        try {
             $this->getNode($relPath);
             return true;
         }
-        catch (\PHPCR\PathNotFoundException $e) 
-        {
+        catch (PathNotFoundException $e){
             return false;
         }
     }
     
     public function hasProperty($relPath)
     {
-        $pos = strpos($relPath, '/');
-        if ($pos === 0)
-        {
+        if (substr($relPath, 0, 1) == '/') {
             throw new \InvalidArgumentException("Expected relative path. Absolute given");
-        }
-
-        /* Try native property first */
-        $nativeProperty = $relPath;
-        if (strpos($relPath, ':') !== false)
-        {
-            $parts = explode(':', $relPath);
-            if ($parts[0] == 'mgd')
-            {
-                $nativeProperty = $parts[1];
-            }
-            else 
-            {
-                $nativeProperty = str_replace(':', '-', $relPath);
-            }
-        }
-
-        if (strpos($relPath, '-') !== false)
-        {
-            $parts = explode('-', $relPath);
-            if ($parts[0] == 'mgd')
-            {
-                $nativeProperty = $parts[1];
-            }
-        }
-
-        if (!$this->midgardNode->typename)
-        {
-            $this->midgardNode->typename = 'nt_unstructured';
-        }
-
-        /* Unfortunatelly, we must initialize new midgard object and reflection object.
-         * There's no other way to check if class has property registered.
-         * Others, (very) old PHP introspection routines check properties, in class default properties scope */
-        $ro = new \ReflectionObject(new $this->midgardNode->typename);
-        if ($ro->hasProperty($nativeProperty))
-        {
-            return true;
-        }
-
-        if (property_exists($this->midgardNode->typename, $nativeProperty))
-        {
-            return true;
+            /* Take few glasses if Absolute given ;) */
         }
 
         $this->populateProperties();
-
-        if (array_key_exists($relPath, $this->properties))
-        {
-            return true;
-        }
-
-        return false;
+        return isset($this->properties[$relPath]);
     }
     
     public function hasNodes()
     {
         $this->populateChildren();
-        if (empty($this->children))
-        {
-            return false;
+        foreach ($this->children as $node) {
+            if (!$node->is_removed) {
+                return true;
+            }
         }
-
-        return true;
+        return false;
     }
     
     public function hasProperties()
     {
         $this->populateProperties();
-        if (empty($this->properties))
-        {
+        if (empty($this->properties)) {
             return false;
         }
 
@@ -903,36 +787,39 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function getPrimaryNodeType()
     {
-        $primaryType = $this->getPropertyValue('jcr:primaryType');
+        $primaryType = $this->getTypeName();
         $ntm = $this->session->getWorkspace()->getNodeTypeManager();
         $nt = $ntm->getNodeType($primaryType);
-
-        if (!$nt)
-        {
+        if (!$nt) {
             $name = $this->getName();
-            throw new \PHPCR\RepositoryException("Failed to get NodeType from current '{$name}' node ({$primaryType})");
+            throw new RepositoryException("Failed to get NodeType from current '{$name}' node ({$primaryType})");
         }
         return $nt;
     }
     
     public function getMixinNodeTypes()
     {
+        $mixins = $this->getMidgard2PropertyValue('jcr:mixinTypes', true);
         $ret = array();
-        if (!$this->hasProperty('jcr:mixinTypes'))
-        {
+        if (!$mixins) {
             return $ret;
         }
 
         $ntm = $this->session->getWorkspace()->getNodeTypeManager();
-        $mixins = $this->getPropertyValue('jcr:mixinTypes');
-        if (!is_array($mixins))
-        {
+        if (!is_array($mixins)) {
             $tmp[] = $mixins;
             $mixins = $tmp;
         }
-        foreach ($mixins as $mixin)
-        {
-            $ret[] = $ntm->getNodeType($mixin);
+
+        foreach ($mixins as $mixin) {
+            if (!$mixin) {
+                continue;
+            }
+            try {
+                $ret[] = $ntm->getNodeType($mixin);
+            } catch (NoSuchNodeTypeException $e) {
+                continue;
+            }
         }
 
         return $ret;
@@ -940,45 +827,16 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function isNodeType($nodeTypeName)
     {
-        /* Check primaryType first */
-        try 
-        {
-            $type = $this->getPropertyValue('jcr:primaryType');
-        }
-        catch (\PHPCR\PathNotFoundException $e)
-        {
-            /* Do nothing */
-        }
-        if ($type == $nodeTypeName)
-        {
+        $primary = $this->getPrimaryNodeType();
+        if ($primary->isNodeType($nodeTypeName)) {
             return true;
         }
-        /* TODO 
-         * Check supertypes */
-        /*
-        $ntm = $this->session->getWorkspace()->getNodeTypeManager();
-        $nt = $ntm->getNodeType($type);
-         */
 
-        /* Check mixin */
-        try 
-        {
-            $mixins = $this->getPropertyValue('jcr:mixinTypes');
-        }
-        catch (\PHPCR\PathNotFoundException $e)
-        {
-            return false;
-        }
-
-        if (!is_array($mixins))
-        {
-            $tmp[] = $mixins;
-            $mixins = $tmp;
-        }
-
-        if (in_array($nodeTypeName, $mixins))
-        {
-            return true;
+        $mixins = $this->getMixinNodeTypes();
+        foreach ($mixins as $mixin) {
+            if ($mixin->isNodeType($nodeTypeName)) {
+                return true;
+            }
         }
 
         return false;
@@ -991,63 +849,32 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function addMixin($mixinName)
     {
-        $midgardMixinName = NodeMapper::getMidgardName($mixinName);
-        if ($midgardMixinName == null 
-            || !interface_exists($midgardMixinName, false))
-        {
-            throw new \PHPCR\NodeType\NoSuchNodeTypeException("{$mixinName} {$midgardMixinName} is not registered type"); 
-        }
-        if (is_subclass_of($midgardMixinName, 'MidgardBaseMixin'))
-        {
-            throw new \PHPCR\NodeType\ConstraintViolationException("{$mixinName} is not registered as mixin"); 
+        if (!$this->session->getWorkspace()->getNodeTypeManager()->hasNodeType($mixinName)) {
+            throw new NoSuchNodeTypeException("{$mixinName} is not registered mixin type"); 
         }
 
-        $hasMixin = false;
-        try 
-        {
-            /* Check if node has such mixin */
-            $mixinProperty = $this->getPropertyValue('jcr:mixinTypes');
-            if (!is_array($mixinProperty))
-            {
-                $tmp[] = $mixinProperty;
-                $mixinProperty = $tmp;
-            }
-            foreach ($mixinProperty as $mixin)
-            {
-                if ($mixin == $mixinName)
-                {
-                    $hasMixin = true;
-                }
-            }
+        if (!$this->canAddMixin($mixinName)) {
+            throw new ConstraintViolationException("{$mixinName} is not registered mixin type"); 
+        }
 
-            if ($hasMixin == false)
-            {
-                $this->setProperty('jcr:mixinTypes', $mixinName);
-            }
-            else 
-            {
-                /* If this node is already of type mixinName (either due to a previously 
-                 * added mixin or due to its primary type, through inheritance) then this method has no effect.*/
+        // Check if we already have such a mixin
+        $mixins = $this->getMixinNodeTypes();
+        foreach ($mixins as $mixin) {
+            if ($mixin->getName() == $mixinName) {
                 return;
             }
         }
-        catch (\PHPCR\PathNotFoundException $e)
-        {
-            $this->setProperty('jcr:mixinTypes', $mixinName);
+
+        if ($this->hasProperty('jcr:mixinTypes')) {
+            $prop = $this->getProperty('jcr:mixinTypes');
+            $prop->addValue($mixinName);
+        } else {
+            $this->setProperty('jcr:mixinTypes', array($mixinName));
         }
 
-        $properties = \midgard_reflector_object::list_defined_properties ($midgardMixinName);
-        foreach ($properties as $name => $v)
-        {
-            $jcrName = NodeMapper::getPHPCRProperty($name);
-            if($this->hasProperty($jcrName))
-            {
-                continue;
-            }
-
-            /* FIXME, determine default value */
-            $this->setProperty($jcrName, ' ');
-        }
+        $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+        $nt = $ntm->getNodeType($mixinName);
+        $this->populatePropertiesForNodeType($nt);
     }
     
     public function removeMixin($mixinName)
@@ -1056,12 +883,21 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     
     public function canAddMixin($mixinName)
     {
-        return false;
+        $midgardMixinName = NodeMapper::getMidgardName($mixinName);
+        if ($midgardMixinName == null || !interface_exists($midgardMixinName, false)) {
+            return false;
+        }
+
+        if (is_subclass_of($midgardMixinName, 'MidgardBaseMixin')) {
+            return false;
+        }
+
+        return true;
     }
     
     public function getDefinition()
     {
-        return new NodeType\NodeDefinition($this);
+        return new NodeDefinition($this, null, null, $this->session->getWorkspace()->getNodeTypeManager());
     }
     
     public function update($srcWorkspace)
@@ -1114,10 +950,9 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return $this->getNodes();
     }
 
-    public function isSame(\PHPCR\ItemInterface $item)
+    public function isSame(ItemInterface $item)
     {
-        if (!$item instanceof \PHPCR\NodeInterface)
-        {
+        if (!$item instanceof NodeInterface) {
             return false;
         }
 
@@ -1125,18 +960,15 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         /* Check session */
        
         $thisContentObject = $this->getMidgard2ContentObject();
-        if (!$thisContentObject)
-        {
+        if (!$thisContentObject) {
             return false;
         }
         $itemContentObject = $item->getMidgard2ContentObject();
-        if (!$itemContentObject)
-        {
+        if (!$itemContentObject) {
             return false;
         }
 
-        if ($thisContentObject->guid == $itemContentObject->guid)
-        {
+        if ($thisContentObject->guid == $itemContentObject->guid) {
             return true;
         }
 
@@ -1204,7 +1036,7 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
     public function move($dstNode, $dstName)
     {
         /* Unset parent's child */
-        unset($this->parent->children[$this->getName()]);
+        unset($this->getParent()->children[$this->getName()]);
 
         /* Set new parent */
         $this->parent = $dstNode;
@@ -1236,82 +1068,63 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         $midgardNode = $this->getMidgard2Node();
 
         /* Remove self instance if marked such */
-        if ($this->remove == true)
-        {
+        if ($this->is_removed == true) {
             $self::removeFromStorage($this);
             return;
         }
 
         /* Remove properties marked to be removed */
-        if (!empty($this->removeProperties))
-        {
-            foreach ($this->removeProperties as $properties)
-            {
-                foreach ($properties as $mnp)
-                {
-                    if (!$mnp->purge_attachments(true)) {
-                        Repository::checkMidgard2Exception($mnp);
-                    }
-                    if (!$mnp->purge()) {
-                        Repository::checkMidgard2Exception($mnp);
-                    }
-                }
+        if (!empty($this->removeProperties)) {
+            foreach ($this->removeProperties as $property) {
+                $property->removeMidgard2PropertyStorage($property->getName(), $property->isMultiple());
             }
         }
 
-        /* Create */
-        if ($this->isNew() === true)
-        {
-            if ($mobject->create() === true)
-            { 
-                $midgardNode->typename = get_class($mobject);
-                $midgardNode->objectguid = $mobject->guid;
+        if (!$this->is_modified && !$this->is_new) {
+            return;
+        }
 
-                $parentNode = $this->parent->getMidgard2Node();
-                if (!$parentNode->id)
-                {
-                    // Refresh from DB in case reference has been lost
-                    $parentNode = new \midgard_node($parentNode->guid);
+        if (!$midgardNode->parent && $this->parent) {
+            $midgardNode->parent = $this->parent->getMidgard2Node()->id;
+            $midgardNode->parentguid = $this->parent->getMidgard2Node()->guid;
+        }
+
+        if (!$midgardNode->guid) {
+            if (!$midgardNode->create()) {
+                $error = \midgard_connection::get_instance()->get_error();
+                if ($error == \MGD_ERR_DUPLICATE) {
+                    throw new \PHPCR\ItemExistsException('Node ' . $this->getPath() . ' already exists');
+
                 }
-                $midgardNode->parentguid = $parentNode->guid;
-                $midgardNode->parent = $parentNode->id;
-                $midgardNode->create();
-            }
-            else 
-            {
                 throw new \Exception(\midgard_connection::get_instance()->get_error_string());
             }
+        } else {
+            $midgardNode->update();
         }
 
-        if ($this->isModified() === true)
-        {
-            if (!$this->isRoot)
-            {
-                if ($mobject->update() === true)
-                {    
+        if ($mobject) {
+            if (!$mobject->guid) {
+                if ($mobject->create()) { 
+                    $midgardNode->typename = get_class($mobject);
+                    $midgardNode->objectguid = $mobject->guid;
                     $midgardNode->update();
+                } else {
+                    throw new \Exception(\midgard_connection::get_instance()->get_error_string());
                 }
-                if (\midgard_connection::get_instance()->get_error() != MGD_ERR_OK)
-                {
-                    throw new \PHPCR\RepositoryException(\midgard_connection::get_instance()->get_error_string());
-                }
+            } else {
+                $mobject->update();
             }
         }
 
         $this->is_modified = false;
-        $this->is_new = false; 
+        $this->is_new = false;
 
-        if (empty($this->properties))
-        {
+        if (!$this->properties) {
             return;
         }
 
-        foreach ($this->properties as $name => $property)
-        {
-            if (is_object($this->properties[$name]))
-            {
-                $this->properties[$name]->save();
-            }
+        foreach ($this->properties as $name => $property) {
+            $this->properties[$name]->save();
         }
     }
 
@@ -1322,7 +1135,34 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         }
 
         if ($this->midgardNode->guid) {
-            $this->midgardNode = new \midgard_node($this->midgardNode->guid);
+            /* Replace this with 'new midgard_node'
+             * Once, workspace bug is fixed:
+             * https://github.com/midgardproject/midgard-core/issues/129
+             */ 
+            $qst = new \midgard_query_storage('midgard_node');
+            $select = new \midgard_query_select($qst);
+            $select->toggle_readonly(false);
+            $select->set_constraint(
+                new \midgard_query_constraint(
+                    new \midgard_query_property('guid'),
+                    '=',
+                    new \midgard_query_value($this->midgardNode->guid)
+                )
+            );
+            $select->execute();
+            $nodes = $select->list_objects();
+            if (!$nodes) {
+                throw new ItemNotFoundException("Node {$this->midgardNode->guid} not found: " . \midgard_connection::get_instance()->get_error_string());
+            }
+            $this->midgardNode = $nodes[0];
+        }
+        $this->is_removed = false;
+        $this->removeProperties = array();
+        
+        if ($this->children) {
+            foreach ($this->children as $node) {
+                $node->refresh($keepChanges);
+            }
         }
 
         if ($this->properties) {
@@ -1335,19 +1175,43 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
 
     public function remove()
     {
-        if ($this->remove == true)
-        {
+        if ($this->is_removed == true) {
             return;
         }
 
-        unset($this->parent->children[$this->getName()]);
-        $this->remove = true;
+        $this->is_removed = true;
         $this->session->removeNode($this);
     }
 
     public function removeMidgard2Node()
     {
-        self::removeFromStorage($this);
+        $mobject = $this->getMidgard2ContentObject();
+        $midgardNode = $this->getMidgard2Node();
+        
+        /* \PHPCR\ReferentialIntegrityException */
+        if ($this->isReferenced()) {
+            throw new \PHPCR\ReferentialIntegrityException("Node " . $this->getPath() . " is referenced by other nodes");
+        }
+
+        /* Remove properties first */
+        $this->populateProperties();
+        foreach ($this->getProperties() as $property) {
+            $property->removeMidgard2Property();
+        }
+
+        /* Remove child objects */
+        $children = $this->getNodes();
+        foreach ($children as $child) {
+            $child->removeMidgard2Node();
+        }
+
+        if ($mobject->guid) {
+            $mobject->purge();
+        }
+
+        if ($midgardNode->guid) {
+            $midgardNode->purge();
+        }
     }
     
     private function isReferenced()
@@ -1390,71 +1254,13 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
         return false;
     }
 
-    private function removeFromStorage($node)
-    { 
-        $mobject = $node->getMidgard2ContentObject();
-        $midgardNode = $node->getMidgard2Node();
-        
-        /* \PHPCR\ReferentialIntegrityException */
-        if ($this->isReferenced())
-            throw new \PHPCR\ReferentialIntegrityException("Node " . $node->getName() . " is referenced by other nodes");
-
-        /* Remove properties first */
-        $node->populateProperties();
-        if (!empty($node->midgardPropertyNodes))
-        {
-            foreach ($node->midgardPropertyNodes as $properties)
-            {
-                foreach ($properties as $mnp)
-                {
-                    if (!$mnp->guid) {
-                        continue;
-                    }
-
-                    $mnp->purge_attachments(true);
-                    Repository::checkMidgard2Exception($mnp);
-                    if (!$mnp->purge()) {
-                        // Object's connection was somehow lost, refresh
-                        try {
-                            $mnp = new \midgard_node_property($mnp->guid);
-                        } catch (\midgard_error_exception $e) {
-                            // Object isn't in DB any longer, just skip
-                            continue;
-                        }
-                        $mnp->purge();
-                        Repository::checkMidgard2Exception($mnp);
-                    }
-                }
-            }
-        }
-
-        /* Remove child objects */
-        $children = $node->getNodes();
-        foreach ($children as $child)
-        {
-            $this->removeFromStorage($child);
-        }
-
-        if ($mobject->purge() == true)
-        {
-            $midgardNode->purge();
-            Repository::checkMidgard2Exception($midgardNode);
-            /* TODO, FIXME, Remove properties from Propertymanager */
-        }
-    }
-
     private function removeProperty($name)
     {
-        if (!isset($this->properties[$name]))
-        {
+        if (!isset($this->properties[$name])) {
             return;
         } 
-        $this->is_modified = true;
-        if (isset($this->midgardPropertyNodes[$name])) {
-            $this->removeProperties[] = $this->midgardPropertyNodes[$name];
-        }
+        $this->removeProperties[$name] = $this->properties[$name];
         unset($this->properties[$name]);
-        return;
     }
 
     /**
@@ -1462,31 +1268,12 @@ class Node extends Item implements \IteratorAggregate, \PHPCR\NodeInterface
      */
     public function isReferenceable()
     {
-        try
-        {
-            $p = $this->getProperty('jcr:mixinTypes');
-            /* FIXME, we should get array as this property is multiple */
-            $values = $p->getValue();
-            if (!is_array($values))
-            {
-                if ($values == 'mix:referenceable')
-                {
-                    return true;
-                }
-                return false;
+        $mixins = $this->getMixinNodeTypes();
+        foreach ($mixins as $mixin) {
+            if ($mixin->getName() == 'mix:referenceable') {
+                return true;
             }
-            foreach ($values as $mixin)
-            {
-                if ($mixin == 'mix:referenceable')
-                {
-                    return true;
-                }
-            }
-            return false;
         }
-        catch (\PHPCR\PathNotFoundException $e)
-        {
-            return false;
-        }
+        return false;
     } 
 }
