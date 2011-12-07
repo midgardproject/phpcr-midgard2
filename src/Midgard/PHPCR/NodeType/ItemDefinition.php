@@ -13,8 +13,10 @@ class ItemDefinition implements ItemDefinitionInterface
     protected $isMandatory = false;
     protected $isProtected = false;
 
-    public function __construct(NodeTypeDefinition $declaringType, ItemDefinitionInterface $template)
+    public function __construct(NodeTypeDefinition $declaringType, ItemDefinitionInterface $template, NodeTypeManager $mgr)
     {
+        $this->nodeTypeManager = $mgr;
+
         $this->declaringNodeType = $declaringType;
         $this->name = $template->getName();
         $this->onParentVersion = $template->getOnParentVersion();

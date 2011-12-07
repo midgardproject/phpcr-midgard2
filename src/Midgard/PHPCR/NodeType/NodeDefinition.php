@@ -13,8 +13,11 @@ class NodeDefinition extends ItemDefinition implements NodeDefinitionInterface
 
     public function __construct(NodeTypeDefinition $declaringType, NodeDefinitionTemplate $template, NodeTypeManager $mgr)
     {
-        $this->nodeTypeManager = $mgr;
-        parent::__construct($declaringType, $template);
+        $this->defaultPrimaryTypeName = $template->getDefaultPrimaryTypeName();
+        $this->requiredPrimaryTypeNames = $template->getRequiredPrimaryTypeNames();
+        $this->allowSameNameSiblings = $template->allowsSameNameSiblings();
+
+        parent::__construct($declaringType, $template, $mgr);
     }
 
     public function allowsSameNameSiblings() 
