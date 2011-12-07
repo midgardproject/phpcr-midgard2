@@ -37,6 +37,30 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         $this->nodeTypeManager = $mgr;
     }
 
+    private function getBooleanValue(midgard_reflection_class $reflector, $name)
+    {
+        $value = $reflector->get_user_value($name);
+        if ($value == 'true') {
+            return true;
+        }
+        return false;
+    }
+
+    private function createChildNodeDefinition($name, $primaryType = 'nt:base', midgard_reflection_class $reflector)
+    {
+
+        $childTemplate = $this->nodeTypeManager->createNodeDefinitionTemplate();
+        $childTemplate->setAutoCreated($this->getBooleanValue($reflector, 'isAutoCreated'));
+        $childTemplate->setDefaultPrimaryTypeName($primaryType);
+        $childTemplate->setMandatory($this->getBooleanValue($reflector, 'isMandatory'));
+        $childTemplate->setName($name);
+        $childTemplate->setAutoCreated($this->getBooleanValue($reflector, 'isAutoCreated'));
+        $childTemplate->setProtected($this->getBooleanValue($reflector, 'isProtected'));
+        $childTemplate->setSameNameSiblings($this->getBooleanValue($reflector, 'SameNameSiblings'));
+
+        return new NodeDefinition($this, $childTemplate, $this->nodeTypeManager);
+    }
+
     public function getDeclaredChildNodeDefinitions() 
     {
         if (!is_null($this->childNodeDefinitions)) {
@@ -48,7 +72,7 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         $reflector = new midgard_reflection_class($midgardName);
         $primaryTypes = $reflector->get_user_value('RequiredPrimaryTypes');
         if (empty($primaryTypes)) {
-            return array();
+            $primaryTypes = null;
         }
 
         $childName = $reflector->get_user_value('PrimaryItemName');
@@ -56,7 +80,9 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
             return array();
         }
 
-        return array(new NodeDefinition(null, $childName, $primaryTypes, $this->nodeTypeManager));
+        $ret = array();
+        $ret[] = $this->createChildNodeDefinition($childName, $primaryTypes, $reflector);
+        return $ret;
     }
 
     public function getDeclaredPropertyDefinitions()
