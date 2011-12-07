@@ -117,13 +117,17 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $parts = explode('/', $relPath);
+        if ($this->hasProperty($parts[0])) {
+            throw new ConstraintViolationException("Can not add node to '{$relPath}' Item which is a Property under " . $this->getPath());
+        }
+
         if (count($parts) > 1) {
             $node = $this->getNode(array_shift($parts));
             return $node->addNode(implode('/', $parts), $primaryNodeTypeName);
         }
 
-        if ($this->hasProperty($relPath)) {
-            throw new ConstraintViolationException("Can not add node to '{$relPath}' Item which is a Property under " . $this->getPath());
+        if ($primaryNodeTypeName && !$this->session->getWorkspace()->getNodeTypeManager()->hasNodeType($primaryNodeTypeName)) {
+            throw new NoSuchNodeTypeException("Can not add node '{$relPath}' under " . $this->getPath() . ": Type {$primaryNodeTypeName} not defined.");
         }
 
         if (!$this->getPrimaryNodeType()->canAddChildNode($relPath, $primaryNodeTypeName)) {

@@ -6,7 +6,7 @@ use Midgard\PHPCR\Utils\NodeMapper;
 
 class NodeDefinition extends ItemDefinition implements NodeDefinitionInterface
 {
-    protected $defaultPrimaryTypeName = null;
+    protected $defaultPrimaryTypeName = 'nt:base';
     protected $requiredPrimaryTypeNames = array();
     protected $allowSameNameSiblings = false;
     protected $nodeTypeManager = null;
@@ -15,6 +15,10 @@ class NodeDefinition extends ItemDefinition implements NodeDefinitionInterface
     {
         $this->defaultPrimaryTypeName = $template->getDefaultPrimaryTypeName();
         $this->requiredPrimaryTypeNames = $template->getRequiredPrimaryTypeNames();
+        if (empty($this->requiredPrimaryTypeNames)) {
+            $this->requiredPrimaryTypeNames[] = $this->defaultPrimaryTypeName;
+        }
+
         $this->allowSameNameSiblings = $template->allowsSameNameSiblings();
 
         parent::__construct($declaringType, $template, $mgr);

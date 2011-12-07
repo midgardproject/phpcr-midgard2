@@ -149,10 +149,11 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
         }
 
         if ($nodeTypeName) {
-            $requiredPrimaryTypes = $childDefs[$nodeName]->getRequiredPrimaryTypes();
+            $nodeType = $this->nodeTypeManager->getNodeType($nodeTypeName);
+            $requiredPrimaryTypes = $childDefs[$nodeName]->getRequiredPrimaryTypeNames();
             $match = false;
             foreach ($requiredPrimaryTypes as $primary) {
-                if ($primary->isNodeType($nodeTypeName)) {
+                if ($nodeType->isNodeType($primary)) {
                     $match = true;
                     break;
                 }

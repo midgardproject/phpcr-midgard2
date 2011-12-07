@@ -56,11 +56,20 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         return false;
     }
 
-    private function createChildNodeDefinition($name, $primaryType = 'nt:base', midgard_reflection_class $reflector)
+    private function createChildNodeDefinition($name, midgard_reflection_class $reflector)
     {
         $template = $this->nodeTypeManager->createNodeDefinitionTemplate();
         $template->setAutoCreated($this->getBooleanValue($reflector, 'isAutoCreated'));
-        $template->setDefaultPrimaryTypeName($primaryType);
+
+        $primaryTypes = $this->getStringValue($reflector, 'RequiredPrimaryTypes');
+        if ($primaryTypes) {
+            $primaryTypes = explode(' ', $primaryTypes);
+        } else {
+            $primaryTypes = array('nt:base');
+        }
+        $template->setRequiredPrimaryTypeNames($primaryTypes);
+
+        $template->setDefaultPrimaryTypeName($this->getStringValue($reflector, 'DefaultPrimaryType'));
         $template->setMandatory($this->getBooleanValue($reflector, 'isMandatory'));
         $template->setName($name);
         $template->setAutoCreated($this->getBooleanValue($reflector, 'isAutoCreated'));
@@ -79,18 +88,12 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
 
         $midgardName = NodeMapper::getMidgardName($this->name);
         $reflector = new midgard_reflection_class($midgardName);
-
-        $primaryTypes = $this->getStringValue($reflector, 'RequiredPrimaryTypes');
-        if (!$primaryTypes) {
-            $primaryTypes = null;
-        }
-
         $childName = $this->getStringValue($reflector, 'PrimaryItemName');
         if (!$childName) {
             return $this->childNodeDefinitions;
         }
 
-        $this->childNodeDefinitions[$childName] = $this->createChildNodeDefinition($childName, $primaryTypes, $reflector);
+        $this->childNodeDefinitions[$childName] = $this->createChildNodeDefinition($childName, $reflector);
 
         return $this->childNodeDefinitions;
     }
