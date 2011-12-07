@@ -21,7 +21,6 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
         parent::__construct($ntt->getName(), $manager);
 
         $this->childNodeDefinitions = $ntt->getDeclaredChildNodeDefinitions();
-        $this->propertyDefinitions = $ntt->getDeclaredPropertyDefinitions();
         $this->primaryItemName = $ntt->getPrimaryItemName();
         $this->hasOrderableChildNodes = $ntt->hasOrderableChildNodes();
         $this->isAbstract = $ntt->isAbstract();
@@ -166,6 +165,10 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
         }
 
         if ($definitions[$propertyName]->isMandatory()) {
+            return false;
+        }
+
+        if ($definitions[$propertyName]->isProtected()) {
             return false;
         }
 

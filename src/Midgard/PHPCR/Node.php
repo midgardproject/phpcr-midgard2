@@ -183,7 +183,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $nodeDef = $this->getNodeDefinitionThatHasProperty($name);
         if (is_null($value)) {
             if ($nodeDef && !$nodeDef->canRemoveProperty($name)) {
-                throw new ConstraintViolationException("Can not remove property {$name} which is mandatory for {$this->primaryNodeTypeName }");
+                throw new ConstraintViolationException("Can not remove property {$name} which is mandatory for " . $nodeDef->getName() . " nodes.");
             }
 
             return $this->removeProperty($name);
