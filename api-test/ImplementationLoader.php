@@ -8,9 +8,7 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         // Features we don't support in the Midgard provider
         'Versioning',
         'Transactions',
-        'PermissionsAndCapabilities',
-        // Queries need to be rewritten
-        'Query',
+        'PermissionsAndCapabilities'
     );
 
     protected $unsupportedCases = array(
