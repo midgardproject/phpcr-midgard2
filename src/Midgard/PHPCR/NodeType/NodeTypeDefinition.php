@@ -52,6 +52,9 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         }
 
         $childName = $reflector->get_user_value('PrimaryItemName');
+        if (!$childName) {
+            return array();
+        }
 
         return array(new NodeDefinition(null, $childName, $primaryTypes, $this->nodeTypeManager));
     }
