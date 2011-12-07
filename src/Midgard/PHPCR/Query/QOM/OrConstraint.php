@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class _Or implements \PHPCR\Query\QOM\OrInterface
+class OrConstraint implements \PHPCR\Query\QOM\OrInterface
 {
     protected $constraintFirst = null;
     protected $constraintSecond = null;
