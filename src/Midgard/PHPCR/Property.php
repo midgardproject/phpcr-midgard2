@@ -7,6 +7,7 @@ use PHPCR\PropertyType;
 use PHPCR\NodeType\PropertyDefinitionInterface; 
 use PHPCR\ValueFormatException;
 use PHPCR\RepositoryException;
+use PHPCR\InvalidItemStateException;
 use IteratorAggregate;
 use DateTime;
 use Midgard\PHPCR\Utils\NodeMapper;
@@ -528,9 +529,16 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     public function refresh($keepChanges)
     {
-        if ($keepChanges && ($this->isModified() || $this->isNew())) {
+        if ($keepChanges) {
             return;
         }
+
+        if ($this->is_removed) {
+            throw new InvalidItemStateException("Cannot refresh removed property " . $this->getPath());
+        }
+
+        $this->is_removed = false;
+
         parent::refresh($keepChanges);
     }
 

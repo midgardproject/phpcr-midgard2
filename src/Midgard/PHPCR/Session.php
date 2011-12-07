@@ -138,8 +138,7 @@ class Session implements SessionInterface
     {
         // Special case when node is expected to exists at '/' path.
         // Which means we can treat root node with special meaning here.
-        if ($absPath == '/')
-        {
+        if ($absPath == '/') {
             return $this->getRootNode();
         }
 
