@@ -37,26 +37,82 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         $this->nodeTypeManager = $mgr;
     }
 
+    private function getStringValue($reflector, $name, $property = null)
+    {
+        if ($property) {
+            // Property reflector
+            return $reflector->get_user_value($property, $name);
+        }
+        // Class reflector
+        return $reflector->get_user_value($name);
+    }
+
+    private function getBooleanValue($reflector, $name, $property = null)
+    {
+        $value = $this->getStringValue($reflector, $name, $property);
+        if ($value == 'true') {
+            return true;
+        }
+        return false;
+    }
+
+    private function createChildNodeDefinition($name, midgard_reflection_class $reflector)
+    {
+        $template = $this->nodeTypeManager->createNodeDefinitionTemplate();
+        $template->setAutoCreated($this->getBooleanValue($reflector, 'isAutoCreated'));
+
+        $primaryTypes = $this->getStringValue($reflector, 'RequiredPrimaryTypes');
+        if ($primaryTypes) {
+            $primaryTypes = explode(' ', $primaryTypes);
+        } else {
+            $primaryTypes = array('nt:base');
+        }
+        $template->setRequiredPrimaryTypeNames($primaryTypes);
+
+        $template->setDefaultPrimaryTypeName($this->getStringValue($reflector, 'DefaultPrimaryType'));
+        $template->setMandatory($this->getBooleanValue($reflector, 'isMandatory'));
+        $template->setName($name);
+        $template->setAutoCreated($this->getBooleanValue($reflector, 'isAutoCreated'));
+        $template->setProtected($this->getBooleanValue($reflector, 'isProtected'));
+        $template->setSameNameSiblings($this->getBooleanValue($reflector, 'SameNameSiblings'));
+
+        return new NodeDefinition($this, $template, $this->nodeTypeManager);
+    }
+
     public function getDeclaredChildNodeDefinitions() 
     {
         if (!is_null($this->childNodeDefinitions)) {
             return $this->childNodeDefinitions;
         }
+        $this->childNodeDefinitions = array();
 
         $midgardName = NodeMapper::getMidgardName($this->name);
-        $this->childNodeDefinitions = array();
         $reflector = new midgard_reflection_class($midgardName);
-        $primaryTypes = $reflector->get_user_value('RequiredPrimaryTypes');
-        if (empty($primaryTypes)) {
-            return array();
-        }
-
-        $childName = $reflector->get_user_value('PrimaryItemName');
+        $childName = $this->getStringValue($reflector, 'PrimaryItemName');
         if (!$childName) {
-            return array();
+            return $this->childNodeDefinitions;
         }
 
-        return array(new NodeDefinition(null, $childName, $primaryTypes, $this->nodeTypeManager));
+        $this->childNodeDefinitions[$childName] = $this->createChildNodeDefinition($childName, $reflector);
+
+        return $this->childNodeDefinitions;
+    }
+
+    private function createPropertyDefinition($midgardName, $name, midgard_reflection_property $reflector = null)
+    {
+        $template = $this->nodeTypeManager->createPropertyDefinitionTemplate();
+        $template->setName($name);
+        if (!$reflector) {
+            // This is all we know of the property
+            return new PropertyDefinition($this, $template, $this->nodeTypeManager);
+        }
+        $template->setAutoCreated($this->getBooleanValue($reflector, 'isAutoCreated', $midgardName));
+        $template->setRequiredType(NodeMapper::getPHPCRPropertyType(null, $midgardName, $reflector));
+        $template->setMandatory($this->getBooleanValue($reflector, 'isMandatory', $midgardName));
+        $template->setProtected($this->getBooleanValue($reflector, 'isProtected', $midgardName));
+        $template->setMultiple($this->getBooleanValue($reflector, 'isMultiple', $midgardName));
+
+        return new PropertyDefinition($this, $template, $this->nodeTypeManager);
     }
 
     public function getDeclaredPropertyDefinitions()
@@ -64,10 +120,11 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         if (!is_null($this->propertyDefinitions)) {
             return $this->propertyDefinitions;
         }
+        $this->propertyDefinitions = array();
 
         $midgardName = NodeMapper::getMidgardName($this->name);
-        $this->propertyDefinitions = array();
         $properties = midgard_reflector_object::list_defined_properties($midgardName);
+        $reflector = $this->getPropertyReflector();
         foreach ($properties as $property => $value) {
             if (in_array($property, $this->midgardInternalProps)) {
                 continue;
@@ -76,9 +133,38 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
             if (!$propertyPHPCR) {
                 continue;
             }
-            $this->propertyDefinitions[$propertyPHPCR] = new PropertyDefinition($this, $propertyPHPCR, $this->nodeTypeManager); 
+            $this->propertyDefinitions[$propertyPHPCR] = $this->createPropertyDefinition($property, $propertyPHPCR, $reflector);
         }
         return $this->propertyDefinitions;
+    }
+
+    private function getPropertyReflector()
+    {
+       $midgardName = NodeMapper::getMidgardName($this->name);
+        if (is_subclass_of($midgardName, 'MidgardDBObject')) {
+            return new midgard_reflection_property($midgardName);
+        }
+        
+        // Currently mixin types are not reflectable. Get reflector
+        // from a type using mixin
+        $nodeTypes = $this->nodeTypeManager->getAllNodeTypes();
+        foreach ($nodeTypes as $nodeType) {
+            if ($nodeType->isMixin()) {
+                continue;
+            }
+
+            if ($nodeType->getName() == $this->getName()) {
+                continue;
+            }
+
+            if (!$nodeType->isNodeType($this->getName())) {
+                continue;
+            }
+
+            $midgardName = NodeMapper::getMidgardName($nodeType->getName());
+            return new midgard_reflection_property($midgardName);
+        }
+        return null;
     }
 
     public function getDeclaredSupertypeNames()
@@ -166,47 +252,5 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
     public function isQueryable()
     {
         return $this->isQueryable;
-    }
-
-    protected function getPropertyReflector($name)
-    {
-        /* If this is MidgardObject derived property, return null.
-         * We have no session available at this point, so check prefix
-         * directly */
-        if (strpos($name, ':') !== false)
-        {
-            $parts = explode(':', $name); 
-            if ($parts[0] == 'mgd')
-            {
-                return null;
-            }
-        }
-
-        $midgardName = NodeMapper::getMidgardName($this->name);
-        if (!$midgardName)
-        {
-            return null;
-        }
-
-        $reflector = new midgard_reflection_property($midgardName);
-        if (!$reflector)
-        {
-            return null;
-        }
-
-        $midgardPropertyName = NodeMapper::getMidgardPropertyName($name);
-        if (!$midgardPropertyName)
-        {
-            return null;
-        }
-
-        $midgardType = $reflector->get_midgard_type($name);
-        /* Property is not registered for this type */
-        if ($midgardType == MGD_TYPE_NONE)
-        {
-            return null;
-        }
-
-        return $reflector;
     }
 }

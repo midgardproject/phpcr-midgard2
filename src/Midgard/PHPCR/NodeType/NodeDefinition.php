@@ -4,111 +4,52 @@ namespace Midgard\PHPCR\NodeType;
 use PHPCR\NodeType\NodeDefinitionInterface;
 use Midgard\PHPCR\Utils\NodeMapper;
 
-class NodeDefinition implements NodeDefinitionInterface
+class NodeDefinition extends ItemDefinition implements NodeDefinitionInterface
 {
-    protected $name = null;
-    protected $node = null;
-    protected $midgardNode = null;
-    protected $typename = null;
+    protected $defaultPrimaryTypeName = 'nt:base';
+    protected $requiredPrimaryTypeNames = array();
+    protected $allowSameNameSiblings = false;
+    protected $nodeTypeManager = null;
 
-    public function __construct(\Midgard\PHPCR\Node $node = null, $name= null, $typename = null, NodeTypeManager $mgr)
+    public function __construct(NodeTypeDefinition $declaringType, NodeDefinitionTemplate $template, NodeTypeManager $mgr)
     {
-        $this->node = $node;
-        if ($node) {
-            $this->midgardNode = $node->getMidgard2Node();
-            $this->typename = $this->midgardNode->typename;
-            $this->name = $node->getName();
-        } else {
-            $this->name = $name;
-            $this->typename = $typename;
+        $this->defaultPrimaryTypeName = $template->getDefaultPrimaryTypeName();
+        $this->requiredPrimaryTypeNames = $template->getRequiredPrimaryTypeNames();
+        if (empty($this->requiredPrimaryTypeNames)) {
+            $this->requiredPrimaryTypeNames[] = $this->defaultPrimaryTypeName;
         }
 
-        $this->nodeTypeManager = $mgr;
-    }
+        $this->allowSameNameSiblings = $template->allowsSameNameSiblings();
 
-    private function getBooleanSchemaValue($name)
-    {
-        $value = \midgard_object_class::get_schema_value($this->typename, $name);
-        if ($value == 'true')
-        {
-            return true;
-        }
-        return false;
+        parent::__construct($declaringType, $template, $mgr);
     }
 
     public function allowsSameNameSiblings() 
     {
-        return $this->getBooleanSchemaValue('SameNameSiblings');
+        return $this->allowSameNameSiblings;
     }
 
     public function getDefaultPrimaryType() 
-    {   
-        /* TODO */
-        return null;
+    {
+        $this->nodeTypeManager->getNodeType($this->getDefaultPrimaryTypeName());
     }
 
     public function getDefaultPrimaryTypeName() 
     {
-        $typename = 'nt_folder';
-        if ($this->typename)
-        {
-            $typename = $this->typename;
-        } 
-        $primaryType = \midgard_object_class::get_schema_value($typename, 'DefaultPrimaryType'); 
-        if ($primaryType == '')
-        {
-            return null;
-        }
-        return $primaryType;
+        return $this->defaultPrimaryTypeName;
     }
 
     public function getRequiredPrimaryTypeNames() 
     {
-        /* TODO */
-        return array();
+        return $this->requiredPrimaryTypeNames;
     }
 
     public function getRequiredPrimaryTypes() 
     {
-        /* TODO */
-        return array();
-    }
-
-    public function getDeclaringNodeType()
-    {
-        return $this->nodeTypeManager->getNodeType(NodeMapper::getPHPCRName($this->typename));
-    }
-
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    public function getOnParentVersion()
-    {
-        $opv = \midgard_object_class::get_schema_value($this->typename, 'OnParentVersion'); 
-        if ($opv == '')
-        {
-            return -1; /* FIXME */
+        $ret = array();
+        foreach ($this->getRequiredPrimaryTypeNames() as $typeName) {
+            $ret[] = $this->nodeTypeManager->getNodeType($typeName);
         }
-        return (int)$opv;
-
-        return $this->onParentVersion;
+        return $ret;
     }
-
-    public function isAutoCreated()
-    {
-        return $this->getBooleanSchemaValue('isAutoCreated');
-    }
-
-    public function isMandatory()
-    {  
-        return $this->getBooleanSchemaValue('isMandatory');
-    }
-
-    public function isProtected() 
-    {     
-        return $this->getBooleanSchemaValue('isProtected');
-    }
-
 }

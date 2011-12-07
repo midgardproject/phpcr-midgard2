@@ -1,7 +1,10 @@
 <?php
 namespace Midgard\PHPCR\NodeType;
 
-class ItemDefinition implements \PHPCR\NodeType\ItemDefinitionInterface
+use PHPCR\NodeType\ItemDefinitionInterface;
+use PHPCR\NodeType\NodeTypeInterface;
+
+class ItemDefinition implements ItemDefinitionInterface
 {
     protected $declaringNodeType = null;
     protected $name = null;
@@ -9,6 +12,18 @@ class ItemDefinition implements \PHPCR\NodeType\ItemDefinitionInterface
     protected $isAutoCreated = false;
     protected $isMandatory = false;
     protected $isProtected = false;
+
+    public function __construct(NodeTypeDefinition $declaringType, ItemDefinitionInterface $template, NodeTypeManager $mgr)
+    {
+        $this->nodeTypeManager = $mgr;
+
+        $this->declaringNodeType = $declaringType;
+        $this->name = $template->getName();
+        $this->onParentVersion = $template->getOnParentVersion();
+        $this->isAutoCreated = $template->isAutoCreated();
+        $this->isMandatory = $template->isMandatory();
+        $this->isProtected = $template->isProtected();
+    }
 
     public function getDeclaringNodeType()
     {
