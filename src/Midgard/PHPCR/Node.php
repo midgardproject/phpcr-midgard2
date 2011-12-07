@@ -32,6 +32,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     protected $midgardPropertyNodes = null;
     protected $is_removed = false;
     protected $removeProperties = array();
+    protected $oldParent = null;
+    protected $oldName = null;
 
     public function __construct(midgard_node $midgardNode = null, Node $parent = null, Session $session)
     {
@@ -259,7 +261,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         } elseif (!isset($this->children[$relPath])) {
             $this->populateChildren(true);
         }
-        
+
         if (!isset($this->children[$relPath])) {
             throw new PathNotFoundException("Node at path '{$relPath}' not found under " . $this->getPath());
         }
@@ -267,7 +269,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         if ($this->children[$relPath]->is_removed) {
             throw new PathNotFoundException("Node at path '{$relPath}' not found under " . $this->getPath() . ' (has been removed)');
         }
-
 
         if ($remainingPath != '') {
             return $this->children[$relPath]->getNode($remainingPath);
@@ -505,7 +506,12 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             if ($appendOnly && isset($this->children[$child->name])) {
                 continue;
             }
-            $this->children[$child->name] = $this->getSession()->getNodeRegistry()->getByMidgardNode($child);
+            $child = $this->getSession()->getNodeRegistry()->getByMidgardNode($child);
+            if ($child->oldParent == $this) {
+                // Child node has been moved from this node
+                continue;
+            }
+            $this->children[$child->getName()] = $child;
         }
     }
 
@@ -1033,33 +1039,39 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         return '/' . implode("/", $elements);
     }
 
-    public function move($dstNode, $dstName)
+    public function move(Node $dstNode, $dstName)
     {
-        /* Unset parent's child */
+        if (!$this->oldParent) {
+            // Store old parent so we can revert this
+            $this->oldParent = $this->getParent();
+            $this->oldName = $this->getName();
+        }
+
+        $this->getSession()->getNodeRegistry()->unregisterPath($this);
+
+        // Unset parent's child
         unset($this->getParent()->children[$this->getName()]);
 
         /* Set new parent */
         $this->parent = $dstNode;
 
-        /* Update Midgard2 Node's properties, so it points to valid parent object */
+        // Update Midgard2 Node's properties, so it points to valid parent object
         $this->midgardNode->parent = $dstNode->midgardNode->id;
         $this->midgardNode->parentguid = $dstNode->midgardNode->guid;
         $this->midgardNode->name = $dstName;
 
-        /* Update parent's children */
+        // Update parent's children
         $dstNode->children[$dstName] = $this;
 
-        /* Update node's state */
-        if (!$this->midgardNode->guid)
-        {
+        // Update node's state
+        if (!$this->midgardNode->guid) {
             $this->is_new = true;
             $this->is_modified = false;
         }
-        else
-        {
+        else {
             $this->is_modified = true;
             $this->is_new = false;
-        } 
+        }
     }
 
     public function save()
@@ -1132,6 +1144,13 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     {
         if ($keepChanges && ($this->isModified() || $this->isNew())) {
             return;
+        }
+
+        if ($this->oldParent) {
+            // Move back
+            $this->move($this->oldParent, $this->oldName);
+            $this->oldParent = null;
+            $this->oldName = null;
         }
 
         if ($this->midgardNode->guid) {

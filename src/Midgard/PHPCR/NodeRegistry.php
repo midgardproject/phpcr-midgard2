@@ -57,6 +57,14 @@ class NodeRegistry
         }
     }
 
+    public function unregisterPath(Node $node)
+    {
+        $path = $node->getPath();
+        if (isset($this->byPath[$path])) {
+            unset($this->byPath[$path]);
+        }
+    }
+
     public function getByPath($path)
     {
         if (!isset($this->byPath[$path])) {
