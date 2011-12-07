@@ -25,11 +25,13 @@ class QueryManager implements \PHPCR\Query\QueryManagerInterface
             throw new \PHPCR\Query\InvalidQueryException("Unsupported '{$language}' language");
         }
 
-        if ($this->query == null)
+        return new SQLQuery($this->session, $statement);
+
+        /*if ($this->query == null)
         {
             $this->query = new SQLQuery($this->session, $statement);
         }
-        return $this->query;
+        return $this->query; */
     }
 
     public function getQOMFactory()
