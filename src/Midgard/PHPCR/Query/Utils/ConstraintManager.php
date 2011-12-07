@@ -8,7 +8,7 @@ class ConstraintManager
     protected $constraintIface = null;
     protected $holder = null;
 
-    public function __construct (SQLQuery $query, QuerySelectHolder $holder, \PHPCR\Query\QOM\ConstraintInterface $iface)
+    public function __construct (SQLQuery $query, QuerySelectHolder $holder, \PHPCR\Query\QOM\ConstraintInterface $iface = null)
     {
         $this->query = $query;
         $this->constraintIface = $iface;
