@@ -17,33 +17,57 @@ class PropertyDefinition implements PropertyDefinitionInterface
     private $isUnstructured = false;
     protected $typename = null;
     protected $midgardPropertyName = null;
+    protected $nodeTypeManager = null;
 
-    public function __construct(NodeTypeDefinition $ntd, $name)
+    public function __construct(NodeTypeDefinition $ntd, $name, NodeTypeManager $mgr)
     {
         $this->nodeDefinition = $ntd;
         $this->property = $name;
         $this->availableQueryOperators = array();
         $this->typename = $ntd->getName();
+        $this->nodeTypeManager = $mgr;
 
-        $midgardName = NodeMapper::getMidgardName($this->typename);
-        if (is_subclass_of($midgardName, 'MidgardDBObject')) {
-            $this->reflector = new midgard_reflection_property($midgardName);
-        }
 
         /* FIXME, once reflector property is in PHP bindings */
         $this->defaultValues = array();
 
         $this->valueConstraints = array();
 
-        if (is_a($midgardName, 'nt_unstructured')) {
+        if ($this->typename == 'nt:unstructured') {
             $this->isUnstructured = true;
         }
+    }
 
-        if (substr($name, 0, 4) == 'mgd:') {
-            $this->midgardPropertyName = substr($name, 4);
+    private function prepareReflector()
+    {
+        if ($this->reflector) {
+            return;
+        }
+        $midgardName = NodeMapper::getMidgardName($this->typename);
+        if (is_subclass_of($midgardName, 'MidgardDBObject')) {
+            $this->reflector = new midgard_reflection_property($midgardName);
+        } else {
+            // Currently mixin types are not reflectable. Get reflector
+            // from a type using mixin
+            $nodeTypes = $this->nodeTypeManager->getAllNodeTypes();
+            foreach ($nodeTypes as $nodeType) {
+                if ($nodeType->isMixin()) {
+                    continue;
+                }
+
+                if ($nodeType->getName() == $this->nodeDefinition->getName()) {
+                    continue;
+                }
+                if (!$nodeType->isNodeType($this->nodeDefinition->getName())) {
+                    continue;
+                }
+
+                $midgardName = NodeMapper::getMidgardName($nodeType->getName());
+                $this->reflector = new midgard_reflection_property($midgardName);
+            }
         }
 
-        $GNsProperty = str_replace(':', '-', $name);
+        $GNsProperty = NodeMapper::getMidgardPropertyName($this->property);
         if ($this->reflector && $this->reflector->get_midgard_type($GNsProperty)) {
             $this->midgardPropertyName = $GNsProperty;
         }
@@ -63,7 +87,8 @@ class PropertyDefinition implements PropertyDefinitionInterface
 
     private function getBooleanSchemaValue($value)
     {
-        if (!$this->midgardPropertyName) {
+        $this->prepareReflector();
+        if (!$this->reflector) {
             return false;
         }
 
@@ -86,15 +111,13 @@ class PropertyDefinition implements PropertyDefinitionInterface
 
     private function getStringSchemaValue($value)
     {
-        $name = $this->midgardPropertyName;
-        if ($name == null)
-        {
+        $this->prepareReflector();
+        if (!$this->reflector) {
             return null;
         }
 
-        $b = $this->reflector->get_user_value($name, $value);
-        if ($b == '')
-        {
+        $b = $this->reflector->get_user_value($this->midgardPropertyName, $value);
+        if ($b == '') {
             return null;
         }
         return $b;
@@ -102,11 +125,12 @@ class PropertyDefinition implements PropertyDefinitionInterface
 
     public function getRequiredType()
     {
+        $this->prepareReflector();
         $midgardName = NodeMapper::getMidgardName($this->typename);
         if (!$midgardName) {
             return null;
         }
-        return NodeMapper::getPHPCRPropertyType($midgardName, $this->midgardPropertyName);
+        return NodeMapper::getPHPCRPropertyType($midgardName, $this->midgardPropertyName, $this->reflector);
     }
 
     public function getValueConstraints()

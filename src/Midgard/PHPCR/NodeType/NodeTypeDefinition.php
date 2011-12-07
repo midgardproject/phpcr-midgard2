@@ -52,6 +52,9 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         }
 
         $childName = $reflector->get_user_value('PrimaryItemName');
+        if (!$childName) {
+            return array();
+        }
 
         return array(new NodeDefinition(null, $childName, $primaryTypes, $this->nodeTypeManager));
     }
@@ -73,7 +76,7 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
             if (!$propertyPHPCR) {
                 continue;
             }
-            $this->propertyDefinitions[$property] = new PropertyDefinition($this, $propertyPHPCR); 
+            $this->propertyDefinitions[$propertyPHPCR] = new PropertyDefinition($this, $propertyPHPCR, $this->nodeTypeManager); 
         }
         return $this->propertyDefinitions;
     }
@@ -100,7 +103,11 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         $reflector = new midgard_reflection_class($midgardName);
         $superTypes = explode(' ', $reflector->get_user_value('Supertypes'));
         foreach ($superTypes as $superType) {
-            if ($superType && !in_array($superType, $this->supertypeNames)) {
+            if (!$superType || $superType == $this->getName()) {
+                continue;
+            }
+            
+            if (!in_array($superType, $this->supertypeNames)) {
                 $this->supertypeNames[] = $superType;
             }
         }

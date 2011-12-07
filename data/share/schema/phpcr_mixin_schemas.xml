@@ -40,14 +40,14 @@
 			<RequiredType>DATE</RequiredType>
 			<isAutoCreated>true</isAutoCreated>
 			<isMandatory>false</isMandatory>
-			<isProtected>false</isProtected>
+			<isProtected>true</isProtected>
 			<isMultiple>false</isMultiple>
 		</property>
 		<property name="jcr-createdBy" type="string">
 	  	<RequiredType>STRING</RequiredType>
 			<isAutoCreated>true</isAutoCreated>
 			<isMandatory>false</isMandatory>
-			<isProtected>false</isProtected>
+			<isProtected>true</isProtected>
 			<isMultiple>false</isMultiple>
 		</property>
 		<!-- Node and NodeType definitions -->

@@ -22,6 +22,7 @@ abstract class Item implements ItemInterface
     protected $parent = null;
     protected $is_new = false;
     protected $is_modified = false;
+    protected $is_removed = false;
     protected $isRoot = false;
     protected $contentObject = null;
     protected $midgardNode = null;

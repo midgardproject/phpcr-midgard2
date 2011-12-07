@@ -5,6 +5,7 @@ use Midgard\PHPCR\Utils\NodeMapper;
 use PHPCR\NodeType\NodeTypeInterface;
 use PHPCR\NodeType\NodeTypeDefinitionInterface;
 use PHPCR\PropertyType;
+use PHPCR\ValueFormatException;
 use midgard_reflector_object;
 use ArrayIterator;
 
@@ -20,7 +21,6 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
         parent::__construct($ntt->getName(), $manager);
 
         $this->childNodeDefinitions = $ntt->getDeclaredChildNodeDefinitions();
-        $this->propertyDefinitions = $ntt->getDeclaredPropertyDefinitions();
         $this->primaryItemName = $ntt->getPrimaryItemName();
         $this->hasOrderableChildNodes = $ntt->hasOrderableChildNodes();
         $this->isAbstract = $ntt->isAbstract();
@@ -113,6 +113,10 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
     public function canSetProperty($propertyName, $value)
     {
+        if ($this->nodeTypeManager->hasNodeType($propertyName)) {
+            return false;
+        }
+
         $definitions = $this->getPropertyDefinitions();
         if (!isset($definitions[$propertyName])) {
             return true;
@@ -120,7 +124,12 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
         $requiredType = $definitions[$propertyName]->getRequiredType();
         if ($requiredType) {
-            if (PropertyType::determineType($value) != $requiredType) {
+            if (is_object($value) && !is_a($value, '\DateTime') && !is_a($value, '\PHPCR\NodeInterface')) {
+                return false;
+            }
+            try {
+                PropertyType::convertType($value, $requiredType);
+            } catch (ValueFormatException $e) {
                 return false;
             }
         }
@@ -134,6 +143,11 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
             // FIXME: We need a list of allowed child node names
             return true;
         }
+
+        if (!$this->nodeTypeManager->hasNodeType($nodeTypeName)) {
+            return false;
+        }
+
         $childNodeDefs = $this->getDeclaredChildNodeDefinitions();
         if (!$childNodeDefs) {
             return true;
@@ -160,7 +174,11 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
             return true;
         }
 
-        if ($definitions[propertyName]->isMandatory()) {
+        if ($definitions[$propertyName]->isMandatory()) {
+            return false;
+        }
+
+        if ($definitions[$propertyName]->isProtected()) {
             return false;
         }
 
