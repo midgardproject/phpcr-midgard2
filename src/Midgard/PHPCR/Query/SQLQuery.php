@@ -15,15 +15,26 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     protected $query = null;
     protected $holder = null;
     protected $storageType = null;
+    protected $source = null;
+    protected $constraint = null;
+    protected $orderings = null;
+    protected $columns = null;
     
-    public function __construct (\Midgard\PHPCR\Session $session, $statement)
+    public function __construct (\Midgard\PHPCR\Session $session, $statement = null, \PHPCR\Query\QOM\SourceInterface $source = null,
+            \PHPCR\Query\QOM\ConstraintInterface $constraint = null, array $orderings = null, array $columns = null)
     {
         $this->session = $session;
         $this->statement = $statement;
-        $this->converter = new \PHPCR\Util\QOM\Sql2ToQomQueryConverter(new QOM\QueryObjectModelFactory());
-        $this->query = $this->converter->parse($statement);
-        $this->storageType = NodeMapper::getMidgardName($this->query->getSource()->getNodeTypeName());
-        $this->selectors[] = $this->query->getSource()->getNodeTypeName();
+        $this->converter = new \PHPCR\Util\QOM\Sql2ToQomQueryConverter(new QOM\QueryObjectModelFactory($this->session));
+        if ($this->statement != null) {
+            $this->query = $this->converter->parse($statement);
+            $this->storageType = NodeMapper::getMidgardName($this->query->getSource()->getNodeTypeName());
+            $this->selectors[] = $this->query->getSource()->getNodeTypeName();
+        }
+        $this->source = $source;
+        $this->language = $constraint;
+        $this->orderings = $orderings;
+        $this->columns = $columns;
     }
 
     public function getMidgardStorageName()
@@ -96,6 +107,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->addOrders();
         $qs->set_constraint($holder->getDefaultConstraintGroup());
 
+        //echo "EXECUTE QUERY : " . $this->statement . "\n";
         //\midgard_connection::get_instance()->set_loglevel("debug");
         $qs->execute();
         //\midgard_connection::get_instance()->set_loglevel("warn");
@@ -134,7 +146,12 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         }
         return $this->node->getPath();
     }
-  
+
+    public function setNode(NodeInterface $node)
+    {
+        $this->node = $node;
+    }
+
     public function storeAsNode($absPath)
     {
         throw new \PHPCR\RepositoryException("Not supported");
