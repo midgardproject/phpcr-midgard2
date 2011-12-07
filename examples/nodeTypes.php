@@ -50,13 +50,13 @@ foreach ($nodeTypes as $nodeType) {
 
     $additionalInfo = array();
     if ($nodeType->isMixin()) {
-        $additionalInfo[] = 'MIXIN';
+        $additionalInfo[] = 'mixin';
     }
     if ($nodeType->hasOrderableChildNodes()) {
-        $additionalInfo[] = 'ORDERABLE';
+        $additionalInfo[] = 'orderable';
     }
     if ($nodeType->getPrimaryItemName()) {
-        $additionalInfo[] = 'PRIMARYITEM ' . strtoupper($nodeType->getPrimaryItemName());
+        $additionalInfo[] = 'primaryitem ' . strtoupper($nodeType->getPrimaryItemName());
     }
     if ($additionalInfo) {
         echo "  " . implode(' ', $additionalInfo) . "\n";
@@ -71,15 +71,19 @@ foreach ($nodeTypes as $nodeType) {
         }
 
         if ($property->isMandatory()) {
-            $propertyInfo[] = 'MANDATORY';
-        }
-
-        if ($property->isProtected()) {
-            $propertyInfo[] = 'PROTECTED';
+            $propertyInfo[] = 'mandatory';
         }
 
         if ($property->isAutoCreated()) {
-            $propertyInfo[] = 'AUTOCREATED';
+            $propertyInfo[] = 'autocreated';
+        }
+
+        if ($property->isProtected()) {
+            $propertyInfo[] = 'protected';
+        }
+
+        if ($property->isMultiple()) {
+            $propertyInfo[] = 'multiple';
         }
 
         echo " " . implode(' ', $propertyInfo) . "\n";
