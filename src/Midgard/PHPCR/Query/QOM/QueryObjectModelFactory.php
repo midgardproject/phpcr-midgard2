@@ -1,18 +1,21 @@
 <?php
 
 namespace Midgard\PHPCR\Query\QOM;
+use Midgard\PHPCR\Session;
 
 class QueryObjectModelFactory implements \PHPCR\Query\QOM\QueryObjectModelFactoryInterface
 {
-    public function __construct () 
+    private $session = null;
+
+    public function __construct (Session $session) 
     {
-    
+        $this->session = $session;
     }
 
     public function createQuery(\PHPCR\Query\QOM\SourceInterface $source, 
         \PHPCR\Query\QOM\ConstraintInterface $constraint = null, array $orderings, array $columns)
     {
-        return new QueryObjectModel ($source, $constraint, $orderings, $columns); 
+        return new QueryObjectModel ($this->session, null, $source, $constraint, $orderings, $columns); 
     }
     
     public function selector($nodeTypeName, $selectorName = null)
