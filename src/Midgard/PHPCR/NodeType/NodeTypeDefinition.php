@@ -73,7 +73,7 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
             if (!$propertyPHPCR) {
                 continue;
             }
-            $this->propertyDefinitions[$property] = new PropertyDefinition($this, $propertyPHPCR); 
+            $this->propertyDefinitions[$propertyPHPCR] = new PropertyDefinition($this, $propertyPHPCR); 
         }
         return $this->propertyDefinitions;
     }

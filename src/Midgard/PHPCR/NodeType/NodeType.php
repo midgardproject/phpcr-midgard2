@@ -5,6 +5,7 @@ use Midgard\PHPCR\Utils\NodeMapper;
 use PHPCR\NodeType\NodeTypeInterface;
 use PHPCR\NodeType\NodeTypeDefinitionInterface;
 use PHPCR\PropertyType;
+use PHPCR\ValueFormatException;
 use midgard_reflector_object;
 use ArrayIterator;
 
@@ -120,7 +121,11 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
         $requiredType = $definitions[$propertyName]->getRequiredType();
         if ($requiredType) {
-            if (PropertyType::determineType($value) != $requiredType) {
+            try {
+                if (PropertyType::determineType($value) != $requiredType) {
+                    return false;
+                }
+            } catch (ValueFormatException $e) {
                 return false;
             }
         }
@@ -160,7 +165,7 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
             return true;
         }
 
-        if ($definitions[propertyName]->isMandatory()) {
+        if ($definitions[$propertyName]->isMandatory()) {
             return false;
         }
 
