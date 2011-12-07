@@ -62,6 +62,29 @@ foreach ($nodeTypes as $nodeType) {
         echo "  " . implode(' ', $additionalInfo) . "\n";
     }
 
+    foreach ($nodeType->getDeclaredChildNodeDefinitions() as $child) {
+        echo "  + " . $child->getName();
+        $childInfo = array();
+        if ($child->getRequiredPrimaryTypeNames() !== null) {
+            $typeNames = $child->getRequiredPrimaryTypeNames();
+            $childInfo[] = '(' . strtoupper($typeNames[0]) . ')';
+        }
+
+        if ($child->isMandatory()) {
+            $childInfo[] = 'mandatory';
+        }
+
+        if ($child->isAutoCreated()) {
+            $childInfo[] = 'autocreated';
+        }
+
+        if ($child->isProtected()) {
+            $childInfo[] = 'protected';
+        }
+
+        echo " " . implode(' ', $childInfo) . "\n";
+    }
+
     foreach ($nodeType->getDeclaredPropertyDefinitions() as $property) {
         echo "  - " . $property->getName();
         $propertyInfo = array();
