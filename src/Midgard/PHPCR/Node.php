@@ -214,11 +214,15 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         catch (PathNotFoundException $e) { 
             $this->properties[$name] = new Property($this, $name, $propertyDef, $type);
             $property = $this->properties[$name];
+            $property->is_new = true;
         }
         $property->setValue($value, $type);
        
         if (is_null($origValue) || $value != $origValue) {
             $this->is_modified = true;
+            if (!$property->is_new) {
+                $property->is_modified = true;
+            }
         }
 
         return $property;
@@ -1138,7 +1142,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function refresh($keepChanges)
     {
-        if ($keepChanges && ($this->isModified() || $this->isNew())) {
+        if ($keepChanges) {
             return;
         }
 
@@ -1175,13 +1179,22 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $this->removeProperties = array();
         
         if ($this->children) {
-            foreach ($this->children as $node) {
+            foreach ($this->children as $name => $node) {
+                if ($node->is_new) {
+                    unset($this->children[$name]);
+                    $this->getSession()->getNodeRegistry()->unregisterPath($node);
+                    continue;
+                }
                 $node->refresh($keepChanges);
             }
         }
 
         if ($this->properties) {
             foreach ($this->properties as $name => $property) {
+                if ($property->is_new) {
+                    unset($this->properties[$name]);
+                    continue;
+                }
                 $this->getProperty($name)->refresh($keepChanges);
             }
         }
