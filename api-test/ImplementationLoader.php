@@ -9,8 +9,6 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'Versioning',
         'Transactions',
         'PermissionsAndCapabilities',
-        // Queries need to be rewritten
-        'Query',
     );
 
     protected $unsupportedCases = array(
