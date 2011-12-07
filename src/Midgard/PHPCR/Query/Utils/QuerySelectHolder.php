@@ -1,15 +1,18 @@
 <?php
 namespace Midgard\PHPCR\Query\Utils;
+use Midgard\PHPCR\Query\SQLQuery;
 
 class QuerySelectholder
 {
+    protected $query = null;
     protected $querySelect = null;
     protected $propertyStorage = null;
     protected $defaultNodeStorage = null;
     protected $defaultConstraintGroup = null;
 
-    public function __construct ()
+    public function __construct (SQLQuery $query)
     {
+        $this->query = $query;
     }
 
     public function getDefaultNodeStorage()
@@ -21,8 +24,27 @@ class QuerySelectholder
 
     public function getQuerySelect()
     {
-        if ($this->querySelect == null)
+        if ($this->querySelect == null) {
             $this->querySelect = new \midgard_query_select($this->getDefaultNodeStorage());
+        
+            /* Implictly add nodetype constraint */
+            $this->getDefaultConstraintGroup()->add_constraint(
+                new \midgard_query_constraint(
+                    new \midgard_query_property("typename"),
+                    "=",
+                    new \midgard_query_value($this->query->getMidgardStorageName())
+                )
+            );
+
+            /* Workaround for 'invalid number of operands' */
+            $this->getDefaultConstraintGroup()->add_constraint(
+                new \midgard_query_constraint(
+                    new \midgard_query_property("typename"),
+                    "<>",
+                    new \midgard_query_value("")
+                )
+            );
+        }
         return $this->querySelect;
     }
 

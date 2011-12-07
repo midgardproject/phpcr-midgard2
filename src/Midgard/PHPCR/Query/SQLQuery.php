@@ -22,13 +22,19 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->statement = $statement;
         $this->converter = new \PHPCR\Util\QOM\Sql2ToQomQueryConverter(new QOM\QueryObjectModelFactory());
         $this->query = $this->converter->parse($statement);
+        $this->storageType = NodeMapper::getMidgardName($this->query->getSource()->getNodeTypeName());
         $this->selectors[] = $this->query->getSource()->getNodeTypeName();
+    }
+
+    public function getMidgardStorageName()
+    {
+        return $this->storageType;
     }
 
     private function getQuerySelectHolder()
     {
         if ($this->holder == null)
-            $this->holder = new Utils\QuerySelectHolder();
+            $this->holder = new Utils\QuerySelectHolder($this);
         return $this->holder;
     }
 
@@ -81,15 +87,14 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     public function execute()
     {
-        $this->storageType = NodeMapper::getMidgardName($this->query->getSource()->getNodeTypeName()); 
-        $this->selectors[] = $this->query->getSource()->getNodeTypeName();
+        $holder = $this->getQuerySelectHolder();
+        $manager = Utils\ConstraintManagerBuilder::factory($this, $holder, $this->query->getConstraint());
+        if ($manager != null)
+            $manager->addConstraint();
 
-        $manager = Utils\ConstraintManagerBuilder::factory($this, $this->getQuerySelectHolder(), $this->query->getConstraint());
-        $manager->addConstraint();
-
-        $qs = $this->getQuerySelectHolder()->getQuerySelect();
+        $qs = $holder->getQuerySelect();
         $this->addOrders();
-        $qs->set_constraint($this->getQuerySelectHolder()->getDefaultConstraintGroup());
+        $qs->set_constraint($holder->getDefaultConstraintGroup());
 
         //\midgard_connection::get_instance()->set_loglevel("debug");
         $qs->execute();
