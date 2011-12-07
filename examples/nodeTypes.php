@@ -15,6 +15,7 @@ $parameters = array(
     'midgard2.configuration.db.type' => 'SQLite',
     'midgard2.configuration.db.name' => 'midgard2cr',
     'midgard2.configuration.db.dir' => __DIR__,
+    'midgard2.configuration.blobdir' => __DIR__ . '/blobs',
     // Let Midgard2 initialize the DB as needed
     'midgard2.configuration.db.init' => true,
     // Enable this if you want to see the actual database queries
@@ -49,13 +50,13 @@ foreach ($nodeTypes as $nodeType) {
 
     $additionalInfo = array();
     if ($nodeType->isMixin()) {
-        $additionalInfo[] = 'MIXIN';
+        $additionalInfo[] = 'mixin';
     }
     if ($nodeType->hasOrderableChildNodes()) {
-        $additionalInfo[] = 'ORDERABLE';
+        $additionalInfo[] = 'orderable';
     }
     if ($nodeType->getPrimaryItemName()) {
-        $additionalInfo[] = 'PRIMARYITEM ' . strtoupper($nodeType->getPrimaryItemName());
+        $additionalInfo[] = 'primaryitem ' . strtoupper($nodeType->getPrimaryItemName());
     }
     if ($additionalInfo) {
         echo "  " . implode(' ', $additionalInfo) . "\n";
@@ -70,15 +71,19 @@ foreach ($nodeTypes as $nodeType) {
         }
 
         if ($property->isMandatory()) {
-            $propertyInfo[] = 'MANDATORY';
-        }
-
-        if ($property->isProtected()) {
-            $propertyInfo[] = 'PROTECTED';
+            $propertyInfo[] = 'mandatory';
         }
 
         if ($property->isAutoCreated()) {
-            $propertyInfo[] = 'AUTOCREATED';
+            $propertyInfo[] = 'autocreated';
+        }
+
+        if ($property->isProtected()) {
+            $propertyInfo[] = 'protected';
+        }
+
+        if ($property->isMultiple()) {
+            $propertyInfo[] = 'multiple';
         }
 
         echo " " . implode(' ', $propertyInfo) . "\n";

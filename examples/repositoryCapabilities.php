@@ -16,6 +16,7 @@ $parameters = array(
     'midgard2.configuration.db.type' => 'SQLite',
     'midgard2.configuration.db.name' => 'midgard2cr',
     'midgard2.configuration.db.dir' => __DIR__,
+    'midgard2.configuration.blobdir' => __DIR__ . '/blobs',
 );
 
 // Get a Midgard repository

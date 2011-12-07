@@ -16,6 +16,7 @@ $parameters = array(
     'midgard2.configuration.db.type' => 'SQLite',
     'midgard2.configuration.db.name' => 'midgard2cr',
     'midgard2.configuration.db.dir' => __DIR__,
+    'midgard2.configuration.blobdir' => __DIR__ . '/blobs',
     // Let Midgard2 initialize the DB as needed
     'midgard2.configuration.db.init' => true,
     // Enable this if you want to see the actual database queries

@@ -78,19 +78,21 @@ class NodeMapper
         return str_replace(':', '-', $property);
     }
 
-    public static function getPHPCRPropertyType($classname, $property)
+    public static function getPHPCRPropertyType($classname, $property, midgard_reflection_property $reflector = null)
     {
-        if (!is_subclass_of($classname, 'MidgardDBObject')) {
-            return null;
+        if (!$reflector) {
+            if (!is_subclass_of($classname, 'MidgardDBObject')) {
+                return null;
+            }
+            $reflector = new midgard_reflection_property($classname);
         }
 
-        $mrp = new midgard_reflection_property($classname);
-        $requiredType = $mrp->get_user_value($property, 'RequiredType');
+        $requiredType = $reflector->get_user_value($property, 'RequiredType');
         if ($requiredType) {
             return PropertyType::valueFromName($requiredType);
         }
 
-        $type = $mrp->get_midgard_type($property);
+        $type = $reflector->get_midgard_type($property);
         switch ($type) {
             case \MGD_TYPE_STRING:
             case \MGD_TYPE_LONGTEXT:
