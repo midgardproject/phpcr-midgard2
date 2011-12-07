@@ -150,11 +150,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             throw new \PHPCR\NodeType\ConstraintViolationException("Can not add node to '{$relPath}' Item which is a Property under " . $this->getPath());
         }
 
-        if (!$this->hasNode($parts[0])) {
-            $node = $this->appendNode(array_shift($parts));
-        } else {
-            $node = $this->getNode(array_shift($parts));
-        }
+        $node = $this->getNode(array_shift($parts));
         return $node->addNode(implode('/', $parts), $primaryNodeTypeName);
     }
 
