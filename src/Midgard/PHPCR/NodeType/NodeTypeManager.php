@@ -91,7 +91,7 @@ class NodeTypeManager implements IteratorAggregate, NodeTypeManagerInterface
 
     public function createPropertyDefinitionTemplate()
     {
-
+        return new PropertyDefinitionTemplate();
     }
 
     public function getAllNodeTypes()

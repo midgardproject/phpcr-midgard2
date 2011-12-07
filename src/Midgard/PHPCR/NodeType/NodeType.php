@@ -137,33 +137,47 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
         return true;
     }
 
-    public function canAddChildNode($childNodeName, $nodeTypeName = NULL)
+    public function canAddChildNode($nodeName, $nodeTypeName = NULL)
     {
-        if (!$nodeTypeName) {
-            // FIXME: We need a list of allowed child node names
-            return true;
-        }
-
-        if (!$this->nodeTypeManager->hasNodeType($nodeTypeName)) {
+        if ($nodeTypeName && !$this->nodeTypeManager->hasNodeType($nodeTypeName)) {
             return false;
-        }
+        } 
 
-        $childNodeDefs = $this->getDeclaredChildNodeDefinitions();
-        if (!$childNodeDefs) {
+        $childDefs = $this->getChildNodeDefinitions();
+        if (!isset($childDefs[$nodeName])) {
             return true;
         }
 
-        foreach ($childNodeDefs as $def) {
-            if ($def->getDeclaringNodeType()->isNodeType($nodeTypeName)) {
-                return true;
+        if ($nodeTypeName) {
+            $nodeType = $this->nodeTypeManager->getNodeType($nodeTypeName);
+            $requiredPrimaryTypes = $childDefs[$nodeName]->getRequiredPrimaryTypeNames();
+            $match = false;
+            foreach ($requiredPrimaryTypes as $primary) {
+                if ($nodeType->isNodeType($primary)) {
+                    $match = true;
+                    break;
+                }
             }
+            return $match;
         }
-        return false;
+        return true;
     }
 
     public function canRemoveNode($nodeName)
     {
-        // FIXME: We need list of mandatory child nodes
+        $childDefs = $this->getDeclaredChildNodeDefinitions();
+        if (!isset($childDefs[$nodeName])) {
+            return true;
+        }
+
+        if ($childDefs[$nodeName]->isMandatory()) {
+            return false;
+        }
+
+        if ($childDefs[$nodeName]->isProtected()) {
+            return false;
+        }
+
         return true;
     }
 
