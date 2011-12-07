@@ -54,8 +54,8 @@ class QueryObjectModelFactory implements \PHPCR\Query\QOM\QueryObjectModelFactor
 
     public function andConstraint(\PHPCR\Query\QOM\ConstraintInterface $constraint1,
         \PHPCR\Query\QOM\ConstraintInterface $constraint2)
-    {
-        return new _And($constraint1, $constraint2);
+    { 
+        return new AndConstraint($constraint1, $constraint2);
     }
 
     public function _or(\PHPCR\Query\QOM\ConstraintInterface $constraint1,
@@ -67,7 +67,7 @@ class QueryObjectModelFactory implements \PHPCR\Query\QOM\QueryObjectModelFactor
     public function orConstraint(\PHPCR\Query\QOM\ConstraintInterface $constraint1,
         \PHPCR\Query\QOM\ConstraintInterface $constraint2)
     {
-         return new _Or($constraint1, $constraint2); 
+         return new OrConstraint($constraint1, $constraint2); 
     }
 
     public function not(\PHPCR\Query\QOM\ConstraintInterface $constraint)
