@@ -30,7 +30,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     protected $children = null;
     protected $properties = null;
     protected $midgardPropertyNodes = null;
-    protected $is_removed = false;
     protected $removeProperties = array();
     protected $oldParent = null;
     protected $oldName = null;
@@ -1286,7 +1285,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     {
         if (!isset($this->properties[$name])) {
             return;
-        } 
+        }
+        $this->properties[$name]->is_removed = true;
         $this->removeProperties[$name] = $this->properties[$name];
         unset($this->properties[$name]);
     }
