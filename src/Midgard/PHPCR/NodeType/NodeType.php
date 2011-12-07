@@ -113,6 +113,10 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
     public function canSetProperty($propertyName, $value)
     {
+        if ($this->nodeTypeManager->hasNodeType($propertyName)) {
+            return false;
+        }
+
         $definitions = $this->getPropertyDefinitions();
         if (!isset($definitions[$propertyName])) {
             return true;
@@ -120,10 +124,11 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
         $requiredType = $definitions[$propertyName]->getRequiredType();
         if ($requiredType) {
+            if (is_object($value) && !is_a($value, '\DateTime') && !is_a($value, '\PHPCR\NodeInterface')) {
+                return false;
+            }
             try {
-                if (PropertyType::determineType($value) != $requiredType) {
-                    return false;
-                }
+                PropertyType::convertType($value, $requiredType);
             } catch (ValueFormatException $e) {
                 return false;
             }
@@ -138,6 +143,11 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
             // FIXME: We need a list of allowed child node names
             return true;
         }
+
+        if (!$this->nodeTypeManager->hasNodeType($nodeTypeName)) {
+            return false;
+        }
+
         $childNodeDefs = $this->getDeclaredChildNodeDefinitions();
         if (!$childNodeDefs) {
             return true;
