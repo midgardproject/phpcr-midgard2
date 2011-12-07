@@ -43,7 +43,7 @@ class NodeDefinition extends ItemDefinition implements NodeDefinitionInterface
     public function getRequiredPrimaryTypes() 
     {
         $ret = array();
-        foreach ($this->getDefaultPrimaryTypeNames() as $typeName) {
+        foreach ($this->getRequiredPrimaryTypeNames() as $typeName) {
             $ret[] = $this->nodeTypeManager->getNodeType($typeName);
         }
         return $ret;

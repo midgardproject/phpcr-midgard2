@@ -116,41 +116,29 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             throw new RepositoryException("Index not allowed");
         }
 
+        $parts = explode('/', $relPath);
+        if (count($parts) > 1) {
+            $node = $this->getNode(array_shift($parts));
+            return $node->addNode(implode('/', $parts), $primaryNodeTypeName);
+        }
+
+        if ($this->hasProperty($relPath)) {
+            throw new ConstraintViolationException("Can not add node to '{$relPath}' Item which is a Property under " . $this->getPath());
+        }
+
+        if (!$this->getPrimaryNodeType()->canAddChildNode($relPath, $primaryNodeTypeName)) {
+            throw new ConstraintViolationException("Can not add node '{$relPath}' under " . $this->getPath() . " due to node type constraints.");
+        }
+
         if ($primaryNodeTypeName == null) {
-            $def = $this->getDefinition();
-            $primaryNodeTypeName = $def->getDefaultPrimaryTypeName();
-            if ($primaryNodeTypeName == null) {
-                if ($this->getPath() == '/') {
-                    $primaryNodeTypeName = 'nt:unstructured';
-                } else {
-                    /* ConstraintViolationException - if a node type or implementation-specific constraint 
-                    * is violated or if an attempt is made to add a node as the child of a property and 
-                    * this implementation performs this validation immediately.*/ 
-                    throw new ConstraintViolationException("Can not determine default node type name for " . $this->getName() . " when trying to add '{$relPath}'");
-                }
+            $childDefs = $this->getPrimaryNodeType()->getChildNodeDefinitions();
+            if (isset($childDefs[$relPath])) {
+                $primaryNodeTypeName = $childDefs[$relPath]->getDefaultPrimaryType();
+            } else {
+                $primaryNodeTypeName = 'nt:unstructured';
             }
         }
-        else {
-            $ntm = $this->session->getWorkspace()->getNodeTypeManager();
-            $nt = $ntm->getNodeType($primaryNodeTypeName);
-        }
-
-        $parts = explode('/', $relPath);
-        $pathElements = count($parts);
-        if ($pathElements == 1) {
-            return $this->appendNode($parts[0], $primaryNodeTypeName);
-        }
-
-        /* ConstraintViolationException:
-         * "if a node type or implementation-specific constraint is violated or 
-         *  if an attempt is made to add a node as the child of a property and 
-         *  this implementation performs this validation immediately." */
-        if ($this->hasProperty($parts[0])) {
-            throw new \PHPCR\NodeType\ConstraintViolationException("Can not add node to '{$relPath}' Item which is a Property under " . $this->getPath());
-        }
-
-        $node = $this->getNode(array_shift($parts));
-        return $node->addNode(implode('/', $parts), $primaryNodeTypeName);
+        return $this->appendNode($relPath, $primaryNodeTypeName);
     }
 
     public function orderBefore($srcChildRelPath, $destChildRelPath)
