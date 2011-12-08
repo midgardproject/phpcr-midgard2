@@ -55,7 +55,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     protected function getTypeName($checkContentObject = true)
     {
         if ($this->isRoot) {
-            return 'nt:folder';
+            return 'nt:unstructured';
         }
         $typeName = $this->getMidgard2PropertyValue('jcr:primaryType', false, $checkContentObject);
         if ($typeName) {
@@ -548,7 +548,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                 new midgard_query_value(array_keys($this->properties))
             )
         );
-        $q->set_constraint($cg);
+        $q->set_constraint($cg); 
         $q->execute();
         $properties = $q->list_objects();
         foreach ($properties as $property) {
@@ -603,7 +603,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     }
     
     public function getPropertyValue($name, $type=null)
-    {
+    {   
         return $this->getProperty($name)->getValue();
     }
     
@@ -724,8 +724,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $midgardNode = \midgard_object_class::factory('midgard_node', $midgardProperty->parent);
             $path = self::getMidgardPath($midgardNode);
             /* Convert to JCR path */
-            $path = str_replace ('/jackalope', '', $path);
+            $path = str_replace('/jackalope', '', $path);
             $path = str_replace('/root', '', $path);
+            //$path = str_replace('/', '', $path);
             $node = $this->session->getNode($path);
             $ret[] = $node->getProperty($midgardProperty->title);
         } 
