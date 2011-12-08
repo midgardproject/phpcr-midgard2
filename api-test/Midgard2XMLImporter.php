@@ -290,7 +290,8 @@ class Midgard2XMLImporter extends \DomDocument
         {
             $root_object = new \midgard_node();
             $root_object->parent = 0;
-            $root_object->name = "jackalope";
+            $root_object->name = "";
+            $root_object->typename = "nt_unstructured";
             $root_object->create();
         }
 

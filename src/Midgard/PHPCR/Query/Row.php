@@ -32,7 +32,7 @@ class Row implements \Iterator, \PHPCR\Query\RowInterface
 
     public function getScore($selectorName = null)
     {
-        return $this->score;
+        return (float) $this->score;
     }
 
     public function getValue($columnName)
