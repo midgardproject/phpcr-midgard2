@@ -12,13 +12,13 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     protected $selectors = array();
     protected $node = null;
     protected $converter = null;
-    //protected $query = null;
     protected $holder = null;
     protected $storageType = null;
     protected $source = null;
     protected $constraint = null;
     protected $orderings = null;
     protected $columns = null;
+    protected $nodeTypeName = null;
     
     public function __construct (\Midgard\PHPCR\Session $session, $statement = null, \PHPCR\Query\QOM\SourceInterface $source = null,
             \PHPCR\Query\QOM\ConstraintInterface $constraint = null, array $orderings = null, array $columns = null)
@@ -27,24 +27,37 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->statement = $statement;
         $QOMFactory = new QOM\QueryObjectModelFactory($session);
         $this->converter = new \PHPCR\Util\QOM\Sql2ToQomQueryConverter($QOMFactory);
+        $this->source = $source;
+        $this->constraint = $constraint;
+        $this->orderings = $orderings;
+        $this->columns = $columns;
+
         if ($this->statement != null) {
-            $query = $this->converter->parse($statement);
+            $this->validateStatement();
+            $query = $this->converter->parse(trim($statement));
             $this->source = $query->getSource();
             $this->constraint = $query->getConstraint(); 
             $this->orderings = $query->getOrderings();
             $this->columns = $query->getColumns();
+        }
+
+        if (is_object($this->getSource())) { /* https://github.com/phpcr/phpcr-api-tests/issues/50 */
             $nodeTypeName = "";
-            if ($query->getSource() instanceOf \PHPCR\Query\QOM\JoinInterface) 
-                $nodeTypeName = $query->getSource()->getLeft()->getNodeTypeName();
+            if ($this->getSource() instanceOf \PHPCR\Query\QOM\JoinInterface) 
+                $nodeTypeName = $this->getSource()->getLeft()->getNodeTypeName();
             else 
-                $nodeTypeName = $query->getSource()->getNodeTypeName();
+                $nodeTypeName = $this->getSource()->getNodeTypeName();
             $this->storageType = NodeMapper::getMidgardName($nodeTypeName);
             $this->selectors[] = $nodeTypeName;
-        } else { 
-            $this->source = $source;
-            $this->constraint = $constraint;
-            $this->orderings = $orderings;
-            $this->columns = $columns;
+            $this->nodeTypeName = $nodeTypeName;
+        }
+    }
+
+    private function validateStatement()
+    {
+        if ($this->statement) { 
+            if (strpos($this->statement, 'SELECT') === false)
+                throw new \PHPCR\Query\InvalidQueryException("Invalid statement");
         }
     }
 
@@ -132,8 +145,17 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         throw new \PHPCR\RepositoryException("Not supported");
     }
 
+    private function validateQOM()
+    {
+        $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+        if (!$ntm->hasNodeType($this->nodeTypeName))
+            throw new \PHPCR\Query\InvalidQueryException("Invalid node type " . $this->nodeTypeName);
+    }
+
     public function execute()
     {
+        $this->validateQOM();
+
         $holder = $this->getQuerySelectHolder();
         $manager = Utils\ConstraintManagerBuilder::factory($this, $holder, $this->getConstraint());
         if ($manager != null)
@@ -167,6 +189,10 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
   
     public function getStatement()
     {
+        if ($this->statement == null) {
+            $converter = new \PHPCR\Util\QOM\QomToSql2QueryConverter(new \PHPCR\Util\QOM\Sql2Generator());
+            $this->statement = $converter->convert($this);
+        }
         return $this->statement;
     }
      

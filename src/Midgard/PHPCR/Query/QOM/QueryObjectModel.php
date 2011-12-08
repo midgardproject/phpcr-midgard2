@@ -7,7 +7,7 @@ use Midgard\PHPCR\Query\SQLQuery;
 /**
  * {@inheritDoc}
  */
-class QueryObjectModel extends SQLQuery
+class QueryObjectModel extends SQLQuery implements \PHPCR\Query\QOM\QueryObjectModelInterface
 {
     /**
      * {@inheritDoc}
@@ -39,5 +39,10 @@ class QueryObjectModel extends SQLQuery
     public function getColumns()
     {
         return $this->columns;
+    }
+
+    public function getLanguage()
+    {
+        return \PHPCR\Query\QueryInterface::JCR_JQOM;
     }
 }
