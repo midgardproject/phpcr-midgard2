@@ -12,13 +12,13 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     protected $selectors = array();
     protected $node = null;
     protected $converter = null;
-    //protected $query = null;
     protected $holder = null;
     protected $storageType = null;
     protected $source = null;
     protected $constraint = null;
     protected $orderings = null;
     protected $columns = null;
+    protected $nodeTypeName = null;
     
     public function __construct (\Midgard\PHPCR\Session $session, $statement = null, \PHPCR\Query\QOM\SourceInterface $source = null,
             \PHPCR\Query\QOM\ConstraintInterface $constraint = null, array $orderings = null, array $columns = null)
@@ -47,6 +47,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
             $nodeTypeName = $this->getSource()->getNodeTypeName();
         $this->storageType = NodeMapper::getMidgardName($nodeTypeName);
         $this->selectors[] = $nodeTypeName;
+        $this->nodeTypeName = $nodeTypeName;
     }
 
     public function getSource()
@@ -133,8 +134,19 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         throw new \PHPCR\RepositoryException("Not supported");
     }
 
+    private function validate()
+    {
+        /* TODO , Validate statement if available */
+
+        $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+        if (!$ntm->hasNodeType($this->nodeTypeName))
+            throw new \PHPCR\Query\InvalidQueryException("Invalid node type " . $this->nodeTypeName);
+    }
+
     public function execute()
     {
+        $this->validate();
+
         $holder = $this->getQuerySelectHolder();
         $manager = Utils\ConstraintManagerBuilder::factory($this, $holder, $this->getConstraint());
         if ($manager != null)
@@ -144,10 +156,10 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->addOrders();
         $qs->set_constraint($holder->getDefaultConstraintGroup());
 
-        echo "EXECUTE QUERY : " . $this->statement . "\n";
-        \midgard_connection::get_instance()->set_loglevel("debug");
+        //echo "EXECUTE QUERY : " . $this->statement . "\n";
+        //\midgard_connection::get_instance()->set_loglevel("debug");
         $qs->execute();
-        \midgard_connection::get_instance()->set_loglevel("warn");
+        //\midgard_connection::get_instance()->set_loglevel("warn");
         return new QueryResult($this, $qs, $this->session);
     }
 
@@ -168,6 +180,10 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
   
     public function getStatement()
     {
+        if ($this->statement == null) {
+            $converter = new \PHPCR\Util\QOM\QomToSql2QueryConverter(new \PHPCR\Util\QOM\Sql2Generator());
+            $this->statement = $converter->convert($this);
+        }
         return $this->statement;
     }
      
