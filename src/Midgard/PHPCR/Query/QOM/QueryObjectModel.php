@@ -7,7 +7,7 @@ use Midgard\PHPCR\Query\SQLQuery;
 /**
  * {@inheritDoc}
  */
-class QueryObjectModel extends SQLQuery
+class QueryObjectModel extends SQLQuery implements \PHPCR\Query\QOM\QueryObjectModelInterface
 {
     /**
      * {@inheritDoc}
