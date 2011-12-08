@@ -12,7 +12,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     protected $selectors = array();
     protected $node = null;
     protected $converter = null;
-    protected $query = null;
+    //protected $query = null;
     protected $holder = null;
     protected $storageType = null;
     protected $source = null;
@@ -28,22 +28,49 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $QOMFactory = new QOM\QueryObjectModelFactory($session);
         $this->converter = new \PHPCR\Util\QOM\Sql2ToQomQueryConverter($QOMFactory);
         if ($this->statement != null) {
-            $this->query = $this->converter->parse($statement);
+            $query = $this->converter->parse($statement);
+            $this->source = $query->getSource();
+            $this->constraint = $query->getConstraint(); 
+            $this->orderings = $query->getOrderings();
+            $this->columns = $query->getColumns();
             $nodeTypeName = "";
-            if ($this->query->getSource() instanceOf \PHPCR\Query\QOM\JoinInterface) 
-                $nodeTypeName = $this->query->getSource()->getLeft()->getNodeTypeName();
+            if ($query->getSource() instanceOf \PHPCR\Query\QOM\JoinInterface) 
+                $nodeTypeName = $query->getSource()->getLeft()->getNodeTypeName();
             else 
-                $nodeTypeName = $this->query->getSource()->getNodeTypeName();
+                $nodeTypeName = $query->getSource()->getNodeTypeName();
             $this->storageType = NodeMapper::getMidgardName($nodeTypeName);
             $this->selectors[] = $nodeTypeName;
         } else { 
-            //$this->query = $QOMFactory->createQuery($source, $constraint, $orderings, $columns);
+            $this->source = $source;
+            $this->constraint = $constraint;
+            $this->orderings = $orderings;
+            $this->columns = $columns;
         }
+    }
 
-        $this->source = $source;
-        $this->language = $constraint;
-        $this->orderings = $orderings;
-        $this->columns = $columns;
+    public function getSource()
+    {
+        return $this->source;
+    }
+
+    public function getColumns()
+    {
+        return $this->columns;
+    }
+
+    public function getConstraint()
+    {
+        return $this->constraint;
+    }
+
+    public function getOrderings()
+    {
+        return $this->orderings;
+    }
+
+    public function getSelectors()
+    {
+        return $this->selectors;
     }
 
     public function getMidgardStorageName()
@@ -76,7 +103,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     private function addOrders()
     {
-        $orderings = $this->query->getOrderings();
+        $orderings = $this->getOrderings();
         if (empty($orderings))
             return;
 
@@ -107,10 +134,8 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     public function execute()
     {
-        if ($this->query == null)
-            return;
         $holder = $this->getQuerySelectHolder();
-        $manager = Utils\ConstraintManagerBuilder::factory($this, $holder, $this->query->getConstraint());
+        $manager = Utils\ConstraintManagerBuilder::factory($this, $holder, $this->getConstraint());
         if ($manager != null)
             $manager->addConstraint();
 
@@ -122,7 +147,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         //\midgard_connection::get_instance()->set_loglevel("debug");
         $qs->execute();
         //\midgard_connection::get_instance()->set_loglevel("warn");
-        return new QueryResult($this->selectors, $qs, $this->session);
+        return new QueryResult($this, $qs, $this->session);
     }
 
     public function getBindVariableNames()

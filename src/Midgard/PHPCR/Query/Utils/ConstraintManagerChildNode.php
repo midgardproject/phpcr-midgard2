@@ -31,7 +31,7 @@ class ConstraintManagerChildNode extends ConstraintManager
             $constraint = new \midgard_query_constraint(
                 new \midgard_query_property("name", $nodeStorage),
                 "=",
-                new \midgard_query_value ($name == '' ? 'root' : $name)
+                new \midgard_query_value ($name)
             );
             $this->holder->getDefaultConstraintGroup()->add_constraint($constraint);
             $currentStorage = $nodeStorage;
