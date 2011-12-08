@@ -40,14 +40,16 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
             $this->columns = $query->getColumns();
         }
 
-        $nodeTypeName = "";
-        if ($this->getSource() instanceOf \PHPCR\Query\QOM\JoinInterface) 
-            $nodeTypeName = $this->getSource()->getLeft()->getNodeTypeName();
-        else 
-            $nodeTypeName = $this->getSource()->getNodeTypeName();
-        $this->storageType = NodeMapper::getMidgardName($nodeTypeName);
-        $this->selectors[] = $nodeTypeName;
-        $this->nodeTypeName = $nodeTypeName;
+        if (is_object($this->getSource())) { /* https://github.com/phpcr/phpcr-api-tests/issues/50 */
+            $nodeTypeName = "";
+            if ($this->getSource() instanceOf \PHPCR\Query\QOM\JoinInterface) 
+                $nodeTypeName = $this->getSource()->getLeft()->getNodeTypeName();
+            else 
+                $nodeTypeName = $this->getSource()->getNodeTypeName();
+            $this->storageType = NodeMapper::getMidgardName($nodeTypeName);
+            $this->selectors[] = $nodeTypeName;
+            $this->nodeTypeName = $nodeTypeName;
+        }
     }
 
     public function getSource()
