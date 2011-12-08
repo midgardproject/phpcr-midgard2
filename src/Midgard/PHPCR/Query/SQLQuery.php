@@ -33,6 +33,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->columns = $columns;
 
         if ($this->statement != null) {
+            $this->validateStatement();
             $query = $this->converter->parse(trim($statement));
             $this->source = $query->getSource();
             $this->constraint = $query->getConstraint(); 
@@ -49,6 +50,14 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
             $this->storageType = NodeMapper::getMidgardName($nodeTypeName);
             $this->selectors[] = $nodeTypeName;
             $this->nodeTypeName = $nodeTypeName;
+        }
+    }
+
+    private function validateStatement()
+    {
+        if ($this->statement) { 
+            if (strpos($this->statement, 'SELECT') === false)
+                throw new \PHPCR\Query\InvalidQueryException("Invalid statement");
         }
     }
 
@@ -136,10 +145,8 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         throw new \PHPCR\RepositoryException("Not supported");
     }
 
-    private function validate()
+    private function validateQOM()
     {
-        /* TODO , Validate statement if available */
-
         $ntm = $this->session->getWorkspace()->getNodeTypeManager();
         if (!$ntm->hasNodeType($this->nodeTypeName))
             throw new \PHPCR\Query\InvalidQueryException("Invalid node type " . $this->nodeTypeName);
@@ -147,7 +154,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     public function execute()
     {
-        $this->validate();
+        $this->validateQOM();
 
         $holder = $this->getQuerySelectHolder();
         $manager = Utils\ConstraintManagerBuilder::factory($this, $holder, $this->getConstraint());
