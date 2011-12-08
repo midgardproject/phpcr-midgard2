@@ -40,4 +40,9 @@ class QueryObjectModel extends SQLQuery implements \PHPCR\Query\QOM\QueryObjectM
     {
         return $this->columns;
     }
+
+    public function getLanguage()
+    {
+        return \PHPCR\Query\QueryInterface::JCR_JQOM;
+    }
 }
