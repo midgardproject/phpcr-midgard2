@@ -73,7 +73,7 @@ class NodeRegistry
         return $this->byPath[$path];
     }
 
-    public function fetchByPath($path)
+    public function fetchByPath($absPath)
     {
         if (substr($absPath, 0, 1) != '/') {
             throw new RepositoryException("Full path required. Given one is '{$absPath}'");

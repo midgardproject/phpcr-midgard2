@@ -108,7 +108,8 @@ class MidgardBootstrap
         if ($q->get_results_count() == 0)
         {
             $root_object = new \midgard_node();
-            $root_object->name = "jackalope";
+            $root_object->name = "";
+            $root_object->typename = "nt_unstructured";
             $root_object->parent = 0;
             $root_object->create();
         }

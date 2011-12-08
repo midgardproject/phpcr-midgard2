@@ -37,7 +37,7 @@ class QueryManager implements \PHPCR\Query\QueryManagerInterface
     public function getQOMFactory()
     {   
         if ($this->QOMFactory == null)
-            $this->QOMFactory = new QOM\QueryObjectModelFactory ();
+            $this->QOMFactory = new QOM\QueryObjectModelFactory ($this->session);
 
         return $this->QOMFactory;
     }

@@ -25,12 +25,21 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     {
         $this->session = $session;
         $this->statement = $statement;
-        $this->converter = new \PHPCR\Util\QOM\Sql2ToQomQueryConverter(new QOM\QueryObjectModelFactory($this->session));
+        $QOMFactory = new QOM\QueryObjectModelFactory($session);
+        $this->converter = new \PHPCR\Util\QOM\Sql2ToQomQueryConverter($QOMFactory);
         if ($this->statement != null) {
             $this->query = $this->converter->parse($statement);
-            $this->storageType = NodeMapper::getMidgardName($this->query->getSource()->getNodeTypeName());
-            $this->selectors[] = $this->query->getSource()->getNodeTypeName();
+            $nodeTypeName = "";
+            if ($this->query->getSource() instanceOf \PHPCR\Query\QOM\JoinInterface) 
+                $nodeTypeName = $this->query->getSource()->getLeft()->getNodeTypeName();
+            else 
+                $nodeTypeName = $this->query->getSource()->getNodeTypeName();
+            $this->storageType = NodeMapper::getMidgardName($nodeTypeName);
+            $this->selectors[] = $nodeTypeName;
+        } else { 
+            //$this->query = $QOMFactory->createQuery($source, $constraint, $orderings, $columns);
         }
+
         $this->source = $source;
         $this->language = $constraint;
         $this->orderings = $orderings;
@@ -98,6 +107,8 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     public function execute()
     {
+        if ($this->query == null)
+            return;
         $holder = $this->getQuerySelectHolder();
         $manager = Utils\ConstraintManagerBuilder::factory($this, $holder, $this->query->getConstraint());
         if ($manager != null)
