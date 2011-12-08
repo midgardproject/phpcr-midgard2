@@ -2,25 +2,31 @@
 namespace Midgard\PHPCR\Query;
 
 use Midgard\PHPCR\Utils\NodeMapper;
+use Midgard\PHPCR\Query\SQLQuery;
 
 class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterface
 {
     protected $qs;
     protected $session;
-    protected $selectors;
+    protected $query;
     protected $rows = null;
 
-    public function __construct(array $selectors, \midgard_query_select $qs, \Midgard\PHPCR\Session $session)
+    public function __construct(SQLQuery $query, \midgard_query_select $qs, \Midgard\PHPCR\Session $session)
     {
         $this->qs = $qs;
         $this->session = $session;
-        $this->selectors = $selectors;
+        $this->query = $query;
+    }
+
+    public function getQuery()
+    {
+        return $this->query;
     }
 
     public function getColumnNames()
     {
         $ret = array();
-        foreach ($this->selectors as $name)
+        foreach ($this->query->getSelectors() as $name)
         {
             $midgardType = NodeMapper::getMidgardName($name);
             $o = new $midgardType;
@@ -77,7 +83,7 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
 
     public function getSelectorNames()
     {
-        return $this->selectors;
+        return $this->query->getSelectors();
     }
 
     public function getIterator()

@@ -53,8 +53,18 @@ class Row implements \Iterator, \PHPCR\Query\RowInterface
                 return $this->getScore();
             }
         }
+        
+        $definedColumns = $this->queryResult->getQuery()->getColumns();
+        foreach ($definedColumns as $column) {
+            if ($column->getPropertyName() == $columnName) {
+                if (!$this->node->hasProperty($columnName))
+                    return null;
+            }
+        }
+
         try 
         {
+            echo "ROW VALUE : " . $this->node->getPath() . " " . $this->node->getName() . " COLNAME : {$columnName} \n";
             return $this->node->getPropertyValue($columnName);
         } 
         catch (\PHPCR\PathNotFoundException $e)
