@@ -33,7 +33,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->columns = $columns;
 
         if ($this->statement != null) {
-            $query = $this->converter->parse($statement);
+            $query = $this->converter->parse(trim($statement));
             $this->source = $query->getSource();
             $this->constraint = $query->getConstraint(); 
             $this->orderings = $query->getOrderings();
