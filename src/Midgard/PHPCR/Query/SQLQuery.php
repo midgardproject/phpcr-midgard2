@@ -27,25 +27,26 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->statement = $statement;
         $QOMFactory = new QOM\QueryObjectModelFactory($session);
         $this->converter = new \PHPCR\Util\QOM\Sql2ToQomQueryConverter($QOMFactory);
+        $this->source = $source;
+        $this->constraint = $constraint;
+        $this->orderings = $orderings;
+        $this->columns = $columns;
+
         if ($this->statement != null) {
             $query = $this->converter->parse($statement);
             $this->source = $query->getSource();
             $this->constraint = $query->getConstraint(); 
             $this->orderings = $query->getOrderings();
             $this->columns = $query->getColumns();
-            $nodeTypeName = "";
-            if ($query->getSource() instanceOf \PHPCR\Query\QOM\JoinInterface) 
-                $nodeTypeName = $query->getSource()->getLeft()->getNodeTypeName();
-            else 
-                $nodeTypeName = $query->getSource()->getNodeTypeName();
-            $this->storageType = NodeMapper::getMidgardName($nodeTypeName);
-            $this->selectors[] = $nodeTypeName;
-        } else { 
-            $this->source = $source;
-            $this->constraint = $constraint;
-            $this->orderings = $orderings;
-            $this->columns = $columns;
         }
+
+        $nodeTypeName = "";
+        if ($this->getSource() instanceOf \PHPCR\Query\QOM\JoinInterface) 
+            $nodeTypeName = $this->getSource()->getLeft()->getNodeTypeName();
+        else 
+            $nodeTypeName = $this->getSource()->getNodeTypeName();
+        $this->storageType = NodeMapper::getMidgardName($nodeTypeName);
+        $this->selectors[] = $nodeTypeName;
     }
 
     public function getSource()
@@ -143,10 +144,10 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->addOrders();
         $qs->set_constraint($holder->getDefaultConstraintGroup());
 
-        //echo "EXECUTE QUERY : " . $this->statement . "\n";
-        //\midgard_connection::get_instance()->set_loglevel("debug");
+        echo "EXECUTE QUERY : " . $this->statement . "\n";
+        \midgard_connection::get_instance()->set_loglevel("debug");
         $qs->execute();
-        //\midgard_connection::get_instance()->set_loglevel("warn");
+        \midgard_connection::get_instance()->set_loglevel("warn");
         return new QueryResult($this, $qs, $this->session);
     }
 
