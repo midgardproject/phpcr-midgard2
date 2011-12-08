@@ -99,7 +99,7 @@ class Midgard2ImportExport implements PHPCR\Test\FixtureLoaderInterface
             {
                 if (is_a($object, 'midgard_node')
                     && property_exists($object, 'name')
-                    && $object->name == 'jackalope')
+                    && $object->name == '')
                 {
                     continue;
                 }
