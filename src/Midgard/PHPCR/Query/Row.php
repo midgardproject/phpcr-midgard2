@@ -64,7 +64,6 @@ class Row implements \Iterator, \PHPCR\Query\RowInterface
 
         try 
         {
-            echo "ROW VALUE : " . $this->node->getPath() . " " . $this->node->getName() . " COLNAME : {$columnName} \n";
             return $this->node->getPropertyValue($columnName);
         } 
         catch (\PHPCR\PathNotFoundException $e)
