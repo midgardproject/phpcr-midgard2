@@ -56,9 +56,14 @@ class Row implements \Iterator, \PHPCR\Query\RowInterface
         
         $definedColumns = $this->queryResult->getQuery()->getColumns();
         foreach ($definedColumns as $column) {
-            if (trim($column->getPropertyName()) == $columnName) { /* https://github.com/phpcr/phpcr-utils/issues/5 */
-                if (!$this->node->hasProperty($columnName))
+            $tmp = trim(trim($column->getPropertyName())); /* https://github.com/phpcr/phpcr-utils/issues/5 */
+            if (strpos($tmp, ']') !== false) {
+                $tmp = substr($tmp, 1, -1); /* Remove [] */
+            }
+            if ($tmp == $columnName) {
+                if (!$this->node->hasProperty($columnName)) {
                     return null;
+                }
             }
         }
 
