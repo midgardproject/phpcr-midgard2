@@ -74,6 +74,7 @@
             <Supertypes>nt:hierarchyNode</Supertypes>
             <isMixin>false</isMixin>
             <PrimaryItemName></PrimaryItemName>
+            <ChildNodeDefinition>*</ChildNodeDefinition>
             <RequiredPrimaryTypes>nt:hierarchyNode</RequiredPrimaryTypes>
             <DefaultPrimaryType></DefaultPrimaryType>
             <isAutoCreated>false</isAutoCreated>
