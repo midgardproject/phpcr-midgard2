@@ -185,15 +185,19 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
     public function canRemoveNode($nodeName)
     {
         $childDefs = $this->getDeclaredChildNodeDefinitions();
-        if (!isset($childDefs[$nodeName])) {
+        if (isset($childDefs[$nodeName])) {
+            $childDef = $childDefs[$nodeName];
+        } elseif (isset($childDefs['*'])) {
+            $childDef = $childDefs['*'];
+        } else {
             return true;
         }
 
-        if ($childDefs[$nodeName]->isMandatory()) {
+        if ($childDef->isMandatory()) {
             return false;
         }
 
-        if ($childDefs[$nodeName]->isProtected()) {
+        if ($childDef->isProtected()) {
             return false;
         }
 

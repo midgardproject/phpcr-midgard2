@@ -1193,6 +1193,12 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function remove()
     {
+        if ($this->getParent()) {
+            if (!$this->getParent()->getPrimaryNodeType()->canRemoveNode($this->getName())) {
+                throw new ConstraintViolationException('Cannot remove node ' . $this->getPath() . ' due to type constraints');
+            }
+        }
+
         if ($this->is_removed == true) {
             return;
         }
