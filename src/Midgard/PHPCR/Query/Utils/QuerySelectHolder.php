@@ -9,10 +9,21 @@ class QuerySelectholder
     protected $propertyStorage = null;
     protected $defaultNodeStorage = null;
     protected $defaultConstraintGroup = null;
+    protected $midgardStorageName = null;
 
     public function __construct (SQLQuery $query)
     {
         $this->query = $query;
+    }
+
+    public function setMidgardStorageName($name)
+    {
+        $this->midgardStorageName = $name;
+    }
+
+    public function getMidgardStorageName()
+    {
+        return $this->midgardStorageName;
     }
 
     public function getDefaultNodeStorage()
@@ -32,7 +43,7 @@ class QuerySelectholder
                 new \midgard_query_constraint(
                     new \midgard_query_property("typename"),
                     "=",
-                    new \midgard_query_value($this->query->getMidgardStorageName())
+                    new \midgard_query_value($this->getMidgardStorageName())
                 )
             );
 

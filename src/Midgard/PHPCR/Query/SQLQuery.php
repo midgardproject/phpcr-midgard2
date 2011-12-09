@@ -42,12 +42,8 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         }
 
         if (is_object($this->getSource())) { /* https://github.com/phpcr/phpcr-api-tests/issues/50 */
-            $nodeTypeName = "";
-            if ($this->getSource() instanceOf \PHPCR\Query\QOM\JoinInterface) { 
-                $nodeTypeName = $this->getSource()->getLeft()->getNodeTypeName();
-            } else {
-                $nodeTypeName = $this->getSource()->getNodeTypeName();
-            }
+            $source = new Utils\Source($this->getQuerySelectHolder(), $this->getSource());
+            $nodeTypeName = $source->getNodeTypeName();
             $this->storageType = NodeMapper::getMidgardName($nodeTypeName);
             $this->selectors[] = $nodeTypeName;
             $this->nodeTypeName = $nodeTypeName;
@@ -124,7 +120,6 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         //$this->addJoinIDToParent();
 
         foreach ($orderings as $order) {
-            print_r($order->getOperand()->getPropertyName());
             $constraint = new \midgard_query_constraint (
                 new \midgard_query_property ("value"),
                 "=",
