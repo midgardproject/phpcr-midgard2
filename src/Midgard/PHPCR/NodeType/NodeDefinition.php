@@ -31,6 +31,9 @@ class NodeDefinition extends ItemDefinition implements NodeDefinitionInterface
 
     public function getDefaultPrimaryType() 
     {
+        if (!$this->getDefaultPrimaryTypeName()) {
+            return null;
+        }
         $this->nodeTypeManager->getNodeType($this->getDefaultPrimaryTypeName());
     }
 

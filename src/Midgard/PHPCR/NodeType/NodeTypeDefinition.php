@@ -86,14 +86,22 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         }
         $this->childNodeDefinitions = array();
 
+        $childNames = array();
         $midgardName = NodeMapper::getMidgardName($this->name);
         $reflector = new midgard_reflection_class($midgardName);
-        $childName = $this->getStringValue($reflector, 'PrimaryItemName');
-        if (!$childName) {
+
+        $childDefs = $this->getStringValue($reflector, 'ChildNodeDefinition');
+        if (!$childDefs) {
             return $this->childNodeDefinitions;
         }
-
-        $this->childNodeDefinitions[$childName] = $this->createChildNodeDefinition($childName, $reflector);
+        
+        $childDefs = explode(' ', $childDefs);
+        foreach ($childDefs as $childName) {
+            if (!$childName) {
+                continue;
+            }
+            $this->childNodeDefinitions[$childName] = $this->createChildNodeDefinition($childName, $reflector);
+        }
 
         return $this->childNodeDefinitions;
     }
