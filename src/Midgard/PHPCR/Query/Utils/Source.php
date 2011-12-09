@@ -14,11 +14,14 @@ class Source
     {
         $this->holder = $holder;
         $this->source = $source;
-        if ($source instanceOf \PHPCR\Query\QOM\JoinInterface) {
+        if ($source instanceOf \PHPCR\Query\QOM\EquiJoinInterface) {
             $this->nodeTypeName = $source->getLeft()->getNodeTypeName();
             $this->isJoin = true;
-        } else {
+        } else if ($source instanceOf \PHPCR\Query\QOM\SelectorInterface) {
             $this->nodeTypeName = $source->getNodeTypeName();
+        } else {
+            /* FIXME */
+            return;
         }
         $this->holder->setMidgardStorageName(NodeMapper::getMidgardName($this->nodeTypeName));
         $this->addImplicitJoin();
