@@ -13,7 +13,7 @@ class ItemDefinition implements ItemDefinitionInterface
     protected $isMandatory = false;
     protected $isProtected = false;
 
-    public function __construct(NodeTypeDefinition $declaringType, ItemDefinitionInterface $template, NodeTypeManager $mgr)
+    public function __construct($declaringType, ItemDefinitionInterface $template, NodeTypeManager $mgr)
     {
         $this->nodeTypeManager = $mgr;
 
@@ -27,7 +27,7 @@ class ItemDefinition implements ItemDefinitionInterface
 
     public function getDeclaringNodeType()
     {
-        return $this->declaringNodeType;
+        return $this->nodeTypeManager->getNodeType(declaringNodeType);
     }
 
     public function getName()

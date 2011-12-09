@@ -82,7 +82,7 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
             $template->setOnParentVersion(OnParentVersionAction::valueFromName($opv));
         }
 
-        return new NodeDefinition($this, $template, $this->nodeTypeManager);
+        return new NodeDefinition($this->getName(), $template, $this->nodeTypeManager);
     }
 
     public function getDeclaredChildNodeDefinitions() 
@@ -126,7 +126,7 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         $template->setProtected($this->getBooleanValue($reflector, 'isProtected', $midgardName));
         $template->setMultiple($this->getBooleanValue($reflector, 'isMultiple', $midgardName));
 
-        return new PropertyDefinition($this, $template, $this->nodeTypeManager);
+        return new PropertyDefinition($this->getName(), $template, $this->nodeTypeManager);
     }
 
     public function getDeclaredPropertyDefinitions()
