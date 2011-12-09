@@ -32,6 +32,7 @@ class NodeTypeManager implements IteratorAggregate, NodeTypeManagerInterface
         foreach ($classes as $refclass)
         {
             $mixin = false;
+            $abstract = false;
             $ignore = true;
             if (   $refclass->isSubclassOf('MidgardObject')
                 || $refclass->isSubclassOf('MidgardBaseMixin')
@@ -64,7 +65,11 @@ class NodeTypeManager implements IteratorAggregate, NodeTypeManagerInterface
                 $mixin = true;
             }
 
-            $mgdschemaType = $this->createNamedNodeTypeTemplate($mgdschemaName, $mixin);
+            if (midgard_reflector_object::get_schema_value($tmpName, 'isAbstract') == 'true') {
+                $abstract = true;
+            }
+
+            $mgdschemaType = $this->createNamedNodeTypeTemplate($mgdschemaName, $mixin, $abstract);
             
             $this->registerNodeType($mgdschemaType, false);
         }
@@ -75,11 +80,12 @@ class NodeTypeManager implements IteratorAggregate, NodeTypeManagerInterface
        return new NodeDefinitionTemplate();
     }
 
-    private function createNamedNodeTypeTemplate($name, $mixin)
+    private function createNamedNodeTypeTemplate($name, $mixin, $abstract)
     {
         $ntt = $this->createNodeTypeTemplate();
         $ntt->setName($name);
         $ntt->setMixin($mixin);
+        $ntt->setAbstract($abstract);
 
         return $ntt;
     }
