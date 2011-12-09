@@ -3,6 +3,7 @@ namespace Midgard\PHPCR\NodeType;
 
 use Midgard\PHPCR\Utils\NodeMapper;
 use PHPCR\NodeType\NodeTypeDefinitionInterface;
+use PHPCR\Version\OnParentVersionAction;
 use ReflectionClass;
 use midgard_reflector_object;
 use midgard_reflection_property;
@@ -75,6 +76,11 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         $template->setAutoCreated($this->getBooleanValue($reflector, 'isAutoCreated'));
         $template->setProtected($this->getBooleanValue($reflector, 'isProtected'));
         $template->setSameNameSiblings($this->getBooleanValue($reflector, 'SameNameSiblings'));
+
+        $opv = $this->getStringValue($reflector, 'OnParentVersion');
+        if ($opv) {
+            $template->setOnParentVersion(OnParentVersionAction::valueFromName($opv));
+        }
 
         return new NodeDefinition($this, $template, $this->nodeTypeManager);
     }
