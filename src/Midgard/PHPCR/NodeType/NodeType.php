@@ -141,7 +141,12 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
     {
         if ($nodeTypeName && !$this->nodeTypeManager->hasNodeType($nodeTypeName)) {
             return false;
-        } 
+        }
+
+        $propDefs = $this->getPropertyDefinitions();
+        if (isset($propDefs[$nodeName])) {
+            return false;
+        }
 
         $childDefs = $this->getChildNodeDefinitions();
         if (!isset($childDefs[$nodeName])) {
