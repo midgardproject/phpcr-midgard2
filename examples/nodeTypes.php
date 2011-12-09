@@ -89,6 +89,10 @@ foreach ($nodeTypes as $nodeType) {
             $childInfo[] = 'protected';
         }
 
+        if ($child->getOnParentVersion()) {
+            $childInfo[] = \PHPCR\Version\OnParentVersionAction::nameFromValue($child->getOnParentVersion());
+        }
+
         echo " " . implode(' ', $childInfo) . "\n";
     }
 
