@@ -27,7 +27,7 @@ class ItemDefinition implements ItemDefinitionInterface
 
     public function getDeclaringNodeType()
     {
-        return $this->nodeTypeManager->getNodeType(declaringNodeType);
+        return $this->nodeTypeManager->getNodeType($this->declaringNodeType);
     }
 
     public function getName()
