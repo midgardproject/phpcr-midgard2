@@ -701,8 +701,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         $q->set_constraint($group);
         $q->execute();
-        if ($q->get_results_count() < 1)
-        {
+        if ($q->get_results_count() < 1) {
             return new \ArrayIterator($ret);
         }
 
@@ -711,14 +710,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         /* TODO, query properties only, once tree and nodes scope is provided by Property */
 
         /* query references */
-        foreach ($nodeProperties as $midgardProperty)
-        {
+        foreach ($nodeProperties as $midgardProperty) {
             $midgardNode = \midgard_object_class::factory('midgard_node', $midgardProperty->parent);
             $path = self::getMidgardPath($midgardNode);
-            /* Convert to JCR path */
-            $path = str_replace('/jackalope', '', $path);
-            $path = str_replace('/root', '', $path);
-            //$path = str_replace('/', '', $path);
             $node = $this->session->getNode($path);
             $ret[] = $node->getProperty($midgardProperty->title);
         } 
@@ -1018,7 +1012,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
          * Last object is root node. */
         do 
         {
-            array_unshift($elements, $object->name);
+            if ($object->name) {
+                array_unshift($elements, $object->name);
+            }
             $objects = self::getMidgardRelativePath($object, null);
             if (empty($objects))
             {
