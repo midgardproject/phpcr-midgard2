@@ -119,18 +119,15 @@ class Midgard2XMLImporter extends \DomDocument
         $n_values = $property->getElementsByTagName('value')->length;
         $propertyType = $property->getAttributeNS($this->ns_sv, 'type');
         $multiAttr = $property->getAttributeNS($this->ns_sv, 'multiple');
-        if ($n_values > 1 || $multiAttr == 'true')
-        {
+        if ($n_values > 1 || $multiAttr == 'true' || $propertyName == 'jcr:mixinTypes') {
             $isMultiple = true;
         }
 
-        if ($propertyType == 'Binary')
-        {
+        if ($propertyType == 'Binary') {
             $isBinary = true;
         }
 
-        for ($i = 0; $i < $n_values; $i++)
-        {
+        for ($i = 0; $i < $n_values; $i++) {
             $vnode = $property->getElementsByTagName('value')->item($i);
             $midgardNodeProperty = new \midgard_node_property();
             $midgardNodeProperty->name = str_replace(':', '-', $propertyName);
@@ -149,8 +146,7 @@ class Midgard2XMLImporter extends \DomDocument
             }
             $midgardNodeProperty->value = $value;
 
-            if ($midgardNodeProperty->type == \PHPCR\PropertyType::BOOLEAN) 
-            {
+            if ($midgardNodeProperty->type == \PHPCR\PropertyType::BOOLEAN) {
                 if ($midgardNodeProperty->value == 'false')
                     $midgardNodeProperty->value = '0';
                 if ($midgardNodeProperty->value == 'true')

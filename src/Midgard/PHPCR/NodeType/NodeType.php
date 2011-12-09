@@ -119,7 +119,9 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
         $definitions = $this->getPropertyDefinitions();
         if (!isset($definitions[$propertyName])) {
-            return true;
+            // FIXME: Now MgdSchemas can't define * properties
+            // so we special-case nt:unstructured
+            return $this->isNodeType('nt:unstructured');
         }
 
         $requiredType = $definitions[$propertyName]->getRequiredType();
@@ -133,7 +135,7 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
                 return false;
             }
         }
-        // FIXME: We need a list of allowed property names
+
         return true;
     }
 
@@ -141,40 +143,61 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
     {
         if ($nodeTypeName && !$this->nodeTypeManager->hasNodeType($nodeTypeName)) {
             return false;
-        } 
+        }
+
+        $propDefs = $this->getPropertyDefinitions();
+        if (isset($propDefs[$nodeName])) {
+            return false;
+        }
 
         $childDefs = $this->getChildNodeDefinitions();
-        if (!isset($childDefs[$nodeName])) {
-            return true;
+        if (isset($childDefs[$nodeName])) {
+            $childDef = $childDefs[$nodeName];
+        } elseif (isset($childDefs['*'])) {
+            $childDef = $childDefs['*'];
+        } else {
+            return false;
         }
 
-        if ($nodeTypeName) {
-            $nodeType = $this->nodeTypeManager->getNodeType($nodeTypeName);
-            $requiredPrimaryTypes = $childDefs[$nodeName]->getRequiredPrimaryTypeNames();
-            $match = false;
-            foreach ($requiredPrimaryTypes as $primary) {
-                if ($nodeType->isNodeType($primary)) {
-                    $match = true;
-                    break;
-                }
+        if (!$nodeTypeName) {
+            $nodeTypeName = $childDef->getDefaultPrimaryTypeName();
+            if (!$nodeTypeName) {
+                return false;
             }
-            return $match;
         }
-        return true;
+        
+        $nodeType = $this->nodeTypeManager->getNodeType($nodeTypeName);
+        if ($nodeType->isMixin() || $nodeType->isAbstract()) {
+            return false;
+        }
+
+        $requiredPrimaryTypes = $childDef->getRequiredPrimaryTypeNames();
+        $match = false;
+        foreach ($requiredPrimaryTypes as $primary) {
+            if ($nodeType->isNodeType($primary)) {
+                $match = true;
+                break;
+            }
+        }
+        return $match;
     }
 
     public function canRemoveNode($nodeName)
     {
         $childDefs = $this->getDeclaredChildNodeDefinitions();
-        if (!isset($childDefs[$nodeName])) {
+        if (isset($childDefs[$nodeName])) {
+            $childDef = $childDefs[$nodeName];
+        } elseif (isset($childDefs['*'])) {
+            $childDef = $childDefs['*'];
+        } else {
             return true;
         }
 
-        if ($childDefs[$nodeName]->isMandatory()) {
+        if ($childDef->isMandatory()) {
             return false;
         }
 
-        if ($childDefs[$nodeName]->isProtected()) {
+        if ($childDef->isProtected()) {
             return false;
         }
 

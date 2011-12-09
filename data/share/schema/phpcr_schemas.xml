@@ -6,7 +6,7 @@
         <!-- JCR properties of nt:base Node -->
         <property name="jcr-primaryType" type="string">
             <description>The type of a node</description>
-            <getOnParentVersion>VERSION</getOnParentVersion>
+            <getOnParentVersion>COMPUTE</getOnParentVersion>
             <RequiredType>NAME</RequiredType>
             <isAutoCreated>true</isAutoCreated>
             <isMandatory>true</isMandatory>
@@ -16,7 +16,7 @@
         <property name="jcr-mixinTypes">
             <description>Mixin types multivalue</description>
           <RequiredType>NAME</RequiredType>
-            <getOnParentVersion>VERSION</getOnParentVersion>
+            <getOnParentVersion>COMPUTE</getOnParentVersion>
             <isAutoCreated>false</isAutoCreated>
             <isMandatory>false</isMandatory>
             <isProtected>true</isProtected>
@@ -32,7 +32,7 @@
             <DefaultPrimaryType></DefaultPrimaryType>
             <isAutoCreated>false</isAutoCreated>
             <isMandatory>false</isMandatory>
-            <OnParentVersion>VERSION</OnParentVersion>
+            <OnParentVersion></OnParentVersion>
             <isProtected>false</isProtected>
             <SameNameSiblings>false</SameNameSiblings>
              <isAbstract>true</isAbstract>    
@@ -50,10 +50,10 @@
             <DefaultPrimaryType></DefaultPrimaryType>
             <isAutoCreated>false</isAutoCreated>
             <isMandatory>false</isMandatory>
-            <OnParentVersion>VERSION</OnParentVersion>
+            <OnParentVersion></OnParentVersion>
             <isProtected>false</isProtected>
             <SameNameSiblings>false</SameNameSiblings>
-             <isAbstract>true</isAbstract>    
+            <isAbstract>true</isAbstract>    
         </user_values>
     </type>
 
@@ -62,18 +62,13 @@
         <property name="id" type="unsigned integer" primaryfield="id">
             <description>Local non-replication-safe database identifier</description>
         </property>
-        <property name="name" type="string" unique="yes">
-            <description>The name of a node</description>
-        </property>
-        <property name="parent" type="unsigned integer">
-            <description>ID of a parent node</description>
-        </property>
 
         <!-- Node and NodeType definitions -->
         <user_values>
             <Supertypes>nt:hierarchyNode</Supertypes>
             <isMixin>false</isMixin>
             <PrimaryItemName></PrimaryItemName>
+            <ChildNodeDefinition>*</ChildNodeDefinition>
             <RequiredPrimaryTypes>nt:hierarchyNode</RequiredPrimaryTypes>
             <DefaultPrimaryType></DefaultPrimaryType>
             <isAutoCreated>false</isAutoCreated>
@@ -88,12 +83,6 @@
     <type name="nt_file" table="phpcr_nt_file" metadata="false" extends="nt_hierarchyNode">
         <property name="id" type="unsigned integer" primaryfield="id">
             <description>Local non-replication-safe database identifier</description>
-        </property>
-        <property name="name" type="string" unique="yes">
-            <description>The name of a node</description>
-        </property>
-        <property name="parent" type="unsigned integer">
-            <description>ID of a parent node</description>
         </property>
 
         <!-- Node and NodeType definitions -->
@@ -122,7 +111,7 @@
         <property name="jcr-content" type="string" field="jcr_content" default="nt:linkedFile">
             <description>The type of a node</description>
             <RequiredType>REFERENCE</RequiredType>
-            <getOnParentVersion>COPY</getOnParentVersion>
+            <getOnParentVersion></getOnParentVersion>
             <isAutoCreated>false</isAutoCreated>
             <isMandatory>true</isMandatory>
             <isProtected>false</isProtected>

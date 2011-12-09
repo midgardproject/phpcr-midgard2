@@ -49,6 +49,9 @@ foreach ($nodeTypes as $nodeType) {
     echo "\n";
 
     $additionalInfo = array();
+    if ($nodeType->isAbstract()) {
+        $additionalInfo[] = 'abstract';
+    }
     if ($nodeType->isMixin()) {
         $additionalInfo[] = 'mixin';
     }
@@ -56,7 +59,7 @@ foreach ($nodeTypes as $nodeType) {
         $additionalInfo[] = 'orderable';
     }
     if ($nodeType->getPrimaryItemName()) {
-        $additionalInfo[] = 'primaryitem ' . strtoupper($nodeType->getPrimaryItemName());
+        $additionalInfo[] = 'primaryitem ' . $nodeType->getPrimaryItemName();
     }
     if ($additionalInfo) {
         echo "  " . implode(' ', $additionalInfo) . "\n";
@@ -67,7 +70,11 @@ foreach ($nodeTypes as $nodeType) {
         $childInfo = array();
         if ($child->getRequiredPrimaryTypeNames() !== null) {
             $typeNames = $child->getRequiredPrimaryTypeNames();
-            $childInfo[] = '(' . strtoupper($typeNames[0]) . ')';
+            $childInfo[] = '(' . $typeNames[0] . ')';
+        }
+
+        if ($child->getDefaultPrimaryTypeName()) {
+            $childInfo[] = '= ' . $child->getDefaultPrimaryTypeName();
         }
 
         if ($child->isMandatory()) {
@@ -80,6 +87,10 @@ foreach ($nodeTypes as $nodeType) {
 
         if ($child->isProtected()) {
             $childInfo[] = 'protected';
+        }
+
+        if ($child->getOnParentVersion()) {
+            $childInfo[] = \PHPCR\Version\OnParentVersionAction::nameFromValue($child->getOnParentVersion());
         }
 
         echo " " . implode(' ', $childInfo) . "\n";

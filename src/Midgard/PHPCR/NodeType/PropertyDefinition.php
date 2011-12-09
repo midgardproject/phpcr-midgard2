@@ -16,7 +16,7 @@ class PropertyDefinition extends ItemDefinition implements PropertyDefinitionInt
     protected $isMultiple = false;
     protected $fullTextSearchable = false;
 
-    public function __construct(NodeTypeDefinition $declaringType, PropertyDefinitionTemplate $template, NodeTypeManager $mgr)
+    public function __construct($declaringType, PropertyDefinitionTemplate $template, NodeTypeManager $mgr)
     {
         $this->availableQueryOperators = $template->getAvailableQueryOperators();
         $this->queryOrderable = $template->isQueryOrderable();
