@@ -15,6 +15,9 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     );
 
     protected $unsupportedTests = array(
+        // This test has missing fixtures in api-tests
+        'Query\QueryObjectSql2Test::testGetStoredQueryPath',
+
         // Workspace functionality isn't fully implemented
         'Connecting\WorkspaceReadMethodsTest::testGetAccessibleWorkspaceNames',
         'Connecting\WorkspaceReadMethodsTest::testGetAccessibleWorkspaceNames',
