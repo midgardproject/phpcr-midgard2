@@ -726,7 +726,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             /* Convert to JCR path */
             $path = str_replace('/jackalope', '', $path);
             $path = str_replace('/root', '', $path);
-            //$path = str_replace('/', '', $path);
+            $path = str_replace('//', '/', $path);
             $node = $this->session->getNode($path);
             $ret[] = $node->getProperty($midgardProperty->title);
         } 
