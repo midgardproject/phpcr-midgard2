@@ -144,8 +144,9 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     private function validateQOM()
     {
         $ntm = $this->session->getWorkspace()->getNodeTypeManager();
-        if (!$ntm->hasNodeType($this->nodeTypeName))
-            throw new \PHPCR\Query\InvalidQueryException("Invalid node type " . $this->nodeTypeName);
+        if (!$ntm->hasNodeType($this->nodeTypeName)) {
+            throw new \PHPCR\Query\InvalidQueryException("Invalid node type '{$this->nodeTypeName}'");
+        }
     }
 
     public function execute()

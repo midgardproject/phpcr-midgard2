@@ -134,14 +134,16 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             throw new ConstraintViolationException("Can not add node '{$relPath}' under " . $this->getPath() . " due to node type constraints.");
         }
 
-        if ($primaryNodeTypeName == null) {
+        if (!$primaryNodeTypeName) {
             $childDefs = $this->getPrimaryNodeType()->getChildNodeDefinitions();
             if (isset($childDefs[$relPath])) {
-                $primaryNodeTypeName = $childDefs[$relPath]->getDefaultPrimaryType();
+                $childDef = $childDefs[$relPath];
             } else {
-                $primaryNodeTypeName = 'nt:unstructured';
+                $childDef = $childDefs['*'];
             }
+            $primaryNodeTypeName = $childDef->getDefaultPrimaryType();
         }
+
         return $this->appendNode($relPath, $primaryNodeTypeName);
     }
 
@@ -548,6 +550,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                 continue;
             }
             $crName = NodeMapper::getPHPCRProperty($property->name);
+            if (isset($this->properties[$crName])) {
+                continue;
+            }
             $this->properties[$crName] = new Property($this, $crName);
         }
     }
@@ -701,8 +706,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         $q->set_constraint($group);
         $q->execute();
-        if ($q->get_results_count() < 1)
-        {
+        if ($q->get_results_count() < 1) {
             return new \ArrayIterator($ret);
         }
 
@@ -711,14 +715,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         /* TODO, query properties only, once tree and nodes scope is provided by Property */
 
         /* query references */
-        foreach ($nodeProperties as $midgardProperty)
-        {
+        foreach ($nodeProperties as $midgardProperty) {
             $midgardNode = \midgard_object_class::factory('midgard_node', $midgardProperty->parent);
             $path = self::getMidgardPath($midgardNode);
-            /* Convert to JCR path */
-            $path = str_replace('/jackalope', '', $path);
-            $path = str_replace('/root', '', $path);
-            $path = str_replace('//', '/', $path);
             $node = $this->session->getNode($path);
             $ret[] = $node->getProperty($midgardProperty->title);
         } 
@@ -1018,7 +1017,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
          * Last object is root node. */
         do 
         {
-            array_unshift($elements, $object->name);
+            if ($object->name) {
+                array_unshift($elements, $object->name);
+            }
             $objects = self::getMidgardRelativePath($object, null);
             if (empty($objects))
             {
@@ -1195,6 +1196,12 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function remove()
     {
+        if ($this->getParent()) {
+            if (!$this->getParent()->getPrimaryNodeType()->canRemoveNode($this->getName())) {
+                throw new ConstraintViolationException('Cannot remove node ' . $this->getPath() . ' due to type constraints');
+            }
+        }
+
         if ($this->is_removed == true) {
             return;
         }

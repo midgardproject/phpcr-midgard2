@@ -16,6 +16,9 @@ class NodeDefinitionTemplate extends NodeDefinition implements NodeDefinitionTem
 
     public function setDefaultPrimaryTypeName($defaultPrimaryTypeName)
     {
+        if (!$defaultPrimaryTypeName) {
+            $defaultPrimaryTypeName = null;
+        }
         $this->defaultPrimaryTypeName = $defaultPrimaryTypeName;
     }
 

@@ -29,11 +29,10 @@ class XMLSystemViewExporter extends XMLExporter
     public function serializeProperties(Node $node, \DOMNode $xmlNode, $skipBinary)
     {
         $properties = self::sortProperties($node);
-        if (empty($properties)) {
-            return;
-        }
         $properties[] = $node->getProperty('jcr:primaryType');
-        $properties[] = $node->getProperty('jcr:mixinTypes');
+        if (count($node->getMixinNodeTypes()) > 0) {
+            $properties[] = $node->getProperty('jcr:mixinTypes');
+        }
         foreach ($properties as $property) {
             /* Create property node */
             $pNode = $this->xmlDoc->createElementNS($this->svUri, $this->svNS . ":" . 'property');
@@ -52,8 +51,7 @@ class XMLSystemViewExporter extends XMLExporter
             $pNode->appendChild($nodeAttr);
 
             /* Add multiple flag attribute */
-            if ($property->isMultiple())
-            {
+            if ($property->isMultiple()) {
                 $nodeAttr = $this->xmlDoc->createAttributeNS($this->svUri, $this->svNS . ":" . 'multiple');
                 $nodeAttr->value = 'true';
                 $pNode->appendChild($nodeAttr);
@@ -63,17 +61,13 @@ class XMLSystemViewExporter extends XMLExporter
                 if (!$values) {
                     continue;
                 }
-                foreach ($values as $v)
-                {
-                    if ($property->getType() == \PHPCR\PropertyType::BINARY)
-                    {
-                        if ($skipBinary)
-                        {
+                foreach ($values as $v) {
+                    if ($property->getType() == \PHPCR\PropertyType::BINARY) {
+                        if ($skipBinary) {
                             $this->addValue($pNode, '');
                         }
-                        else 
-                        {
-                            $this->addValue($pNode, base64_encode(base64_encode($v)));
+                        else {
+                            $this->addValue($pNode, base64_encode($v));
                         }
                     }
                     else
@@ -84,19 +78,15 @@ class XMLSystemViewExporter extends XMLExporter
             }
             else 
             {
-                if ($property->getType() == \PHPCR\PropertyType::BINARY)
-                {
-                    if ($skipBinary)
-                    {
+                if ($property->getType() == \PHPCR\PropertyType::BINARY) {
+                    if ($skipBinary) {
                         $this->addValue($pNode, '');
                     }
-                    else 
-                    {
+                    else  {
                         $this->addValue($pNode, base64_encode($property->getString()));
                     }
                 }
-                else
-                { 
+                else { 
                     $this->addValue($pNode, $property->getString()); 
                 }
             }
@@ -112,40 +102,35 @@ class XMLSystemViewExporter extends XMLExporter
 
     public function serializeNode(Node $node, \DOMNode $xmlNode = null, $skipBinary, $noRecurse)
     {
-        $this->xmlNode = self::createNodeElement();
-        if (!$xmlNode)
-        {
-            $this->xmlDoc->appendChild($this->xmlNode);
-            $this->xmlRootNode = $this->xmlNode;
+        $currentXmlNode = self::createNodeElement();
+        if (!$xmlNode) {
+            $this->xmlDoc->appendChild($currentXmlNode);
+            $this->xmlRootNode = $currentXmlNode;
         }
-        else 
-        {
-            $xmlNode->appendChild($this->xmlNode);
+        else {
+            $xmlNode->appendChild($currentXmlNode);
         }
 
         $nodeAttr = $this->xmlDoc->createAttributeNS($this->svUri, $this->svNS . ":" . 'name');
         $nodeName = $node->getName();
         $nodeAttr->value = $nodeName;
 
-        $this->xmlNode->appendChild($nodeAttr);
-        $this->serializeProperties($node, $this->xmlNode, $skipBinary);
+        $currentXmlNode->appendChild($nodeAttr);
+        $this->serializeProperties($node, $currentXmlNode, $skipBinary);
 
         $this->addNamespaceAttribute($nodeName);    
 
-        if ($noRecurse)
-        {
+        if ($noRecurse) {
             return;
         }
 
         $nodes = $node->getNodes();
-        if (empty($nodes))
-        {
+        if (empty($nodes)) {
             return;
         }   
 
-        foreach ($nodes as $name => $child)
-        {
-            $this->serializeNode($child, $this->xmlNode, $skipBinary, $noRecurse);
+        foreach ($nodes as $name => $child) {
+            $this->serializeNode($child, $currentXmlNode, $skipBinary, $noRecurse);
         }
     }
 }

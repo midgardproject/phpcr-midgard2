@@ -3,6 +3,7 @@ namespace Midgard\PHPCR\NodeType;
 
 use Midgard\PHPCR\Utils\NodeMapper;
 use PHPCR\NodeType\NodeTypeDefinitionInterface;
+use PHPCR\Version\OnParentVersionAction;
 use ReflectionClass;
 use midgard_reflector_object;
 use midgard_reflection_property;
@@ -76,7 +77,12 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         $template->setProtected($this->getBooleanValue($reflector, 'isProtected'));
         $template->setSameNameSiblings($this->getBooleanValue($reflector, 'SameNameSiblings'));
 
-        return new NodeDefinition($this, $template, $this->nodeTypeManager);
+        $opv = $this->getStringValue($reflector, 'OnParentVersion');
+        if ($opv) {
+            $template->setOnParentVersion(OnParentVersionAction::valueFromName($opv));
+        }
+
+        return new NodeDefinition($this->getName(), $template, $this->nodeTypeManager);
     }
 
     public function getDeclaredChildNodeDefinitions() 
@@ -86,14 +92,22 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         }
         $this->childNodeDefinitions = array();
 
+        $childNames = array();
         $midgardName = NodeMapper::getMidgardName($this->name);
         $reflector = new midgard_reflection_class($midgardName);
-        $childName = $this->getStringValue($reflector, 'PrimaryItemName');
-        if (!$childName) {
+
+        $childDefs = $this->getStringValue($reflector, 'ChildNodeDefinition');
+        if (!$childDefs) {
             return $this->childNodeDefinitions;
         }
-
-        $this->childNodeDefinitions[$childName] = $this->createChildNodeDefinition($childName, $reflector);
+        
+        $childDefs = explode(' ', $childDefs);
+        foreach ($childDefs as $childName) {
+            if (!$childName) {
+                continue;
+            }
+            $this->childNodeDefinitions[$childName] = $this->createChildNodeDefinition($childName, $reflector);
+        }
 
         return $this->childNodeDefinitions;
     }
@@ -112,7 +126,7 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         $template->setProtected($this->getBooleanValue($reflector, 'isProtected', $midgardName));
         $template->setMultiple($this->getBooleanValue($reflector, 'isMultiple', $midgardName));
 
-        return new PropertyDefinition($this, $template, $this->nodeTypeManager);
+        return new PropertyDefinition($this->getName(), $template, $this->nodeTypeManager);
     }
 
     public function getDeclaredPropertyDefinitions()

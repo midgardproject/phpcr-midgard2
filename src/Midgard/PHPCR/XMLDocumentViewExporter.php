@@ -69,7 +69,7 @@ class XMLDocumentViewExporter extends XMLExporter
         $nodeName = $node->getName();
         try
         {
-            $this->xmlNode = $this->xmlDoc->createElement(self::escapeXmlName($nodeName));
+            $currentXmlNode = $this->xmlDoc->createElement(self::escapeXmlName($nodeName));
         }
         catch (\DOMException $e)
         {
@@ -78,18 +78,18 @@ class XMLDocumentViewExporter extends XMLExporter
         }
         if (!$xmlNode)
         {
-            $this->xmlDoc->appendChild($this->xmlNode);
-            $this->xmlRootNode = $this->xmlNode;
+            $this->xmlDoc->appendChild($currentXmlNode);
+            $this->xmlRootNode = $currentXmlNode;
         }
         else 
         {
-            $xmlNode->appendChild($this->xmlNode);
+            $xmlNode->appendChild($currentXmlNode);
         }
 
         $primaryType = $this->xmlDoc->createAttribute('jcr:primaryType');
         $primaryType->value = $node->getPrimaryNodeType()->getName();
         $this->addNamespaceAttribute('jcr:primaryType');
-        $this->xmlNode->appendChild($primaryType);
+        $currentXmlNode->appendChild($primaryType);
 
         $mixins = array();
         $mixinTypes = $node->getMixinNodeTypes();
@@ -99,10 +99,10 @@ class XMLDocumentViewExporter extends XMLExporter
         if ($mixins) {
             $mixinTypes = $this->xmlDoc->createAttribute('jcr:mixinTypes');
             $mixinTypes->value = implode(' ', $mixins);
-            $this->xmlNode->appendChild($mixinTypes);
+            $currentXmlNode->appendChild($mixinTypes);
         }
 
-        $this->serializeProperties($node, $this->xmlNode, $skipBinary);
+        $this->serializeProperties($node, $currentXmlNode, $skipBinary);
 
         $this->addNamespaceAttribute($nodeName);    
 
@@ -116,7 +116,7 @@ class XMLDocumentViewExporter extends XMLExporter
         }   
 
         foreach ($nodes as $name => $child) {
-            $this->serializeNode($child, $this->xmlNode, $skipBinary, $noRecurse);
+            $this->serializeNode($child, $currentXmlNode, $skipBinary, $noRecurse);
         }
     }
 }

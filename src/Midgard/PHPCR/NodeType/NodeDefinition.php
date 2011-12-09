@@ -11,7 +11,7 @@ class NodeDefinition extends ItemDefinition implements NodeDefinitionInterface
     protected $allowSameNameSiblings = false;
     protected $nodeTypeManager = null;
 
-    public function __construct(NodeTypeDefinition $declaringType, NodeDefinitionTemplate $template, NodeTypeManager $mgr)
+    public function __construct($declaringType, NodeDefinitionTemplate $template, NodeTypeManager $mgr)
     {
         $this->defaultPrimaryTypeName = $template->getDefaultPrimaryTypeName();
         $this->requiredPrimaryTypeNames = $template->getRequiredPrimaryTypeNames();
@@ -31,6 +31,9 @@ class NodeDefinition extends ItemDefinition implements NodeDefinitionInterface
 
     public function getDefaultPrimaryType() 
     {
+        if (!$this->getDefaultPrimaryTypeName()) {
+            return null;
+        }
         $this->nodeTypeManager->getNodeType($this->getDefaultPrimaryTypeName());
     }
 

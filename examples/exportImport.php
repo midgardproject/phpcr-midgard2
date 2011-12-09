@@ -38,6 +38,10 @@ if (!$session->nodeExists('/test')) {
     $session->save();
 }
 
+$node = $session->getNode('/test');
+$node->addMixin('mix:referenceable');
+$session->save();
+
 // Export the node via XML
 $session->exportDocumentView('/test', fopen('/tmp/exportedNode.xml', 'w'), true, true);
 
