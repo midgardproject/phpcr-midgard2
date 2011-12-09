@@ -423,6 +423,9 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         if (!is_null($this->multiple)) {
             return $this->multiple;
         }
+        if ($this->definition) {
+            return $this->definition->isMultiple();
+        }
         $object = $this->getMidgard2PropertyStorage($this->getName(), false);
         if ($object && $object instanceof midgard_node_property && $object->multiple) {
             return true;
