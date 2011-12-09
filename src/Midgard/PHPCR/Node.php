@@ -130,10 +130,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             throw new NoSuchNodeTypeException("Can not add node '{$relPath}' under " . $this->getPath() . ": Type {$primaryNodeTypeName} not defined.");
         }
 
-        if (!$this->getPrimaryNodeType()->canAddChildNode($relPath, $primaryNodeTypeName)) {
-            throw new ConstraintViolationException("Can not add node '{$relPath}' under " . $this->getPath() . " due to node type constraints.");
-        }
-
         if ($primaryNodeTypeName == null) {
             $childDefs = $this->getPrimaryNodeType()->getChildNodeDefinitions();
             if (isset($childDefs[$relPath])) {
@@ -142,6 +138,11 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                 $primaryNodeTypeName = 'nt:unstructured';
             }
         }
+
+        if (!$this->getPrimaryNodeType()->canAddChildNode($relPath, $primaryNodeTypeName)) {
+            throw new ConstraintViolationException("Can not add node '{$relPath}' under " . $this->getPath() . " due to node type constraints.");
+        }
+
         return $this->appendNode($relPath, $primaryNodeTypeName);
     }
 

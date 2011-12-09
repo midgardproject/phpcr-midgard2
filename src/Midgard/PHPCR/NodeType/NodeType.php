@@ -153,7 +153,9 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
             return true;
         }
 
-        if ($nodeTypeName) {
+        if (!$nodeTypeName) {
+            return false;
+        }
             $nodeType = $this->nodeTypeManager->getNodeType($nodeTypeName);
             $requiredPrimaryTypes = $childDefs[$nodeName]->getRequiredPrimaryTypeNames();
             $match = false;
@@ -164,8 +166,6 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
                 }
             }
             return $match;
-        }
-        return true;
     }
 
     public function canRemoveNode($nodeName)
