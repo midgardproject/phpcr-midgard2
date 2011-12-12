@@ -19,6 +19,9 @@ class Source
             $this->isJoin = true;
         } else if ($source instanceOf \PHPCR\Query\QOM\SelectorInterface) {
             $this->nodeTypeName = $source->getNodeTypeName();
+        } else if ($source instanceOf \PHPCR\Query\QOM\JoinInterface){
+            $this->nodeTypeName = $source->getLeft()->getNodeTypeName();
+            $this->isJoin = true;
         } else {
             /* FIXME */
             return;
