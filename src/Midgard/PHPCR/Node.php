@@ -131,7 +131,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         if (!$this->getPrimaryNodeType()->canAddChildNode($relPath, $primaryNodeTypeName)) {
-            throw new ConstraintViolationException("Can not add node '{$relPath}' under " . $this->getPath() . " due to node type constraints.");
+            throw new ConstraintViolationException("Can not add node '{$primaryNodeTypeName}' '{$relPath}' under '" . $this->getTypeName() . "' " . $this->getPath() . " due to node type constraints.");
         }
 
         if (!$primaryNodeTypeName) {
