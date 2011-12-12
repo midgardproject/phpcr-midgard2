@@ -11,6 +11,8 @@ You need to have a [midgard2 PHP extension](https://github.com/midgardproject/mi
 
     $ sudo apt-get install php5-midgard2
 
+If your distribution doesn't come with Midgard2, then you can either compile it manually or use [our precompiled packages](http://download.opensuse.org/repositories/home:/midgardproject:/ratatoskr/).
+
 Then set your project to depend on `midgard/phpcr` by having your `composer.json` to include:
 
     "require": {
