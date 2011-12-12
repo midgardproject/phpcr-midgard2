@@ -45,11 +45,6 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
                         $ret[] = $name . "." . NodeMapper::getPHPCRProperty($k);
                 }
             }
-
-            /* Not sure if spec defines it clearly.
-             * Jackrabbit adds these columns, so PHPCR and so we */
-            $ret[] = 'jcr:path';
-            $ret[] = 'jcr:score'; 
         }
 
         return $ret;
