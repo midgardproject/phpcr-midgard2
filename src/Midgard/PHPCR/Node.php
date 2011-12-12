@@ -880,12 +880,12 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function canAddMixin($mixinName)
     {
-        $midgardMixinName = NodeMapper::getMidgardName($mixinName);
-        if ($midgardMixinName == null || !interface_exists($midgardMixinName, false)) {
+        if (!$this->session->getWorkspace()->getNodeTypeManager()->hasNodeType($mixinName)) {
             return false;
         }
 
-        if (is_subclass_of($midgardMixinName, 'MidgardBaseMixin')) {
+        $mixinType = $this->session->getWorkspace()->getNodeTypeManager()->getNodeType($mixinName);
+        if (!$mixinType->isMixin()) {
             return false;
         }
 
