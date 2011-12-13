@@ -18,7 +18,7 @@ sudo dpkg -i libmidgard2-dev_10.05.5.1-1_i386.deb
 # Build and install Midgard2 PHP extension
 wget https://github.com/midgardproject/midgard-php5/tarball/ratatoskr
 tar zxf ratatoskr
-sh -c "cd midgardproject-midgard-php5-*&&php `pyrus get php_dir|tail -1`/pake.php install"
+sh -c "cd midgardproject-midgard-php5-*&&php `pyrus get php_dir|tail -1`/pake.php install > /dev/null"
 echo "extension=midgard2.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
 
 # Set up test environment
