@@ -1232,7 +1232,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $child->removeMidgard2Node();
         }
 
-        if ($mobject->guid) {
+        if ($mobject && $mobject->guid) {
             $mobject->purge();
         }
 

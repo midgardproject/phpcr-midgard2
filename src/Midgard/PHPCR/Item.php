@@ -49,7 +49,7 @@ abstract class Item implements ItemInterface
             $this->contentObject = new $midgardType($this->midgardNode->objectguid);
         } else {
             if (!class_exists($midgardType)) {
-                throw \Exception("{$midgardType} not found");
+                throw new \Exception("{$midgardType} not found");
             }
             $this->contentObject = new $midgardType();
         }
