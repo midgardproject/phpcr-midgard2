@@ -42,23 +42,12 @@ class Row implements \Iterator, \PHPCR\Query\RowInterface
             $parts = explode('.', $columnName);
             $columnName = $parts[1];
         }
-        else 
-        {
-            if (strpos($columnName, 'path'))
-            {
-                return $this->getPath();
-            }
-            else if (strpos($columnName, 'score'))
-            {
-                return $this->getScore();
-            }
-        }
         
         $definedColumns = $this->queryResult->getQuery()->getColumns();
         foreach ($definedColumns as $column) {
-            $tmp = trim(trim($column->getPropertyName())); /* https://github.com/phpcr/phpcr-utils/issues/5 */
-            if (strpos($tmp, ']') !== false) {
-                $tmp = substr($tmp, 1, -1); /* Remove [] */
+            $tmp = $column->getPropertyName();
+            if (strpos($tmp, "[") !== false) {
+                $tmp = substr($tmp, 1, -1); /* Remove [] */ /* "Illegal offset type " */
             }
             if ($tmp == $columnName) {
                 if (!$this->node->hasProperty($columnName)) {
