@@ -53,13 +53,7 @@ class NodeTypeManager implements IteratorAggregate, NodeTypeManagerInterface
                 continue;
             }
 
-            if (   strpos($tmpName, 'nt_') !== false
-                || strpos($tmpName, 'mix_') !== false) {
-                $mgdschemaName = NodeMapper::getPHPCRName($tmpName);
-            }   
-            else {
-                $mgdschemaName = "mgd:{$tmpName}";
-            }
+            $mgdschemaName = NodeMapper::getPHPCRName($tmpName);
 
             if (midgard_reflector_object::get_schema_value($tmpName, 'isMixin') == 'true') {
                 $mixin = true;
