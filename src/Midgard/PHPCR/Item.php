@@ -14,6 +14,7 @@ use midgard_query_value;
 use midgard_blob;
 use midgard_node;
 use midgard_node_property;
+use midgard_error_exception;
 use Midgard\PHPCR\Utils\NodeMapper;
 
 abstract class Item implements ItemInterface
@@ -46,10 +47,14 @@ abstract class Item implements ItemInterface
 
         $midgardType = '\\' . $this->midgardNode->typename;
         if ($this->midgardNode->objectguid) {
-            $this->contentObject = new $midgardType($this->midgardNode->objectguid);
+            try {
+                $this->contentObject = new $midgardType($this->midgardNode->objectguid);
+            } catch (midgard_error_exception $e) {
+                $this->midgardNode->objectguid = '';
+            }
         } else {
             if (!class_exists($midgardType)) {
-                throw \Exception("{$midgardType} not found");
+                throw new \Exception("{$midgardType} not found");
             }
             $this->contentObject = new $midgardType();
         }

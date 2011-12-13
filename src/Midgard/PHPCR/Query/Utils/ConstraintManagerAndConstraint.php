@@ -1,7 +1,7 @@
 <?php
 namespace Midgard\PHPCR\Query\Utils;
 
-class ConstraintManager_And extends ConstraintManager
+class ConstraintManagerAndConstraint extends ConstraintManager
 {
     public function addConstraint()
     {

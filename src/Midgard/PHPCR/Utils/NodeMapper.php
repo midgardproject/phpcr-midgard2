@@ -40,16 +40,26 @@ class NodeMapper
      */ 
     public static function getPHPCRName($type)
     {
-        if (strpos($type, '_') === false)
-        {
-            if (strpos($type, ':') !== false)
-            {
+        static $phpcrNames = array();
+        if (isset($phpcrNames[$type])) {
+            return $phpcrNames[$type];
+        }
+
+        if (substr($type, 0, 7) == 'midgard') {
+            $phpcrNames[$type] = "mgd:{$type}";
+            return $phpcrNames[$type]; 
+        }
+
+        if (strpos($type, '_') === false) {
+            if (strpos($type, ':') !== false) {
+                $phpcrNames[$type] = $type;;
                 return $type;
             }
             return null;
         }
         /* TODO, determine uper cases */
-        return str_replace('_', ':', $type);
+        $phpcrNames[$type] = str_replace('_', ':', $type);
+        return $phpcrNames[$type]; 
     }
 
     /**
