@@ -21,7 +21,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     protected $type = PropertyType::UNDEFINED;
     protected $definition = null;
     protected $multiple = null;
-    private $streams = array();
+    private $resources = array();
 
     public function __construct(Node $node, $propertyName, PropertyDefinitionInterface $definition = null, $type = null)
     {
@@ -168,6 +168,8 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         rewind($source);
         stream_copy_to_stream($source, $target);
         rewind($target);
+        $this->resources[] = $source;
+        $this->resources[] = $target;
     }
 
     private function setBinaryValue($value)
@@ -255,9 +257,13 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     public function getBinary()
     {
         if ($this->getType() != PropertyType::BINARY) {
-            return PropertyType::convertType($this->getNativeValue(), PropertyType::BINARY, $this->getType());
+            $stream = PropertyType::convertType($this->getNativeValue(), PropertyType::BINARY, $this->getType());
+            $this->resources[] = $stream;
+            return $stream;
         }
-        return $this->getMidgard2PropertyBinary($this->getName(), $this->isMultiple());
+        $stream = $this->getMidgard2PropertyBinary($this->getName(), $this->isMultiple());
+        $this->resources[] = $stream;
+        return $stream;
     }
     
     public function getLong()
@@ -507,9 +513,20 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         }
     }
 
+    private function closeResources()
+    {
+        foreach ($this->resources as $resource) {
+            if (is_resource($resource)) {
+                fclose($resource);
+            }
+        }
+        $this->resources = array();
+    }
+
     public function save()
     {
         if (!$this->is_modified && !$this->is_new) {
+            $this->closeResources();
             return;
         }
 
@@ -519,15 +536,12 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
                 $this->savePropertyObject($propertyObject);
             }
             $this->setUnmodified();
-            return;
+        } elseif (is_a($object, 'midgard_node_property')) {
+            $this->savePropertyObject($object);
+            $this->setUnmodified();
         }
 
-        if (!is_a($object, 'midgard_node_property')) {
-            return;
-        }
-
-        $this->savePropertyObject($object);
-        $this->setUnmodified();
+        $this->closeResources();
     }
 
     public function refresh($keepChanges)
