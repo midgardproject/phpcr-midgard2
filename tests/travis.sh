@@ -31,5 +31,5 @@ cp -r data/share/* /tmp/Midgard2CR/share
 cp data/midgard2.conf /tmp/Midgard2CR/midgard2.conf
 
 # Install dependencies with Composer
-wget http://getcomposer.org/composer.phar
+wget -q http://getcomposer.org/composer.phar
 php composer.phar install
