@@ -1,6 +1,7 @@
 <?php
-
 namespace Midgard\PHPCR\Query;
+
+use Midgard\PHPCR\Node;
 
 class Row implements \Iterator, \PHPCR\Query\RowInterface
 {
@@ -12,7 +13,7 @@ class Row implements \Iterator, \PHPCR\Query\RowInterface
     protected $values = null; 
     protected $indexes = null;
 
-    public function __construct(\Midgard\PHPCR\Query\QueryResult $qr, $path, $score, \Midgard\PHPCR\Node $node)
+    public function __construct(\Midgard\PHPCR\Query\QueryResult $qr, $path, $score, Node $node)
     {
         $this->queryResult = $qr;
         $this->path = $path;
@@ -37,28 +38,16 @@ class Row implements \Iterator, \PHPCR\Query\RowInterface
 
     public function getValue($columnName)
     {
-        if (strpos($columnName, '.'))
-        {
+        if (strpos($columnName, '.')) {
             $parts = explode('.', $columnName);
             $columnName = $parts[1];
-        }
-        else 
-        {
-            if (strpos($columnName, 'path'))
-            {
-                return $this->getPath();
-            }
-            else if (strpos($columnName, 'score'))
-            {
-                return $this->getScore();
-            }
         }
         
         $definedColumns = $this->queryResult->getQuery()->getColumns();
         foreach ($definedColumns as $column) {
-            $tmp = trim(trim($column->getPropertyName())); /* https://github.com/phpcr/phpcr-utils/issues/5 */
-            if (strpos($tmp, ']') !== false) {
-                $tmp = substr($tmp, 1, -1); /* Remove [] */
+            $tmp = $column->getPropertyName();
+            if (strpos($tmp, "[") !== false) {
+                $tmp = substr($tmp, 1, -1); /* Remove [] */ /* "Illegal offset type " */
             }
             if ($tmp == $columnName) {
                 if (!$this->node->hasProperty($columnName)) {
@@ -67,9 +56,12 @@ class Row implements \Iterator, \PHPCR\Query\RowInterface
             }
         }
 
-        try 
-        {
-            return $this->node->getPropertyValue($columnName);
+        try {
+            $ret = $this->node->getPropertyValue($columnName);
+            if ($ret instanceof Node) {
+                return $ret->getIdentifier();
+            }
+            return $ret;
         } 
         catch (\PHPCR\PathNotFoundException $e)
         {
