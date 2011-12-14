@@ -3,6 +3,7 @@ namespace Midgard\PHPCR\Query;
 
 use Midgard\PHPCR\Utils\NodeMapper;
 use PHPCR\NodeInterface;
+use PHPCR\Util\QOM\Sql2ToQomQueryConverter;
 
 class SQLQuery implements \PHPCR\Query\QueryInterface
 {
@@ -26,7 +27,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->session = $session;
         $this->statement = $statement;
         $QOMFactory = new QOM\QueryObjectModelFactory($session);
-        $this->converter = new \PHPCR\Util\QOM\Sql2ToQomQueryConverter($QOMFactory);
+        $this->converter = new Sql2ToQomQueryConverter($QOMFactory);
         $this->source = $source;
         $this->constraint = $constraint;
         $this->orderings = $orderings;
@@ -36,14 +37,16 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
             $this->validateStatement();
             $query = $this->converter->parse(trim($statement));
             $this->source = $query->getSource();
+            $this->source->computeQuerySelectConstraints($this->getQuerySelectholder());
+            $this->nodeTypeName = $this->source->getNodeTypeName();
             $this->constraint = $query->getConstraint(); 
             $this->orderings = $query->getOrderings();
             $this->columns = $query->getColumns();
         }
 
         if (is_object($this->getSource())) { /* https://github.com/phpcr/phpcr-api-tests/issues/50 */
-            $source = new Utils\Source($this->getQuerySelectHolder(), $this->getSource());
-            $nodeTypeName = $source->getNodeTypeName();
+            $this->source->computeQuerySelectConstraints($this->getQuerySelectholder());
+            $nodeTypeName = $this->source->getNodeTypeName();
             $this->storageType = NodeMapper::getMidgardName($nodeTypeName);
             $this->selectors[] = $nodeTypeName;
             $this->nodeTypeName = $nodeTypeName;
@@ -132,7 +135,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
                 new \midgard_query_property('id'),
                 new \midgard_query_property('parent', $propertyStorage)
             );
-            $this->getQuerySelectHolder()->getQuerySelect()->add_order (new \midgard_query_property('value', $propertyStorage));
+            $this->getQuerySelectHolder()->getQuerySelect()->add_order (new \midgard_query_property('value', $propertyStorage), \SORT_DESC);
         }
     }
 
@@ -162,8 +165,8 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->addOrders();
         $qs->set_constraint($holder->getDefaultConstraintGroup());
 
-        //echo "EXECUTE QUERY : " . $this->statement . "\n";
         //\midgard_connection::get_instance()->set_loglevel("debug");
+        //\midgard_error::debug("EXECUTE QUERY : " . $this->statement . "");
         $qs->execute();
         //\midgard_connection::get_instance()->set_loglevel("warn");
         return new QueryResult($this, $qs, $this->session);
