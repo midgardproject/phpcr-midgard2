@@ -366,7 +366,10 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
                     $ret = array();
                     foreach ($v as $id) {
                         $ret[] = $this->parent->getSession()->getNodeByIdentifier($id);
-                    } 
+                    }
+                    foreach ($ret as $index => $node) {
+                        $ret[$index] = $this->parent->getSession()->getNode($node->getPath()); 
+                    }
                     return $ret;
                 } 
                 $node = $this->parent->getSession()->getNodeByIdentifier($v);
@@ -524,30 +527,36 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         } else {
             $propertyObject->create();
         }
+        $this->saveBinaryObject($propertyObject);
+    }
 
-        if ($this->getType() == PropertyType::BINARY) {
-            if (!isset($propertyObject->stream)) {
-                return;
-            }
-            $attachments = $propertyObject->find_attachments(array('name' => $this->getName()));
-            if (!$attachments) {
-                $att = new midgard_attachment();
-                $att->name = $this->getName();
-                $att->parentguid = $propertyObject->guid;
-                $attachments = array($att);
-            }
-
-            $blob = new midgard_blob($attachments[0]);
-            rewind($propertyObject->stream);
-            $blob->write_content(stream_get_contents($propertyObject->stream));
-            rewind($propertyObject->stream);
-
-            if ($attachments[0]->guid) {
-                $attachments[0]->update();
-                return;
-            }
-            $attachments[0]->create();
+    private function saveBinaryObject($propertyObject)
+    {
+        if ($this->getType() != PropertyType::BINARY) {
+            return;
         }
+
+        if (!isset($propertyObject->stream)) {
+            return;
+        }
+        $attachments = $propertyObject->find_attachments(array('name' => $this->getName()));
+        if (!$attachments) {
+            $att = new midgard_attachment();
+            $att->name = $this->getName();
+            $att->parentguid = $propertyObject->guid;
+            $attachments = array($att);
+        }
+
+        $blob = new midgard_blob($attachments[0]);
+        rewind($propertyObject->stream);
+        $blob->write_content(stream_get_contents($propertyObject->stream));
+        rewind($propertyObject->stream);
+
+        if ($attachments[0]->guid) {
+            $attachments[0]->update();
+            return;
+        }
+        $attachments[0]->create();
     }
 
     private function closeResources()
@@ -576,6 +585,8 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         } elseif (is_a($object, 'midgard_node_property')) {
             $this->savePropertyObject($object);
             $this->setUnmodified();
+        } else {
+            $this->saveBinaryObject($object);
         }
 
         $this->closeResources();
