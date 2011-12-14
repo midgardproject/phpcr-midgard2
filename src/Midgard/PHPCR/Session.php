@@ -175,11 +175,12 @@ class Session implements SessionInterface
     
     public function nodeExists($absPath)
     {
-        if ($absPath == '/') {
+        try {
+            $this->getNode($absPath);
             return true;
+        } catch (PathNotFoundException $e) {
+            return false;
         }
-
-        return $this->getRootNode()->hasNode(substr($absPath, 1));
     }
     
     public function propertyExists($absPath)
@@ -187,8 +188,7 @@ class Session implements SessionInterface
         try {
             $this->getProperty($absPath);
             return true;
-        }
-        catch (PathNotFoundException $e) {
+        } catch (PathNotFoundException $e) {
             return false;
         }
     }
