@@ -133,15 +133,6 @@
         <property name="id" type="unsigned integer" primaryfield="id">
             <description>Local non-replication-safe database identifier</description>
         </property>
-        <property name="name" type="string">
-            <description>The name of a node</description>
-        </property>
-        <property name="parent" type="unsigned integer">
-            <description>ID of a parent (unspecified type) node</description>
-        </property>
-        <property name="parentname" type="string">
-            <description>Type name of parent node</description>
-        </property>
 
         <!-- JCR properties of nt:unstructured Node - derived from abstract nt_base -->
 
@@ -166,12 +157,6 @@
     <type name="nt_resource" table="phpcr_nt_resource" metadata="false" extends="nt_base, mix_referenceable, mix_mimeType, mix_lastModified">
         <property name="id" type="unsigned integer" primaryfield="id">
             <description>Local non-replication-safe database identifier</description>
-        </property>
-        <property name="name" type="string" unique="yes">
-            <description>The name of a node</description>
-        </property>
-        <property name="parent" type="unsigned integer">
-            <description>ID of a parent node</description>
         </property>
 
         <property name="jcr-data" type="string" field="jcr_data">

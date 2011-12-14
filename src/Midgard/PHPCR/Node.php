@@ -33,6 +33,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     protected $removeProperties = array();
     protected $oldParent = null;
     protected $oldName = null;
+    private $is_purged = false;
 
     public function __construct(midgard_node $midgardNode = null, Node $parent = null, Session $session)
     {
@@ -446,6 +447,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     protected function populateParent()
     {
+        if (!is_null($this->parent)) {
+            return;
+        }
+
         if ($this->isRoot) {
             return;
         }
@@ -1140,6 +1145,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function refresh($keepChanges)
     {
+        if ($this->is_purged) {
+            return;
+        }
+
         if ($keepChanges) {
             $changedProps = array();
             if ($this->properties) {
@@ -1190,7 +1199,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $select->execute();
             $nodes = $select->list_objects();
             if (!$nodes) {
-                throw new ItemNotFoundException("Node {$this->midgardNode->guid} not found: " . \midgard_connection::get_instance()->get_error_string());
+                $this->is_removed = true;
+                $this->is_purged = true;
+                return;
             }
             $this->midgardNode = $nodes[0];
         }
@@ -1246,6 +1257,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             throw new \PHPCR\ReferentialIntegrityException("Node " . $this->getPath() . " is referenced by other nodes");
         }
 
+        $this->getSession()->getNodeRegistry()->unregisterPath($this);
+
         /* Remove properties first */
         $this->populateProperties();
         foreach ($this->getProperties() as $property) {
@@ -1265,19 +1278,19 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         if ($midgardNode->guid) {
             $midgardNode->purge();
         }
+
+        $this->is_purged = true;
     }
     
     private function isReferenced()
     {
         $this->populateProperties();
-        if (!$this->hasProperty('jcr:uuid'))
-        {
+        if (!$this->hasProperty('jcr:uuid')) {
             return false;
         }
         
         $uuid = $this->getPropertyValue('jcr:uuid');
-        if ($uuid === null || $uuid === "") 
-        {
+        if ($uuid === null || $uuid === "") {
             return false;
         }
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node_property'));
@@ -1299,8 +1312,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         );
         $q->set_constraint($group);
         $q->execute();
-        if ($q->get_results_count() > 0)
-        {
+        if ($q->get_results_count() > 0) {
             return true;
         }
 

@@ -218,13 +218,22 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     private function getDefaultValue($value)
     {
-        if ($this->getName() == 'jcr:uuid') {
-            $this->setValue(UUIDHelper::generateUUID());
+        if ($this->getType() == PropertyType::DATE) {
+            $this->setValue(new \DateTime());
             return $this->getNativeValue();
         }
 
-        if ($this->getType() == PropertyType::DATE) {
-            $this->setValue(new \DateTime());
+        switch ($this->getName()) {
+        case 'jcr:uuid':
+            $this->setValue(UUIDHelper::generateUUID());
+            return $this->getNativeValue();
+
+        case 'jcr:createdBy':
+        case 'jcr:lastModifiedBy':
+            $this->setValue($this->parent->getSession()->getUserID());
+            return $this->getNativeValue();
+        case 'jcr:primaryType':
+            $this->setValue($this->parent->getPrimaryNodeType()->getName());
             return $this->getNativeValue();
         }
 
@@ -266,6 +275,10 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
                         $val->setTimeStamp($timestamp);
                     } else {
                         $val = new \DateTime($val);
+                    }
+                } else {
+                    if ($val->getTimeStamp() < 0) {
+                        $val = new \DateTime();
                     }
                 }
                 $ret[] = $val;
@@ -346,28 +359,28 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getSession()->getNode($path);
         }
 
-        if ($type == PropertyType::REFERENCE || $type == PropertyType::WEAKREFERENCE)
-        {
+        if ($type == PropertyType::REFERENCE || $type == PropertyType::WEAKREFERENCE) {
             try {
                 $v = $this->getNativeValue();
                 if (is_array($v)) {
                     $ret = array();
                     foreach ($v as $id) {
                         $ret[] = $this->parent->getSession()->getNodeByIdentifier($id);
-                    } 
+                    }
+                    foreach ($ret as $index => $node) {
+                        $ret[$index] = $this->parent->getSession()->getNode($node->getPath()); 
+                    }
                     return $ret;
                 } 
-                return $this->parent->getSession()->getNodeByIdentifier($v);
+                $node = $this->parent->getSession()->getNodeByIdentifier($v);
+                return $this->parent->getSession()->getNode($node->getPath());
             }
-            catch (\PHPCR\PathNotFoundException $e)
-            {
+            catch (\PHPCR\PathNotFoundException $e) {
                 throw new \PHPCR\ItemNotFoundException($e->getMessage());
             }
         }
    
         throw new ValueFormatException("Can not convert {$this->propertyName} (of type " . PropertyType::nameFromValue($type) . ") to Node type."); 
-
-        return $this->parent;
     }
     
     public function getProperty()
@@ -514,30 +527,36 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         } else {
             $propertyObject->create();
         }
+        $this->saveBinaryObject($propertyObject);
+    }
 
-        if ($this->getType() == PropertyType::BINARY) {
-            if (!isset($propertyObject->stream)) {
-                return;
-            }
-            $attachments = $propertyObject->find_attachments(array('name' => $this->getName()));
-            if (!$attachments) {
-                $att = new midgard_attachment();
-                $att->name = $this->getName();
-                $att->parentguid = $propertyObject->guid;
-                $attachments = array($att);
-            }
-
-            $blob = new midgard_blob($attachments[0]);
-            rewind($propertyObject->stream);
-            $blob->write_content(stream_get_contents($propertyObject->stream));
-            rewind($propertyObject->stream);
-
-            if ($attachments[0]->guid) {
-                $attachments[0]->update();
-                return;
-            }
-            $attachments[0]->create();
+    private function saveBinaryObject($propertyObject)
+    {
+        if ($this->getType() != PropertyType::BINARY) {
+            return;
         }
+
+        if (!isset($propertyObject->stream)) {
+            return;
+        }
+        $attachments = $propertyObject->find_attachments(array('name' => $this->getName()));
+        if (!$attachments) {
+            $att = new midgard_attachment();
+            $att->name = $this->getName();
+            $att->parentguid = $propertyObject->guid;
+            $attachments = array($att);
+        }
+
+        $blob = new midgard_blob($attachments[0]);
+        rewind($propertyObject->stream);
+        $blob->write_content(stream_get_contents($propertyObject->stream));
+        rewind($propertyObject->stream);
+
+        if ($attachments[0]->guid) {
+            $attachments[0]->update();
+            return;
+        }
+        $attachments[0]->create();
     }
 
     private function closeResources()
@@ -566,6 +585,8 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         } elseif (is_a($object, 'midgard_node_property')) {
             $this->savePropertyObject($object);
             $this->setUnmodified();
+        } else {
+            $this->saveBinaryObject($object);
         }
 
         $this->closeResources();
