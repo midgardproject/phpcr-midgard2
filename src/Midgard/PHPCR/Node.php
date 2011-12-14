@@ -1138,6 +1138,27 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     public function refresh($keepChanges)
     {
         if ($keepChanges) {
+            $changedProps = array();
+            if ($this->properties) {
+                foreach ($this->properties as $name => $property) {
+                    if ($property->isNew() || $property->isModified()) {
+                        $changedProps[$name] = $property;
+                    }
+                }
+            }
+            $this->properties = $changedProps;
+
+            $changedChildren = array();
+            if ($this->children) {
+                foreach ($this->children as $name => $node) {
+                    if ($node->isNew() || $node->isModified()) {
+                        $changedChildren[$name] = $node;
+                    }
+                    $node->refresh($keepChanges);
+                }
+            }
+            $this->children = $changedChildren;
+            $this->populateChildren(true);
             return;
         }
 
