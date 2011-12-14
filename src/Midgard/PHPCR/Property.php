@@ -359,8 +359,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getSession()->getNode($path);
         }
 
-        if ($type == PropertyType::REFERENCE || $type == PropertyType::WEAKREFERENCE)
-        {
+        if ($type == PropertyType::REFERENCE || $type == PropertyType::WEAKREFERENCE) {
             try {
                 $v = $this->getNativeValue();
                 if (is_array($v)) {
@@ -370,17 +369,15 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
                     } 
                     return $ret;
                 } 
-                return $this->parent->getSession()->getNodeByIdentifier($v);
+                $node = $this->parent->getSession()->getNodeByIdentifier($v);
+                return $this->parent->getSession()->getNode($node->getPath());
             }
-            catch (\PHPCR\PathNotFoundException $e)
-            {
+            catch (\PHPCR\PathNotFoundException $e) {
                 throw new \PHPCR\ItemNotFoundException($e->getMessage());
             }
         }
    
         throw new ValueFormatException("Can not convert {$this->propertyName} (of type " . PropertyType::nameFromValue($type) . ") to Node type."); 
-
-        return $this->parent;
     }
     
     public function getProperty()
