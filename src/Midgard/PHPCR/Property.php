@@ -218,13 +218,22 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     private function getDefaultValue($value)
     {
-        if ($this->getName() == 'jcr:uuid') {
-            $this->setValue(UUIDHelper::generateUUID());
+        if ($this->getType() == PropertyType::DATE) {
+            $this->setValue(new \DateTime());
             return $this->getNativeValue();
         }
 
-        if ($this->getType() == PropertyType::DATE) {
-            $this->setValue(new \DateTime());
+        switch ($this->getName()) {
+        case 'jcr:uuid':
+            $this->setValue(UUIDHelper::generateUUID());
+            return $this->getNativeValue();
+
+        case 'jcr:createdBy':
+        case 'jcr:lastModifiedBy':
+            $this->setValue($this->parent->getSession()->getUserID());
+            return $this->getNativeValue();
+        case 'jcr:primaryType':
+            $this->setValue($this->parent->getPrimaryNodeType()->getName());
             return $this->getNativeValue();
         }
 
@@ -266,6 +275,10 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
                         $val->setTimeStamp($timestamp);
                     } else {
                         $val = new \DateTime($val);
+                    }
+                } else {
+                    if ($val->getTimeStamp() < 0) {
+                        $val = new \DateTime();
                     }
                 }
                 $ret[] = $val;
