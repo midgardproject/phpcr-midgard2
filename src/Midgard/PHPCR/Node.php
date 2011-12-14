@@ -494,7 +494,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $children = $select->list_objects();
-        $this->children = array();
         foreach ($children as $child) {
             if ($appendOnly && isset($this->children[$child->name])) {
                 continue;
