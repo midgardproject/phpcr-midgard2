@@ -18,7 +18,7 @@ use midgard_node_property;
 class Property extends Item implements IteratorAggregate, PropertyInterface
 {
     protected $propertyName = null;
-    protected $type = PropertyType::UNDEFINED;
+    protected $type = null;
     protected $definition = null;
     protected $multiple = null;
     private $resources = array();
@@ -49,11 +49,6 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     private function validateValue($value, $type)
     {
-        /*
-        if (is_array($value) && !$this->isNew() && !$this->isMultiple()) {
-            throw new ValueFormatException("Attempted to set array as value to a non-multivalued property");
-        }*/
-
         if ($this->isMultiple() && is_array($value)) {
             foreach ($value as $val) {
                 $this->validateValue($val, $type);
@@ -115,7 +110,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         elseif (is_a($value, '\Midgard\PHPCR\Property')) {
             return $value->getString(); 
         }
-        return $value;
+        return PropertyType::convertType($value, PropertyType::STRING, $this->getType());
     }
 
     public function setValue($value, $type = null, $weak = FALSE)
@@ -126,7 +121,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
         if ($type) {
             $this->type = $type;
-        } elseif (!$this->type) {
+        } elseif (is_null($this->type)) {
             $this->type = PropertyType::determineType(is_array($value) ? reset($value) : $value);
         }
 
@@ -145,8 +140,12 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
          * \InvalidArgumentException
          */ 
 
-        if (is_null($this->multiple) && is_array($value)) {
-            $this->multiple = true;
+        if (is_array($value)) {
+            if (is_null($this->multiple) && $this->isNew()) {
+                $this->multiple = true;
+            } elseif (!$this->isMultiple()) {
+                throw new ValueFormatException("Cannot set multiple values to a non-multivalued property " . $this->getPath());
+            }
         }
 
         $normalizedValue = $this->normalizePropertyValue($value, $type);
@@ -189,9 +188,9 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     public function addValue($value)
     {
         if (!$this->isMultiple()) {
-            throw new ValueFormatException("Can't add values to a non-multiple property");
+            throw new ValueFormatException("Can't add values to a non-multiple property " . $this->getPath());
         }
-        $values = $this->getNativeValue();
+        $values = $this->getValue();
         $values[] = $value;
         $this->setValue($values);
     }
@@ -305,15 +304,12 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
                 return $this->getSession()->getNodes($path);
             }
             /* TODO, handle /./ path */
-            if (strpos($path, ".") == false)
-            {
-                try 
-                {
+            if (strpos($path, ".") == false) {
+                try {
                     $node = $this->parent->getNode($path);
                     return $node;
                 }
-                catch (\PHPCR\PathNotFoundException $e)
-                {
+                catch (\PHPCR\PathNotFoundException $e) {
                     throw new \PHPCR\ItemNotFoundException($e->getMessage());
                 }
             }
@@ -370,7 +366,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getLengths();
         }
 
-        if ($this->type === PropertyType::BINARY)
+        if ($this->getType() === PropertyType::BINARY)
         {
             $stat = fstat($v);
             return $stat['size'];
@@ -403,7 +399,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     public function getType()
     {
-        if ($this->type) {
+        if (!is_null($this->type)) {
             // Type either given at instantiation or from definition
             return $this->type;
         }
@@ -432,7 +428,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         if ($this->definition) {
             return $this->definition->isMultiple();
         }
-        $object = $this->getMidgard2PropertyStorage($this->getName(), false);
+        $object = $this->getMidgard2PropertyStorage($this->getName(), false, false, false);
         if ($object && $object instanceof midgard_node_property && $object->multiple) {
             return true;
         }
@@ -477,6 +473,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             $type = PropertyType::determineType($propertyObject->value);
         }
         $propertyObject->type = $type;
+        $propertyObject->multiple = $this->isMultiple();
 
         if (!$propertyObject->parent) {
             $propertyObject->parent = $this->getMidgard2Node()->id;
@@ -525,7 +522,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     public function save()
     {
-        if (!$this->is_modified && !$this->is_new) {
+        if (!$this->is_modified && !$this->isNew()) {
             $this->closeResources();
             return;
         }
