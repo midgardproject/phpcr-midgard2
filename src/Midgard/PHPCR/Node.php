@@ -33,6 +33,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     protected $removeProperties = array();
     protected $oldParent = null;
     protected $oldName = null;
+    private $is_purged = false;
 
     public function __construct(midgard_node $midgardNode = null, Node $parent = null, Session $session)
     {
@@ -446,6 +447,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     protected function populateParent()
     {
+        if (!is_null($this->parent)) {
+            return;
+        }
+
         if ($this->isRoot) {
             return;
         }
@@ -1140,6 +1145,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function refresh($keepChanges)
     {
+        if ($this->is_purged) {
+            return;
+        }
+
         if ($keepChanges) {
             $changedProps = array();
             if ($this->properties) {
@@ -1190,7 +1199,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $select->execute();
             $nodes = $select->list_objects();
             if (!$nodes) {
-                throw new ItemNotFoundException("Node {$this->midgardNode->guid} not found: " . \midgard_connection::get_instance()->get_error_string());
+                $this->is_removed = true;
+                $this->is_purged = true;
+                return;
             }
             $this->midgardNode = $nodes[0];
         }
@@ -1240,6 +1251,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     {
         $mobject = $this->getMidgard2ContentObject();
         $midgardNode = $this->getMidgard2Node();
+
+        $this->getSession()->getNodeRegistry()->unregisterPath($this);
         
         /* \PHPCR\ReferentialIntegrityException */
         if ($this->isReferenced()) {
@@ -1265,6 +1278,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         if ($midgardNode->guid) {
             $midgardNode->purge();
         }
+
+        $this->is_purged = true;
     }
     
     private function isReferenced()

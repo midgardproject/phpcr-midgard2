@@ -228,7 +228,6 @@ class Session implements SessionInterface
         catch (\PHPCR\PathNotFoundException $e)  {
             $node = $this->getNode($absPath);
             $node->remove();
-            $this->removeNode($node);
         }
     }
 
