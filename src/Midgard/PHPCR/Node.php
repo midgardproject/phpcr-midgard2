@@ -551,9 +551,11 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             }
             $crName = NodeMapper::getPHPCRProperty($property->name);
             if (isset($this->properties[$crName])) {
+                $this->properties[$crName]->is_new = false;
                 continue;
             }
             $this->properties[$crName] = new Property($this, $crName);
+            $this->properties[$crName]->is_new = false;
         }
     }
 

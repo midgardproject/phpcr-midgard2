@@ -141,7 +141,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
          */ 
 
         if (is_array($value)) {
-            if (is_null($this->multiple)) {
+            if (is_null($this->multiple) && $this->isNew()) {
                 $this->multiple = true;
             } elseif (!$this->isMultiple()) {
                 throw new ValueFormatException("Cannot set multiple values to a non-multivalued property " . $this->getPath());
@@ -522,7 +522,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     public function save()
     {
-        if (!$this->is_modified && !$this->is_new) {
+        if (!$this->is_modified && !$this->isNew()) {
             $this->closeResources();
             return;
         }
