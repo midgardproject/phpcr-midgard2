@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class Selector implements \PHPCR\Query\QOM\SelectorInterface 
+class Selector extends QuerySelectHelper implements \PHPCR\Query\QOM\SelectorInterface 
 {
     protected $nodeTypeName = null;
     protected $name = null;
