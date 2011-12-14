@@ -8,6 +8,7 @@ use PHPCR\NodeType\PropertyDefinitionInterface;
 use PHPCR\ValueFormatException;
 use PHPCR\RepositoryException;
 use PHPCR\InvalidItemStateException;
+use PHPCR\Util\UUIDHelper;
 use IteratorAggregate;
 use DateTime;
 use Midgard\PHPCR\Utils\NodeMapper;
@@ -215,13 +216,42 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         } 
     }
 
+    private function getDefaultValue($value)
+    {
+        if ($this->getName() == 'jcr:uuid') {
+            $this->setValue(UUIDHelper::generateUUID());
+            return $this->getNativeValue();
+        }
+
+        if ($this->getType() == PropertyType::DATE) {
+            $this->setValue(new \DateTime());
+            return $this->getNativeValue();
+        }
+
+        $defaults = $this->definition->getDefaultValues();
+        if (!$defaults) {
+            return $value;
+        }
+
+        if ($this->isMultiple()) {
+            $this->setValue($defaults);
+            return $this->getNativeValue();
+        }
+
+        $this->setValue($defaults[0]);
+        return $this->getNativeValue();
+    }
+
     public function getNativeValue()
     {
         if ($this->getType() == PropertyType::BINARY) {
             return $this->getBinary();
-        } 
+        }
 
         $value = $this->getMidgard2PropertyValue($this->getName(), $this->isMultiple(), true, false);
+        if (!$value && $this->definition && $this->definition->isAutoCreated()) {
+            $value = $this->getDefaultValue($value);
+        }
 
         if ($this->getType() == PropertyType::DATE) {
             if (!is_array($value)) {
