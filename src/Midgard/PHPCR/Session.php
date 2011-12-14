@@ -175,13 +175,11 @@ class Session implements SessionInterface
     
     public function nodeExists($absPath)
     {
-        try {
-            $this->getNode($absPath);
+        if ($absPath == '/') {
             return true;
         }
-        catch (PathNotFoundException $e) {
-            return false;
-        }
+
+        return $this->getRootNode()->hasNode(substr($absPath, 1));
     }
     
     public function propertyExists($absPath)
@@ -198,22 +196,19 @@ class Session implements SessionInterface
     public function move($srcAbsPath, $destAbsPath)
     {
         /* RepositoryException - If the last element of destAbsPath has an index or if another error occurs. */
-        if (strpos($destAbsPath, '[') !== false)
-        {
+        if (strpos($destAbsPath, '[') !== false) {
             throw new \PHPCR\RepositoryException("Index not allowed in destination path");
         }
 
         $node = $this->getNode($srcAbsPath);
 
         /* No need to check destination node, source one exists and path is invalid */
-        if ($srcAbsPath == $destAbsPath)
-        {
+        if ($srcAbsPath == $destAbsPath) {
             throw new \PHPCR\ItemExistsException("Source and destination paths are equal");
         }
 
         /* If paths are different, check if destination exists */
-        if ($this->nodeExists($destAbsPath))
-        {
+        if ($this->nodeExists($destAbsPath)) {
             throw new \PHPCR\ItemExistsException("Node at destination path {$destAbsPath} exists");
         }
 
