@@ -1251,13 +1251,13 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     {
         $mobject = $this->getMidgard2ContentObject();
         $midgardNode = $this->getMidgard2Node();
-
-        $this->getSession()->getNodeRegistry()->unregisterPath($this);
         
         /* \PHPCR\ReferentialIntegrityException */
         if ($this->isReferenced()) {
             throw new \PHPCR\ReferentialIntegrityException("Node " . $this->getPath() . " is referenced by other nodes");
         }
+
+        $this->getSession()->getNodeRegistry()->unregisterPath($this);
 
         /* Remove properties first */
         $this->populateProperties();
@@ -1285,14 +1285,12 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     private function isReferenced()
     {
         $this->populateProperties();
-        if (!$this->hasProperty('jcr:uuid'))
-        {
+        if (!$this->hasProperty('jcr:uuid')) {
             return false;
         }
         
         $uuid = $this->getPropertyValue('jcr:uuid');
-        if ($uuid === null || $uuid === "") 
-        {
+        if ($uuid === null || $uuid === "") {
             return false;
         }
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node_property'));
@@ -1314,8 +1312,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         );
         $q->set_constraint($group);
         $q->execute();
-        if ($q->get_results_count() > 0)
-        {
+        if ($q->get_results_count() > 0) {
             return true;
         }
 
