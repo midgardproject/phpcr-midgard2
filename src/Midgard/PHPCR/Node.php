@@ -580,7 +580,11 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $this->populatePropertiesForNodeType($mixin);
         }
 
-        $this->populatePropertiesUndefined();
+        // FIXME: Now MgdSchemas can't define * properties
+        // so we special-case nt:unstructured
+        if ($this->getPrimaryNodeType()->isNodeType('nt:unstructured')) {
+            $this->populatePropertiesUndefined();
+        }
     }
 
     public function getProperty($relPath)
