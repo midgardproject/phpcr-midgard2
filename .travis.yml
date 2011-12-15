@@ -6,6 +6,7 @@ php:
 env:
   - DATABASE=sqlite
   - DATABASE=mysql
+  - DATABASE=postgresql
 
 before_script:
   - ./tests/travis_${DATABASE}.sh
