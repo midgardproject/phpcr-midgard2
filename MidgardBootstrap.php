@@ -40,7 +40,9 @@ class MidgardBootstrap
         }
 
         exec("cp -r " . $this->sourceDir . "/share/* " . $this->sharedir);
-        exec("cp " . $this->sourceDir . "/midgard2.conf " . $this->sharedir);
+        if (!file_exists("{$this->sharedir}/midgard2.conf")) {
+            exec("cp " . $this->sourceDir . "/midgard2_sqlite.conf " . $this->sharedir);
+        }
    
         $config = new \midgard_config();
         $config->sharedir = $this->sharedir;
