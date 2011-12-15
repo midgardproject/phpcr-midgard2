@@ -10,7 +10,7 @@
          bootstrap="bootstrap.php">
     <php>
         <var name="midgard2.configuration.db.type" value="MySQL" />
-        <var name="midgard2.configuration.db.name" value="myapp_test" />
+        <var name="midgard2.configuration.db.name" value="midgard2_test" />
         <var name="midgard2.configuration.db.host" value="0.0.0.0" />
         <var name="midgard2.configuration.db.port" value="3306" />
         <var name="midgard2.configuration.db.username" value="" />
