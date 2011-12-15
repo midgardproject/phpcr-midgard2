@@ -6,7 +6,7 @@ git submodule update
 ./tests/travis_midgard.sh
 
 # Copy Midgard2 PHPCR schemas
-cp -r ./data/share/schema/* /usr/share/midgard2/schema/
+sudo cp -r ./data/share/schema/* /usr/share/midgard2/schema/
 
 # Install dependencies with Composer
 wget -q http://getcomposer.org/composer.phar
