@@ -97,27 +97,52 @@ class Repository implements RepositoryInterface
 
         return new Session($this->connection, $this, $user, $rootObject, $credentials);
     }
+
+    private function prepareConfigSQLite(midgard_config $config, array $parameters)
+    {
+        if (!isset($parameters['midgard2.configuration.db.dir'])) {
+            throw new RepositoryException('Database directory must be set for SQLite repositories');
+        }
+        $config->dbdir = $parameters['midgard2.configuration.db.dir'];
+        return $config;
+    }
+
+    private function prepareConfigMySQL(midgard_config $config, array $parameters)
+    {
+        if (isset($parameters['midgard2.configuration.db.host'])) {
+            $config->host = $parameters['midgard2.configuration.db.host'];
+        }
+        if (isset($parameters['midgard2.configuration.db.port'])) {
+            $config->port = $parameters['midgard2.configuration.db.port'];
+        }
+        if (isset($parameters['midgard2.configuration.db.username'])) {
+            $config->dbuser = $parameters['midgard2.configuration.db.username'];
+        }
+        if (isset($parameters['midgard2.configuration.db.password'])) {
+            $config->dbpass = $parameters['midgard2.configuration.db.password'];
+        }
+        return $config;
+    }
     
     private function midgard2Connect(array $parameters = null)
     {
         $mgd = midgard_connection::get_instance();
-        if ($mgd->is_connected())
-        {
+        if ($mgd->is_connected()) {
             return $mgd;
         }
 
         $config = new midgard_config();
         if (isset($parameters['midgard2.configuration.file'])) {
             $config->read_file_at_path($parameters['midgard2.configuration.file']);
-        }
-        elseif (   isset($parameters['midgard2.configuration.db.type'])
-                && isset($parameters['midgard2.configuration.db.name'])
-                && isset($parameters['midgard2.configuration.db.dir'])) {
+        } elseif (isset($parameters['midgard2.configuration.db.type']) && isset($parameters['midgard2.configuration.db.name'])) {
             $config->dbtype = $parameters['midgard2.configuration.db.type'];
             $config->database = $parameters['midgard2.configuration.db.name'];
-            $config->dbdir = $parameters['midgard2.configuration.db.dir'];
-        }
-        else {
+            if ($config->dbtype == 'SQLite') {
+                $config = $this->prepareConfigSQLite($config, $parameters);
+            } else {
+                $config = $this->prepareConfigMySQL($config, $parameters);
+            }
+        } else {
             throw new RepositoryException('No initialized Midgard2 connection or configuration parameters available');
         }
 
@@ -131,7 +156,7 @@ class Repository implements RepositoryInterface
 
         $mgd = midgard_connection::get_instance();
         if (!$mgd->open_config($config)) {
-            throw new \PHPCR\RepositoryException($mgd->get_error_string());
+            throw new RepositoryException($mgd->get_error_string());
         }
 
         $mgd->enable_dbus(false);

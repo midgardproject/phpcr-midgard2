@@ -10,6 +10,10 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
         'midgard2.configuration.db.type' => 'string: database type (SQLite, MySQL, ...)',
         'midgard2.configuration.db.name' => 'string: database name',
         'midgard2.configuration.db.dir' => 'string: database directory path (when used with SQLite)',
+        'midgard2.configuration.db.host' => 'string: database hostname',
+        'midgard2.configuration.db.port' => 'integer: database port',
+        'midgard2.configuration.db.username' => 'string: database username',
+        'midgard2.configuration.db.password' => 'string: database password',
         'midgard2.configuration.loglevel' => 'string: Midgard2 log level',
         'midgard2.configuration.blobdir' => 'string: path of the attachment storage root directory',
         // Whether to enable automatic initialization of Midgard2 database
@@ -20,19 +24,17 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
     {
         static $repository = null;
 
-        if ($repository !== null)
+        if ($repository !== null) {
             return $repository;
+        }
 
-        if (!extension_loaded('midgard2'))
-        {
+        if (!extension_loaded('midgard2')) {
             throw new \PHPCR\RepositoryException("The Midgard2 PHPCR provider requires 'midgard2' extension to be loaded.");
         }
 
-        if (!class_exists('\\midgard_node'))
-        {
+        if (!class_exists('\\midgard_node')) {
             $shareDir = getenv('MIDGARD_ENV_GLOBAL_SHAREDIR');
-            if (!$shareDir)
-            {
+            if (!$shareDir) {
                 $config = new \midgard_config();
                 $shareDir = $config->sharedir;
             }
