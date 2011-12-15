@@ -1,9 +1,8 @@
 <?php
-
-require __DIR__ . '/../MidgardBootstrap.php';
-
 class ImplementationLoader extends \PHPCR\Test\AbstractLoader
 {
+    private static $instance = null;
+
     protected $unsupportedChapters = array(
         // Features we don't support in the Midgard provider
         'Versioning',
@@ -51,19 +50,16 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
 
     public static function getInstance()   
     {
-        static $instance;
-        if (!is_object($instance))
-        {
-            $instance = new ImplementationLoader('Midgard\PHPCR\RepositoryFactory', 'default');
+        if (null === self::$instance) {
+            self::$instance = new ImplementationLoader('\Midgard\PHPCR\RepositoryFactory', 'default');
         }
-        return $instance;
+        return self::$instance;
     }
 
     public function getRepositoryFactoryParameters()
     {
-        return array(
-            'mgd' => midgard_connection::get_instance()
-        );
+        $factoryclass = $this->factoryclass;
+        return array_intersect_key($GLOBALS, $factoryclass::getConfigurationKeys());
     }
 
     public function getCredentials()
@@ -90,17 +86,5 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     {
         require_once __DIR__ . "/Midgard2ImportExport.php";
         return new Midgard2ImportExport(__DIR__."/suite/fixtures/");
-    }
-
-    public function getRepository()
-    {   
-        static $initialized = false;
-
-        if ($initialized == false) {
-            $mb = new MidgardBootstrap (__DIR__  . "/../data");
-            $mb->execute ();
-            $initialized = true;
-        }
-        return Midgard\PHPCR\RepositoryFactory::getRepository();
     }
 }

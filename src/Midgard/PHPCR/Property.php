@@ -22,6 +22,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     protected $type = null;
     protected $definition = null;
     protected $multiple = null;
+    private $value = null;
     private $resources = array();
 
     public function __construct(Node $node, $propertyName, PropertyDefinitionInterface $definition = null, $type = null)
@@ -157,6 +158,9 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         if ($this->getType() == PropertyType::BINARY) {
             $this->setBinaryValue($value);
         } else {
+            if ($this->getType() != PropertyType::DATE) {
+                $this->value = $normalizedValue;
+            }
             $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
         }
         $this->is_modified = true;
@@ -257,6 +261,10 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getBinary();
         }
 
+        if (!is_null($this->value)) {
+            return $this->value;
+        }
+
         $value = $this->getMidgard2PropertyValue($this->getName(), $this->isMultiple(), true, false);
         if (!$value && $this->definition && $this->definition->isAutoCreated()) {
             $value = $this->getDefaultValue($value);
@@ -287,6 +295,10 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             if (!$this->isMultiple()) {
                 $value = $ret[0];
             }
+        }
+
+        if ($this->getType() != PropertyType::DATE) {
+            $this->value = $value;
         }
         return $value;
     }
@@ -603,6 +615,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         }
 
         $this->is_removed = false;
+        $this->value = null;
 
         parent::refresh($keepChanges);
     }

@@ -1,5 +1,4 @@
 <?php
-
 if (gc_enabled()) {
     echo "Disabling Zend Garbage Collection to prevent segfaults, see:\n";
     echo "  https://bugs.php.net/bug.php?id=51091\n";
@@ -9,13 +8,6 @@ if (gc_enabled()) {
 
 // Set up autoloader
 require __DIR__ . '/../vendor/.composer/autoload.php';
-
-// TODO: Remove once https://github.com/midgardproject/midgard-php5/issues/8 is fixed
-if (getenv('MIDGARD_ENV_GLOBAL_SHAREDIR') != '/tmp/Midgard2CR/share')
-{
-    echo "\nBefore running these tests you need to run 'export MIDGARD_ENV_GLOBAL_SHAREDIR=/tmp/Midgard2CR/share'\n";
-    exit(1);
-}
 
 define('SPEC_VERSION_DESC', 'jcr.specification.version');
 define('SPEC_NAME_DESC', 'jcr.specification.name');

@@ -1,9 +1,9 @@
 Midgard2 PHP Content Repository provider
 ========================================
 
-This project implements a [Midgard2](http://midgard2.org/) -backed provider of the [PHP Content Repository](http://phpcr.github.com/) (PHPCR) interfaces. The plan is to have a fully [Jackalope](http://jackalope.github.com/) compatible PHPCR provider that can be used in PHP Content Management Systems without requiring Java.
+This project implements a [Midgard2](http://midgard2.org/) -backed provider of the [PHP Content Repository](http://phpcr.github.com/) (PHPCR) interfaces. `phpcr-midgard2` is a fully [Jackalope](http://jackalope.github.com/) compatible PHPCR provider that can be used in PHP Content Management Systems without requiring Java.
 
-Using Midgard2 instead of [Apache Jackrabbit](http://jackrabbit.apache.org/) also has the benefit of making interoperability with regular relational databases used by many CMSs easy.
+Using Midgard2 instead of [Apache Jackrabbit](http://jackrabbit.apache.org/) also has the benefit of making interoperability with regular relational databases used by many CMSs easy. Midgard2 supports [multiple databases](http://www.gnome-db.org/Providers_status), including MySQL and SQLite.
 
 ## Installing
 
@@ -24,7 +24,7 @@ Then just install the provider via [Composer](http://packagist.org/):
     $ wget http://getcomposer.org/composer.phar
     $ php composer.phar install
 
-You also need to copy the Midgard2 PHPCR schemas from `vendor/midgard/phpcr/share/schema` to your schema directory (by default `/usr/share/midgard2/schema`).
+You also need to copy the Midgard2 PHPCR schemas from `vendor/midgard/phpcr/data/share/schema` to your schema directory (by default `/usr/share/midgard2/schema`).
 
 ## Getting started
 
@@ -40,6 +40,8 @@ After you've included the autoloader you should be able to open a Midgard2 repos
         'midgard2.configuration.db.type' => 'SQLite',
         'midgard2.configuration.db.name' => 'midgard2cr',
         'midgard2.configuration.db.dir' => __DIR__,
+        // Where you want to store file attachments
+        'midgard2.configuration.blobdir' => '/var/lib/midgard2/blobs',
         // Let Midgard2 initialize the DB as needed
         'midgard2.configuration.db.init' => true,
     );
@@ -52,6 +54,22 @@ After you've included the autoloader you should be able to open a Midgard2 repos
     $session = $repository->login($credentials, 'default');
 
 After this the whole [PHPCR API](http://phpcr.github.com/doc/html/index.html) will be available. See some example code in the [examples` directory](https://github.com/bergie/phpcr-midgard2/tree/master/examples).
+
+With MySQL, the connection parameters could for example be:
+
+    $parameters = array(
+        // MySQL connection settings. The database has to exist
+        'midgard2.connection.db.type' => 'MySQL',
+        'midgard2.connection.db.name' => 'midgard2',
+        'midgard2.connection.db.username' => 'midgard',
+        'midgard2.connection.db.password' => 'midgard',
+        'midgard2.connection.db.host' => '127.0.0.1',
+        'midgard2.connection.db.port' => '3306'
+        // Let Midgard2 initialize the DB as needed
+        'midgard2.configuration.db.init' => true,
+    );
+
+This is the only different part from the example using SQLite above.
 
 ## About PHPCR
 
@@ -105,6 +123,7 @@ The PHPCR API uses namespaces for node types and property names. The regular [Mi
 ## Projects using PHPCR
 
 * [Symfony CMF](http://pooteeweet.org/blog/0/1912#m1912)
+* [Doctrine ODM](https://github.com/doctrine/phpcr-odm)
 * Flow3/TYPO3
 
 ## Licensing
