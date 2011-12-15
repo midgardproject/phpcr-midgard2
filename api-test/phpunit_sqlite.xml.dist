@@ -1,0 +1,38 @@
+<phpunit backupGlobals="false"
+         backupStaticAttributes="false"
+         colors="false"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         syntaxCheck="false"
+         bootstrap="bootstrap.php">
+    <php>
+        <var name="midgard2.configuration.db.type" value="SQLite" />
+        <var name="midgard2.configuration.db.name" value="phpcr" />
+        <var name="midgard2.configuration.db.dir" value="/tmp" />
+        <var name="midgard2.configuration.db.init" value="true" />
+        <var name="midgard2.configuration.blobdir" value="/tmp/phpcr-blobs" />
+        <!--<var name="midgard2.configuration.loglevel" value="debug" />-->
+        <var name="phpcr.user" value="admin" />
+        <var name="phpcr.pass" value="password" />
+    </php>
+
+    <testsuites>
+        <testsuite name="phpCR">
+            <directory>suite/tests/</directory>
+        </testsuite>
+    </testsuites>
+
+    <filter>
+        <whitelist>
+            <directory>../</directory>
+            <exclude>
+                <directory>../tests</directory>
+                <directory>.</directory>
+                <file>../src/jackalope/transport/curl.php</file>
+            </exclude>
+        </whitelist>
+    </filter>
+</phpunit>
