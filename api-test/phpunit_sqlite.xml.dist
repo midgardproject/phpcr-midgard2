@@ -9,11 +9,14 @@
          syntaxCheck="false"
          bootstrap="bootstrap.php">
     <php>
-        <var name="phpcr.url" value="http://localhost:8080/server" />
+        <var name="midgard2.configuration.db.type" value="SQLite" />
+        <var name="midgard2.configuration.db.name" value="phpcr" />
+        <var name="midgard2.configuration.db.dir" value="/tmp" />
+        <var name="midgard2.configuration.db.init" value="true" />
+        <var name="midgard2.configuration.blobdir" value="/tmp/phpcr-blobs" />
+        <!--<var name="midgard2.configuration.loglevel" value="debug" />-->
         <var name="phpcr.user" value="admin" />
         <var name="phpcr.pass" value="password" />
-        <var name="phpcr.workspace" value="test" />
-        <var name="phpcr.transport" value="davex" />
     </php>
 
     <testsuites>
