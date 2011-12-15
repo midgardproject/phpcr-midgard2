@@ -51,7 +51,7 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     public static function getInstance()   
     {
         if (null === self::$instance) {
-            self::$instance = new ImplementationLoader('\Midgard\PHPCR\RepositoryFactory', '');
+            self::$instance = new ImplementationLoader('\Midgard\PHPCR\RepositoryFactory', 'default');
         }
         return self::$instance;
     }

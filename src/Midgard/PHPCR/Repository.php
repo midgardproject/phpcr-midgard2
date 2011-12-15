@@ -73,6 +73,7 @@ class Repository implements RepositoryInterface
     );
 
     protected $connection = null;
+    protected $autoinit = false;
 
     public function __construct(array $parameters = null)
     {
@@ -126,6 +127,10 @@ class Repository implements RepositoryInterface
     
     private function midgard2Connect(array $parameters = null)
     {
+        if (isset($parameters['midgard2.configuration.db.init']) && $parameters['midgard2.configuration.db.init']) {
+            $this->autoinit = true;
+        }
+
         $mgd = midgard_connection::get_instance();
         if ($mgd->is_connected()) {
             return $mgd;
@@ -162,8 +167,7 @@ class Repository implements RepositoryInterface
         $mgd->enable_dbus(false);
         $mgd->enable_quota(false);
 
-        if (   isset($parameters['midgard2.configuration.db.init'])
-            && $parameters['midgard2.configuration.db.init']) {
+        if ($this->autoinit) {
             $config->create_blobdir();
             $this->midgard2InitDb($mgd);
         }
@@ -213,9 +217,12 @@ class Repository implements RepositoryInterface
         $ws = new midgard_workspace();
         $wmanager = new midgard_workspace_manager($this->connection);
         if (!$wmanager->path_exists($workspaceName)) {
-            throw new NoSuchWorkspaceException("Workspace {$workspaceName} not defined");
-        }
-        else {
+            if ($workspaceName != 'default' || !$this->autoinit) {
+                throw new NoSuchWorkspaceException("Workspace {$workspaceName} not defined");
+            }
+            $ws->name = $workspaceName;
+            $wmanager->create_workspace($ws, '');
+        } else {
             $wmanager->get_workspace_by_path($ws, $workspaceName);   
         }
 
