@@ -6,7 +6,7 @@ php:
 before_script:
   - ./tests/travis.sh
 
-script: ./tests/travis-test.sh
+script: ./tests/travis_test.sh
 
 notifications:
     irc: "irc.freenode.org#midgard"
