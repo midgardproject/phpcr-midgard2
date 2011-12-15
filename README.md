@@ -24,7 +24,10 @@ Then just install the provider via [Composer](http://packagist.org/):
     $ wget http://getcomposer.org/composer.phar
     $ php composer.phar install
 
-You also need to copy the Midgard2 PHPCR schemas from `vendor/midgard/phpcr/data/share/schema` to your schema directory (by default `/usr/share/midgard2/schema`).
+You also need to copy the Midgard2 PHPCR schemas from `vendor/midgard/phpcr/data/share` to your schema directory (by default `/usr/share/midgard2`):
+
+    $ sudo cp vendor/midgard/phpcr/data/share/schema/* /usr/share/midgard2/schema/
+    $ sudo cp vendor/midgard/phpcr/data/share/views/* /usr/share/midgard2/views/
 
 ## Getting started
 
