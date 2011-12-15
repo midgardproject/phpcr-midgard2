@@ -261,15 +261,21 @@ class Session implements SessionInterface
         // TODO
         
         $t = $this->getTransactionManager();
-        if ($t->inTransaction() == false) 
+        if ($t->inTransaction() == false) {
             $t->begin();
+        }
+
+        // Delete all removed nodes that don't have hard refs
+        $removeAfter = array();
+        foreach ($this->removeNodes as $node) {
+            try {
+                $node->removeMidgard2Node();
+            } catch (\Exception $e) {
+                $removeAfter[] = $node;
+            }
+        }
 
         try {
-            /* Remove nodes marked as removed */
-            foreach ($this->removeNodes as $node) {
-                $node->removeMidgard2Node();
-            }
-
             $root_node = $this->getRootNode();
             $root_node->save();
         
@@ -304,6 +310,16 @@ class Session implements SessionInterface
                     throw new \PHPCR\RepositoryException($midgard_errstr);
                 }
             }
+        }
+
+        try {
+            /* Remove nodes marked as removed */
+            foreach ($removeAfter as $node) {
+                $node->removeMidgard2Node();
+            }
+        } catch (\Exception $e) {
+            $t->rollback();
+            throw $e;
         }
 
         $t->commit();
