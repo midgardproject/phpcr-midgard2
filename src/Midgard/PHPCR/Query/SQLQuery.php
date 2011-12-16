@@ -60,6 +60,11 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         }
     }
 
+    public function getSession()
+    {
+        return $this->session;
+    }
+
     public function getSource()
     {
         return $this->source;
