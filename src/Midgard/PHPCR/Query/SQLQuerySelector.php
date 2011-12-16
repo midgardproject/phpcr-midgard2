@@ -76,6 +76,14 @@ class SQLQuerySelector
                 }
             }
 
+            $constraints = $this->SQLQuery->getConstraint()->getMidgardConstraints($selectorName, $qs, $nodeStorage);
+            if (!empty($constraints)) {
+                foreach ($constraints as $c) 
+                {
+                    $defaultCG->add_constraint($c);
+                }
+            }
+
             $qs->set_constraint($defaultCG);
             $selects[$selectorName] = $qs;
         }
