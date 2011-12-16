@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class SameNodeJoinCondition implements \PHPCR\Query\QOM\SameNodeJoinConditionInterface
+class SameNodeJoinCondition extends ConditionHelper implements \PHPCR\Query\QOM\SameNodeJoinConditionInterface
 {
     protected $selectorFirst = null;
     protected $selectorSecond = null;
