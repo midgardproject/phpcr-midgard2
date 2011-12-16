@@ -5,7 +5,7 @@ class ConstraintHelper
 {
     public function getMidgardConstraints($selectorName, \midgard_query_select $qs, \midgard_query_storage $nodeStorage)
     {
-        return;
+        return array();
     }
 
     public function removeQuotes($value)
