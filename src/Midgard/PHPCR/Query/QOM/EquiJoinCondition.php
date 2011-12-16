@@ -71,8 +71,6 @@ class EquiJoinCondition extends ConditionHelper implements \PHPCR\Query\QOM\Equi
         $rows[0] = $selects[$selector1Name]['QuerySelect'];
         $rows[1] = $selects[$selector2Name]['QuerySelect'];
 
-        print_r($selects[$selector2Name]);
-
         $retTwo = $rows[1]->list_objects();
         $i = 0;
         $j = 0;
