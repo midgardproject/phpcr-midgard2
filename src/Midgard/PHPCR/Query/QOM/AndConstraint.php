@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class AndConstraint implements \PHPCR\Query\QOM\AndInterface
+class AndConstraint extends ConstraintHelper implements \PHPCR\Query\QOM\AndInterface
 {
     protected $constraintFirst = null;
     protected $constraintSecond = null;
