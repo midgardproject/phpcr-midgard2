@@ -40,10 +40,15 @@ class SQLQuerySelector
             $properties = array();
             foreach ($this->SQLQuery->getColumns() as $column) 
             {
-                if ($selectorName == $column->getSelectorName()) {
-                    $properties[] = NodeMapper::getMidgardPropertyName(str_replace(array('[', ']'), '', $column->getPropertyName()));
+                if ($selectorName != $column->getSelectorName()) {
+                    continue;
                 }
+
+                $midgardName = NodeMapper::getMidgardPropertyName(str_replace(array('[', ']'), '', $column->getPropertyName())); 
+                $properties[$midgardName]['columnName'] = $column->getColumnName();
+                $properties[$midgardName]['propertyName'] = $column->getPropertyName();
             }
+            $selects[$selectorName]['properties'] = $properties;
 
             $defaultCG = new midgard_query_constraint_group("AND");
             $defaultCG->add_constraint(
@@ -61,7 +66,7 @@ class SQLQuerySelector
                 $addOR = true;
             }
 
-            foreach ($properties as $name) 
+            foreach ($properties as $name => $v) 
             {
                 $cg->add_constraint(
                     new midgard_query_constraint(
@@ -85,13 +90,13 @@ class SQLQuerySelector
             }
 
             $qs->set_constraint($defaultCG);
-            $selects[$selectorName] = $qs;
+            $selects[$selectorName]['QuerySelect'] = $qs;
         }
 
-        foreach ($selects as $qs) 
+        foreach ($selects as $name => $v) 
         {
             \midgard_connection::get_instance()->set_loglevel("debug");
-            $qs->execute();
+            $v['QuerySelect']->execute();
             \midgard_connection::get_instance()->set_loglevel("warn");
         }
 
@@ -106,6 +111,7 @@ class SQLQuerySelector
     public function getQueryResult()
     {
         $ret = $this->computeResult();
+        print_r($ret);
     }
 }
 

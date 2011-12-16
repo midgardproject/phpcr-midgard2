@@ -65,19 +65,29 @@ class EquiJoinCondition extends ConditionHelper implements \PHPCR\Query\QOM\Equi
 
     public function computeResults(array $selects)
     {
-        $rows[0] = $selects[$this->getSelector1Name()];
-        $rows[1] = $selects[$this->getSelector2Name()];
-      
+        $selector1Name = $this->getSelector1Name(); 
+        $selector2Name = $this->getSelector2Name();
+
+        $rows[0] = $selects[$selector1Name]['QuerySelect'];
+        $rows[1] = $selects[$selector2Name]['QuerySelect'];
+
+        print_r($selects[$selector2Name]);
+
         $retTwo = $rows[1]->list_objects();
         $i = 0;
         $j = 0;
         $result = array();
+        $selector1Name = $this->getSelector1Name(); 
+        $selector2Name = $this->getSelector2Name(); 
+
         foreach ($rows[0]->list_objects() as $object) 
         {
             $objTwo = $this->findEqualRow($object->value, $retTwo);
             if ($objTwo != null) {
-                $result[$j][$this->getSelector1Name()] = $object;
-                $result[$j][$this->getSelector2Name()] = $objTwo;
+                $result[$j][$selector1Name][$object->name] = $selects[$selector1Name]['properties'][$object->name]; 
+                $result[$j][$selector1Name][$object->name]['midgardNodeProperty'] =  $object;
+                $result[$j][$selector2Name][$objTwo->name] = $selects[$selector2Name]['properties'][$objTwo->name]; 
+                $result[$j][$selector2Name][$objTwo->name]['midgardNodeProperty'] =  $objTwo;
             }
             $i++;
         }
