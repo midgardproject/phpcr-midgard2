@@ -67,7 +67,7 @@ class QueryResultSelector extends QueryResult
             $this->nodes;
         }
 
-        foreach ($this->getResultProprties() as $props)
+        foreach ($this->getResultProperties() as $props)
         {
             $ret[] = $this->session->getNodeRegistry()->getByMidgardGuid($prop['midgardNodeProperty']->guid);
         }
@@ -78,7 +78,6 @@ class QueryResultSelector extends QueryResult
 
     public function getRows()
     {
-        throw new \PHPCR\RepositoryException("NotImplemented");
         if ($this->rows != null) {
             return $this->rows;
         }
@@ -86,9 +85,22 @@ class QueryResultSelector extends QueryResult
         $i = 0;
         foreach ($this->result as $row)
         {
-            $ret[] = new RowSelector($this, );   
+            $selectors = array();
+            foreach ($row as $selectorName => $cols)
+            { 
+                foreach ($cols as $name => $props)
+                {
+                    $columnName = $props['columnName'];
+                    if ($columnName == null) {
+                        $columnName = str_replace(array('[', ']'), '', $props['propertyName']);
+                    } 
+                    $selectors[$selectorName][$columnName]['midgardNodeProperty'] = $props['midgardNodeProperty'];
+                }
+            }
+            $ret[] = new RowSelector($this, $i, $selectors);   
+            $i++;
         }
-
+ 
         $this->rows = new \ArrayIterator($ret);
         return $this->rows;
     }
