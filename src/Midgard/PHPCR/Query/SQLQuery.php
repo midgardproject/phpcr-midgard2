@@ -37,7 +37,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
             $this->validateStatement();
             $query = $this->converter->parse(trim($statement));
             $this->source = $query->getSource();
-            $this->source->computeQuerySelectConstraints($this->getQuerySelectholder());
+            //$this->source->computeQuerySelectConstraints($this->getQuerySelectholder());
             $this->nodeTypeName = $this->source->getNodeTypeName();
             $this->constraint = $query->getConstraint(); 
             $this->orderings = $query->getOrderings();
@@ -47,8 +47,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         if (is_object($this->getSource())) { /* https://github.com/phpcr/phpcr-api-tests/issues/50 */
             $this->source->computeQuerySelectConstraints($this->getQuerySelectholder());
             $nodeTypeName = $this->source->getNodeTypeName();
-            $this->storageType = NodeMapper::getMidgardName($nodeTypeName);
-            $this->selectors[] = $nodeTypeName;
+            $this->storageType = NodeMapper::getMidgardName($nodeTypeName); 
             $this->nodeTypeName = $nodeTypeName;
         }
     }
@@ -59,6 +58,11 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
             if (strpos($this->statement, 'SELECT') === false)
                 throw new \PHPCR\Query\InvalidQueryException("Invalid statement");
         }
+    }
+
+    public function getSession()
+    {
+        return $this->session;
     }
 
     public function getSource()
@@ -83,6 +87,18 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     public function getSelectors()
     {
+        if ($this->selectors != null) {
+            return $this->selectors;
+        }
+
+        if ($this->source instanceOf \Midgard\PHPCR\Query\QOM\Selector) {
+            $this->selectors[] = $this->source; 
+        } else {
+            /* TODO, get selectors recursively */
+            $this->selectors[] = $this->source->getLeft();
+            $this->selectors[] = $this->source->getRight();
+        }
+        
         return $this->selectors;
     }
 
@@ -156,7 +172,14 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     {
         $this->validateQOM();
 
-        $holder = $this->getQuerySelectHolder();
+        $holder = $this->getQuerySelectHolder(); 
+
+        if (count($this->getSelectors()) > 1 && count($this->getColumns()) > 1)
+        {
+            $select = new SQLQuerySelector($this, $holder);
+            return $select->getQueryResult();
+        }
+
         $manager = Utils\ConstraintManagerBuilder::factory($this, $holder, $this->getConstraint());
         if ($manager != null)
             $manager->addConstraint();

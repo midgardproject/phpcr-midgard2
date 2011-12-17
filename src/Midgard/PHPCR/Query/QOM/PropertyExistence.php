@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class PropertyExistence implements \PHPCR\Query\QOM\PropertyExistenceInterface
+class PropertyExistence extends ConstraintHelper implements \PHPCR\Query\QOM\PropertyExistenceInterface
 {
     protected $selectorName = null;
     protected $propertyName = null;
