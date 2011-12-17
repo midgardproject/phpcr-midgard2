@@ -103,15 +103,9 @@ class SQLQuerySelector
         return $this->SQLQuery->getSource()->getJoinCondition()->computeResults($selects);
     }
 
-    private function computeEquiJoinCondition(QOM\JoinCondition $joinCondition, array $selects)
-    {
-        
-    }
-
     public function getQueryResult()
     {
-        $ret = $this->computeResult();
-        print_r($ret);
+        return new QueryResultSelector($this->SQLQuery->getSession(), $this->SQLQuery, $this->computeResult());
     }
 }
 
