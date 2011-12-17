@@ -95,9 +95,7 @@ class SQLQuerySelector
 
         foreach ($selects as $name => $v) 
         {
-            \midgard_connection::get_instance()->set_loglevel("debug");
             $v['QuerySelect']->execute();
-            \midgard_connection::get_instance()->set_loglevel("warn");
         }
 
         return $this->SQLQuery->getSource()->getJoinCondition()->computeResults($selects);
