@@ -26,7 +26,7 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
     public function getColumnNames()
     {
         $ret = array();
-        foreach ($this->query->getSelectors() as $name)
+        foreach ($this->getSelectorNames() as $name)
         {
             $midgardType = NodeMapper::getMidgardName($name);
             $o = new $midgardType;
@@ -78,7 +78,12 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
 
     public function getSelectorNames()
     {
-        return $this->query->getSelectors();
+        $names = array();
+        foreach ($this->query->getSelectors() as $selector) 
+        {
+            $names[] = $selector->getNodeTypeName();
+        }
+        return $names;
     }
 
     public function getIterator()
