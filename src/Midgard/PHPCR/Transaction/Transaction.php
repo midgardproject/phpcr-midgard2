@@ -1,8 +1,10 @@
 <?php
-
 namespace Midgard\PHPCR\Transaction;
 
-class Transaction implements \PHPCR\Transaction\UserTransactionInterface
+use PHPCR\Transaction\UserTransactionInterface;
+use midgard_transaction;
+
+class Transaction implements UserTransactionInterface
 {
     private $midgardTransaction = null;
     private $timeout = 0;
@@ -10,11 +12,14 @@ class Transaction implements \PHPCR\Transaction\UserTransactionInterface
 
     public function __construct()
     {
-        $this->midgardTransaction = new \midgard_transaction();
+        $this->midgardTransaction = new midgard_transaction();
     }
 
     public function begin()
     {
+        if ($this->inTransaction) {
+            return;
+        }
         $this->midgardTransaction->begin();
         $this->inTransaction = true;
     }
@@ -41,4 +46,3 @@ class Transaction implements \PHPCR\Transaction\UserTransactionInterface
         $this->timeout = 0;
     }
 }
-?>

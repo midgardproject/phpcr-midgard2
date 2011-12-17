@@ -135,7 +135,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
                 new \midgard_query_property('id'),
                 new \midgard_query_property('parent', $propertyStorage)
             );
-            $this->getQuerySelectHolder()->getQuerySelect()->add_order (new \midgard_query_property('value', $propertyStorage));
+            $this->getQuerySelectHolder()->getQuerySelect()->add_order (new \midgard_query_property('value', $propertyStorage), \SORT_DESC);
         }
     }
 
@@ -165,8 +165,8 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $this->addOrders();
         $qs->set_constraint($holder->getDefaultConstraintGroup());
 
-        //echo "EXECUTE QUERY : " . $this->statement . "\n";
         //\midgard_connection::get_instance()->set_loglevel("debug");
+        //\midgard_error::debug("EXECUTE QUERY : " . $this->statement . "");
         $qs->execute();
         //\midgard_connection::get_instance()->set_loglevel("warn");
         return new QueryResult($this, $qs, $this->session);

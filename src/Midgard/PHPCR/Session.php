@@ -178,8 +178,7 @@ class Session implements SessionInterface
         try {
             $this->getNode($absPath);
             return true;
-        }
-        catch (PathNotFoundException $e) {
+        } catch (PathNotFoundException $e) {
             return false;
         }
     }
@@ -189,8 +188,7 @@ class Session implements SessionInterface
         try {
             $this->getProperty($absPath);
             return true;
-        }
-        catch (PathNotFoundException $e) {
+        } catch (PathNotFoundException $e) {
             return false;
         }
     }
@@ -198,22 +196,19 @@ class Session implements SessionInterface
     public function move($srcAbsPath, $destAbsPath)
     {
         /* RepositoryException - If the last element of destAbsPath has an index or if another error occurs. */
-        if (strpos($destAbsPath, '[') !== false)
-        {
+        if (strpos($destAbsPath, '[') !== false) {
             throw new \PHPCR\RepositoryException("Index not allowed in destination path");
         }
 
         $node = $this->getNode($srcAbsPath);
 
         /* No need to check destination node, source one exists and path is invalid */
-        if ($srcAbsPath == $destAbsPath)
-        {
+        if ($srcAbsPath == $destAbsPath) {
             throw new \PHPCR\ItemExistsException("Source and destination paths are equal");
         }
 
         /* If paths are different, check if destination exists */
-        if ($this->nodeExists($destAbsPath))
-        {
+        if ($this->nodeExists($destAbsPath)) {
             throw new \PHPCR\ItemExistsException("Node at destination path {$destAbsPath} exists");
         }
 
@@ -233,7 +228,6 @@ class Session implements SessionInterface
         catch (\PHPCR\PathNotFoundException $e)  {
             $node = $this->getNode($absPath);
             $node->remove();
-            $this->removeNode($node);
         }
     }
 
@@ -267,15 +261,21 @@ class Session implements SessionInterface
         // TODO
         
         $t = $this->getTransactionManager();
-        if ($t->inTransaction() == false) 
+        if ($t->inTransaction() == false) {
             $t->begin();
+        }
+
+        // Delete all removed nodes that don't have hard refs
+        $removeAfter = array();
+        foreach ($this->removeNodes as $node) {
+            try {
+                $node->removeMidgard2Node();
+            } catch (\Exception $e) {
+                $removeAfter[] = $node;
+            }
+        }
 
         try {
-            /* Remove nodes marked as removed */
-            foreach ($this->removeNodes as $node) {
-                $node->removeMidgard2Node();
-            }
-
             $root_node = $this->getRootNode();
             $root_node->save();
         
@@ -310,6 +310,16 @@ class Session implements SessionInterface
                     throw new \PHPCR\RepositoryException($midgard_errstr);
                 }
             }
+        }
+
+        try {
+            /* Remove nodes marked as removed */
+            foreach ($removeAfter as $node) {
+                $node->removeMidgard2Node();
+            }
+        } catch (\Exception $e) {
+            $t->rollback();
+            throw $e;
         }
 
         $t->commit();

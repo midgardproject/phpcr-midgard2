@@ -9,11 +9,17 @@
          syntaxCheck="false"
          bootstrap="bootstrap.php">
     <php>
-        <var name="phpcr.url" value="http://localhost:8080/server" />
+        <var name="midgard2.configuration.db.type" value="PostgreSQL" />
+        <var name="midgard2.configuration.db.name" value="midgard2_test" />
+        <var name="midgard2.configuration.db.host" value="127.0.0.1" />
+        <var name="midgard2.configuration.db.port" value="5432" />
+        <var name="midgard2.configuration.db.username" value="postgres" />
+        <var name="midgard2.configuration.db.password" value="" />
+        <var name="midgard2.configuration.db.init" value="true" />
+        <var name="midgard2.configuration.blobdir" value="/tmp/phpcr-blobs" />
+        <!--<var name="midgard2.configuration.loglevel" value="debug" />-->
         <var name="phpcr.user" value="admin" />
         <var name="phpcr.pass" value="password" />
-        <var name="phpcr.workspace" value="test" />
-        <var name="phpcr.transport" value="davex" />
     </php>
 
     <testsuites>
