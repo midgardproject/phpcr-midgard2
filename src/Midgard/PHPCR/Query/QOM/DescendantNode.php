@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class DescendantNode implements \PHPCR\Query\QOM\DescendantNodeInterface
+class DescendantNode extends ConstraintHelper implements \PHPCR\Query\QOM\DescendantNodeInterface
 {
     protected $selectorName = null;
     protected $ancestorPath = null;
