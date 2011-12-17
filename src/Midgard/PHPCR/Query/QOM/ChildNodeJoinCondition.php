@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class ChildNodeJoinCondition implements \PHPCR\Query\QOM\ChildNodeJoinConditionInterface
+class ChildNodeJoinCondition extends ConditionHelper implements \PHPCR\Query\QOM\ChildNodeJoinConditionInterface
 {
     protected $childSelectorName = null;
     protected $parentSelectorName = null;

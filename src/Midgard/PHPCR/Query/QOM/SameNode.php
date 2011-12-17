@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class SameNode implements \PHPCR\Query\QOM\SameNodeInterface
+class SameNode extends ConstraintHelper implements \PHPCR\Query\QOM\SameNodeInterface
 {
     protected $selectorName = null;
     protected $path = null;

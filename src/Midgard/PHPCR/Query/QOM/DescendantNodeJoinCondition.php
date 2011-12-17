@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class DescendantNodeJoinCondition implements \PHPCR\Query\QOM\DescendantNodeJoinConditionInterface
+class DescendantNodeJoinCondition extends ConditionHelper implements \PHPCR\Query\QOM\DescendantNodeJoinConditionInterface
 {
     protected $descendantSelector = null;
     protected $ancestorSelector = null;

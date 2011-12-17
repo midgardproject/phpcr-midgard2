@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class Not implements \PHPCR\Query\QOM\NotInterface
+class Not extends ConstraintHelper implements \PHPCR\Query\QOM\NotInterface
 {
     protected $constraint = null;
 

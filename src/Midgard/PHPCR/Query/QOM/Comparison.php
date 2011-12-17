@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class Comparison implements \PHPCR\Query\QOM\ComparisonInterface
+class Comparison extends ConstraintHelper implements \PHPCR\Query\QOM\ComparisonInterface
 {
     protected $operandFirst = null;
     protected $operator = null;
