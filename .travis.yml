@@ -3,10 +3,15 @@ language: php
 php:
   - 5.3
 
-before_script:
-  - ./tests/travis.sh
+env:
+  - DATABASE=sqlite
+  - DATABASE=mysql
+  - DATABASE=postgresql
 
-script: ./tests/travis-test.sh
+before_script:
+  - ./tests/travis_${DATABASE}.sh
+
+script: phpunit -c api-test/phpunit_${DATABASE}.xml.dist
 
 notifications:
     irc: "irc.freenode.org#midgard"
