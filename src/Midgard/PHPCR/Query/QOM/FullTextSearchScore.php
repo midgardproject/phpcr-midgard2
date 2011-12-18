@@ -5,7 +5,7 @@ namespace Midgard\PHPCR\Query\QOM;
 /**
  * {@inheritDoc}
  */
-class FullTextSearchScore implements \PHPCR\Query\QOM\FullTextSearchScoreInterface
+class FullTextSearchScore extends ConstraintHelper implements \PHPCR\Query\QOM\FullTextSearchScoreInterface
 {
     protected $selectorName = null;
 

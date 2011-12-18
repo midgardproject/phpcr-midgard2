@@ -17,11 +17,11 @@ class QuerySelectHelper
 
     public function normalizeName($name)
     {
-        $name = trim($name);
-        if (strpos($name, '[') !== false) {
-            return strtr($name, array('[' => '', ']' => ''));
+        $n = trim($name);
+        if (strpos($n, '[') !== false) {
+            $n =  strtr($n, array('[' => '', ']' => ''));
         }
-        return $name;
+        return NodeMapper::getMidgardPropertyName($n);
     }
 
     public function mapJoinType($jcrJoin)
