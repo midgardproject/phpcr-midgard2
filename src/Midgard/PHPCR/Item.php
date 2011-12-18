@@ -418,6 +418,11 @@ abstract class Item implements ItemInterface
         return $this->is_modified;
     }
 
+    public function isDeleted()
+    {
+        return $this->is_removed;
+    }
+
     protected function setUnmodified()
     {
         $this->is_new = false;
