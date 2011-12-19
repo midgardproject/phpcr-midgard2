@@ -132,6 +132,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     private function addOrders()
     {
+        return;
         $orderings = $this->getOrderings();
         if (empty($orderings))
             return;
@@ -151,7 +152,9 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
                 new \midgard_query_property('id'),
                 new \midgard_query_property('parent', $propertyStorage)
             );
-            $this->getQuerySelectHolder()->getQuerySelect()->add_order (new \midgard_query_property('value', $propertyStorage), \SORT_DESC);
+            $this->getQuerySelectHolder()->getQuerySelect()->add_order (
+                new \midgard_query_property('value', $propertyStorage), 
+                $order->getOrder() == \PHPCR\Query\QOM\QueryObjectModelConstantsInterface::JCR_ORDER_ASCENDING ? \SORT_ASC : \SORT_DESC);
         }
     }
 
