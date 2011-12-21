@@ -10,6 +10,8 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
     protected $session;
     protected $query;
     protected $rows = null;
+    protected $ordered = false;
+    protected $nodes = null;
 
     public function __construct(SQLQuery $query, \midgard_query_select $qs, \Midgard\PHPCR\Session $session)
     {
@@ -50,8 +52,65 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
         return $ret;
     }
 
+    protected function orderResult()
+    {
+        if ($this->ordered == true) {
+            return;
+        }
+
+        $orderings = $this->query->getOrderings();
+        if (empty($orderings)) {
+            $this->ordered = true;
+            return;
+        }
+
+        $properties = array();
+
+        foreach ($orderings as $ordering)
+        {
+            if (!($ordering->getOperand() instanceOf \Midgard\PHPCR\Query\QOM\PropertyValue)) {
+                throw new \PHPCR\RepositoryException(get_class($ordering->getOperand()) ." operand not supported");
+            }
+            $properties[$ordering->getOperand()->getPropertyName()] = $ordering->getOrder();
+        }
+
+        $tmpResult = $this->nodes;
+        /* Foreach orderings' property and foreach Node, associate property -> node */
+        foreach ($properties as $property => $order)
+        {
+            foreach ($tmpResult as $path => $n) 
+            {
+                try {
+                    $v = $n->getPropertyValue($property);
+                } catch (\PHPCR\PathNotFoundException $e) {
+                    $v = null;
+                }
+                $tmpOrder[$n->getPath()] = $v;
+            }
+
+            /* Sort by given property and order type */
+            if ($order == 'jcr.order.ascending') {
+                asort($tmpOrder, SORT_STRING);
+            } else {
+                arsort($tmpOrder, SORT_STRING);
+            }
+
+            foreach ($tmpOrder as $path => $pv) {
+                $tmp[$path] = $tmpResult[$path];
+            } 
+            $tmpResult = $tmp;
+        }
+
+        $this->nodes = new \ArrayIterator($tmpResult);
+        $this->ordered = true;
+    }
+
     public function getNodes($prefetch = false)
     {
+        if ($this->nodes != null) {
+            return $this->nodes;
+        }
+
         $objects = $this->qs->list_objects();
         $ret = array();
         foreach ($objects as $midgardNode)
@@ -59,7 +118,9 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
             $node = $this->session->getNodeRegistry()->getByMidgardNode($midgardNode);
             $ret[$node->getPath()] = $node;
         }
-        return new \ArrayIterator($ret);
+        $this->nodes = new \ArrayIterator($ret);
+        $this->orderResult();
+        return $this->nodes;
     }
 
     public function getRows()
