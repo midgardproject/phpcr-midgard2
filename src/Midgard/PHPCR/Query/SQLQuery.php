@@ -20,6 +20,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     protected $orderings = null;
     protected $columns = null;
     protected $nodeTypeName = null;
+    protected $limit = 0;
     
     public function __construct (\Midgard\PHPCR\Session $session, $statement = null, \PHPCR\Query\QOM\SourceInterface $source = null,
             \PHPCR\Query\QOM\ConstraintInterface $constraint = null, array $orderings = null, array $columns = null)
@@ -160,9 +161,14 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     public function setLimit($limit)
     {
-        $this->getQuerySelectHolder()->getQuerySelect()->set_limit($limit);
+        $this->limit = $limit;
     }
-   
+
+    public function getLimit()
+    {
+        return $this->limit;
+    }
+
     public function setOffset($offset)
     {
         $this->getQuerySelectHolder()->getQuerySelect()->set_offfset($offset);
