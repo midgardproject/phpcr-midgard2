@@ -289,7 +289,7 @@ abstract class Item implements ItemInterface
                 }
                 $prop = $this->prepareMidgard2PropertyObject($name, $multiple);        
                 $prop->value = $val;
-                $storedProperties[] = $prop;
+                array_push($storedProperties, $prop);
             }
             foreach ($object as $propertyObject) {
                 if ($propertyObject->guid) {
