@@ -278,6 +278,18 @@ class Midgard2XMLImporter extends \DomDocument
 
     public function execute()
     {
+        $workspaceName = 'default';
+        $mgd = \midgard_connection::get_instance();
+        $ws = new \midgard_workspace();
+        $wmanager = new \midgard_workspace_manager($mgd);
+        if (!$wmanager->path_exists($workspaceName)) {
+            $wmanager->create_workspace($ws, '');
+        } else {
+            $wmanager->get_workspace_by_path($ws, $workspaceName);
+        }
+        $mgd->enable_workspace(true);
+        $mgd->set_workspace($ws);
+
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
         $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
         $q->execute();

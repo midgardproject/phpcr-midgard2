@@ -23,3 +23,4 @@ wget -q https://github.com/midgardproject/midgard-php5/tarball/${MIDGARD_EXT_VER
 tar zxf ${MIDGARD_EXT_VERSION}
 sh -c "cd midgardproject-midgard-php5-*&&php `pyrus get php_dir|tail -1`/pake.php install > /dev/null"
 echo "extension=midgard2.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
+
