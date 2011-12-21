@@ -263,18 +263,6 @@ class Repository implements RepositoryInterface
         /* Prepare namespace registry */
         midgard_storage::create_class_storage("midgard_namespace_registry");
 
-        /* Create required root node */
-        $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
-        $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
-        $q->execute();
-        if ($q->get_results_count() == 0) {
-            $root_object = new midgard_node();
-            $root_object->name = "";
-            $root_object->typename = "nt_unstructured";
-            $root_object->parent = 0;
-            $root_object->create();
-        }
-
         if ($this->descriptors['option.workspace.management.supported']) {
             $connection->enable_workspace(false);
         }
@@ -282,20 +270,35 @@ class Repository implements RepositoryInterface
     
     private function getRootObject()
     {
-        $rootnodes = $this->getRootNodes();
-        if (empty($rootnodes)) {
+        $rootnode = $this->getRootNode();
+        if (empty($rootnode)) {
             throw new NoSuchWorkspaceException('No root nodes defined');
         }
-        return $rootnodes[0];
+        return $rootnode;
     }
     
-    private function getRootNodes()
+    private function getRootNode()
     {
+        /* Try to fetch root node first */
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node'));
         $q->set_constraint(new \midgard_query_constraint(new \midgard_query_property('parent'), '=', new \midgard_query_value(0)));
         $q->toggle_readonly = false;
         $q->execute();
-        return $q->list_objects();
+
+        /* Return it, it exists */
+        if ($q->get_results_count() > 0) {
+            $ret = $q->list_objects();
+            return $ret[0];
+        }
+
+        /* Otherwise, create it */
+        $root_object = new midgard_node();
+        $root_object->name = "";
+        $root_object->typename = "nt_unstructured";
+        $root_object->parent = 0;
+        $root_object->create();
+
+        return $root_object;
     }
     
     public function getDescriptorKeys()
