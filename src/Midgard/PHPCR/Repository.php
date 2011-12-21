@@ -90,11 +90,11 @@ class Repository implements RepositoryInterface
     {
         $user = $this->midgard2Login($credentials);
 
-        $rootObject = $this->getRootObject();
-
         if ($workspaceName != null) {
             $this->midgard2SetWorkspace($workspaceName);
         }
+
+        $rootObject = $this->getRootObject();
 
         return new Session($this->connection, $this, $user, $rootObject, $credentials);
     }
