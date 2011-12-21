@@ -116,10 +116,24 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
         foreach ($objects as $midgardNode)
         {
             $node = $this->session->getNodeRegistry()->getByMidgardNode($midgardNode);
-            $ret[$node->getPath()] = $node;
+            $ret[$node->getPath()] = $node; 
         }
         $this->nodes = new \ArrayIterator($ret);
         $this->orderResult();
+
+        $limit = $this->query->getLimit();
+        if ($limit > 0) {
+            $count = 0;
+            foreach ($this->nodes as $path => $node) {
+                $count++;
+                $tmp[$path] = $node;
+                if ($limit == $count) {
+                    break;
+                }
+            }
+            $this->nodes = new \ArrayIterator($tmp);
+        }
+
         return $this->nodes;
     }
 
