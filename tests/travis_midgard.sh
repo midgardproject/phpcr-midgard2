@@ -5,7 +5,7 @@ pyrus channel-discover pear.indeyets.ru
 pyrus install -f http://pear.indeyets.ru/get/pake-1.6.3.tgz
 
 # Options
-MIDGARD_LIBS_VERSION=10.05.1-1
+MIDGARD_LIBS_VERSION=10.05.5.1-1
 MIDGARD_EXT_VERSION=ratatoskr
 
 # Install Midgard2 library from OBS
