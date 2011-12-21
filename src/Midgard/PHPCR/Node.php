@@ -142,7 +142,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             } else {
                 $childDef = $childDefs['*'];
             }
-            $primaryNodeTypeName = $childDef->getDefaultPrimaryType();
+            $primaryNodeTypeName = $childDef->getDefaultPrimaryTypeName();
+            if (!$primaryNodeTypeName) {
+                throw new InvalidArgumentException('No node type found from definition "' . $childDef->getName() . '" of ' . $this->getPrimaryNodeType()->getName() . ' for new node ' . $relPath . ' under ' . $this->getPath());
+            }
         }
 
         return $this->appendNode($relPath, $primaryNodeTypeName);
