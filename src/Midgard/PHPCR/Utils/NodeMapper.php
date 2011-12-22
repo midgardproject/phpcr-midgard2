@@ -63,25 +63,24 @@ class NodeMapper
     }
 
     /**
-     * Replaces '-' with ':' in given property name
+     * Replaces first '-' with ':' in given property name
      */
     public static function getPHPCRProperty($property)
     {
-        if (strpos($property, '-') === false)
-        {
+        $pos = strpos($property, '-');
+        if ($pos === false) {
             return $property;
         }
         /* TODO, determine uper cases */
-        return str_replace('-', ':', $property);
+        return substr_replace($property, ':', $pos, 1);
     }
 
     /**
-     * Replaces '-' with ':' in given property name
+     * Replaces all instances of ':' with '-' in given property name
      */
     public static function getMidgardPropertyName($property)
     {
-        if (strpos($property, ':') === false)
-        {
+        if (strpos($property, ':') === false) {
             return $property;
         }
         /* TODO, determine uper cases */
