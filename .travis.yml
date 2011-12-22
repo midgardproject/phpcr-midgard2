@@ -1,7 +1,6 @@
 language: php
 
 php:
-  - 5.3
   - 5.4
 
 env:
@@ -11,7 +10,7 @@ env:
 before_script:
   - ./tests/travis_${DATABASE}.sh
 
-script: phpunit -c api-test/phpunit_${DATABASE}.xml.dist
+script: php5 -v; valgrind -v --log-file=segfault.log phpunit -c api-test/phpunit_${DATABASE}.xml.dist; cat segfault.log
 
 notifications:
     irc: "irc.freenode.org#midgard"

@@ -9,7 +9,7 @@ MIDGARD_LIBS_VERSION=10.05.5.1-1
 MIDGARD_EXT_VERSION=ratatoskr
 
 # Install Midgard2 library from OBS
-sudo apt-get install -y dbus libglib2.0-dev libgda-4.0-4 libgda-4.0-dev 
+sudo apt-get install -y dbus libglib2.0-dev libgda-4.0-4 libgda-4.0-dev valgrind 
 wget -q http://download.opensuse.org/repositories/home:/midgardproject:/ratatoskr/xUbuntu_10.04/i386/libmidgard2-2010_${MIDGARD_LIBS_VERSION}_i386.deb
 wget -q http://download.opensuse.org/repositories/home:/midgardproject:/ratatoskr/xUbuntu_10.04/i386/midgard2-common_${MIDGARD_LIBS_VERSION}_i386.deb 
 wget -q http://download.opensuse.org/repositories/home:/midgardproject:/ratatoskr/xUbuntu_10.04/i386/libmidgard2-dev_${MIDGARD_LIBS_VERSION}_i386.deb 
