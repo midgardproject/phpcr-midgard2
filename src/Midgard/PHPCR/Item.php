@@ -154,7 +154,15 @@ abstract class Item implements ItemInterface
             return $this->getMidgard2PropertyStorageEmpty($name, $multiple, $prepareNew);
         }
 
-        $q = new midgard_query_select(new midgard_query_storage('midgard_node_property'));
+        $storage = new midgard_query_storage('midgard_node_property');
+        // Hack needed for https://github.com/midgardproject/midgard-core/issues/131
+        $storage2 = new midgard_query_storage('midgard_node_property');
+        $q = new midgard_query_select($storage);
+        $q->add_join(
+            'INNER',                                             
+            new midgard_query_property('id'),
+            new midgard_query_property('id', $storage2)
+        );
         $cg = new midgard_query_constraint_group('AND');
         $cg->add_constraint(
             new midgard_query_constraint(
@@ -171,6 +179,7 @@ abstract class Item implements ItemInterface
             )
         );
         $q->set_constraint($cg);
+        $q->add_order(new midgard_query_property('id'), \SORT_ASC);
         $q->execute();
         if ($q->get_results_count() < 1) {
             return $this->getMidgard2PropertyStorageEmpty($name, $multiple, $prepareNew);
