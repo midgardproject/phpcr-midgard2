@@ -70,7 +70,14 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         }
         $template->setRequiredPrimaryTypeNames($primaryTypes);
 
-        $template->setDefaultPrimaryTypeName($this->getStringValue($reflector, 'DefaultPrimaryType'));
+        $defaultPrimary = $this->getStringValue($reflector, 'DefaultPrimaryType');
+        if (!$defaultPrimary) {
+            if (in_array($this->getName(), $primaryTypes) || in_array('*', $primaryTypes)) {
+                $defaultPrimary = $this->getName();
+            }
+        }
+        $template->setDefaultPrimaryTypeName($defaultPrimary);
+
         $template->setMandatory($this->getBooleanValue($reflector, 'isMandatory'));
         $template->setName($name);
         $template->setAutoCreated($this->getBooleanValue($reflector, 'isAutoCreated'));
