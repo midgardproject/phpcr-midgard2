@@ -289,7 +289,6 @@ abstract class Item implements ItemInterface
             if (!is_array($value)) {
                 $value = array($value);
             }
-            $i= 0;
             foreach ($value as $val) {
                 if ($object) {
                     $propertyObject = array_shift($object);
@@ -303,7 +302,7 @@ abstract class Item implements ItemInterface
             }
             foreach ($object as $propertyObject) {
                 if ($propertyObject->guid) {
-                    $propertyObject->delete();
+                    $propertyObject->purge();
                 }
             }
             $this->propertyObjects[$name][$multiple] = $storedProperties;
