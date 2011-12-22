@@ -533,7 +533,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         if (!$this->getMidgard2Node()->id) {
             return;
         }
-        $q = new midgard_query_select(new midgard_query_storage('midgard_node_property'));
+        $qs = new midgard_query_storage('midgard_node_property');
+        $q = new midgard_query_select($qs);
         $cg = new midgard_query_constraint_group('AND');
         $cg->add_constraint(
             new midgard_query_constraint(
@@ -549,7 +550,19 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                 new midgard_query_value(array_keys($this->properties))
             )
         );
-        $q->set_constraint($cg); 
+
+        /* Add implicit join and order.
+         * Remove join, once core issue is fixed: https://github.com/midgardproject/midgard-core/issues/131 */
+        /* Workaround */
+        $qs2 = new midgard_query_storage('midgard_node_property');
+        $q->add_join(
+            'INNER',
+            new \midgard_query_property('id'),
+            new \midgard_query_property('id', $qs2)
+        );
+        /* Workaround end */
+        $q->add_order(new midgard_query_property('id'), \SORT_ASC);
+        $q->set_constraint($cg);
         $q->execute();
         $properties = $q->list_objects();
         foreach ($properties as $property) {

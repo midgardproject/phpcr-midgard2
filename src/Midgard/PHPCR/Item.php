@@ -280,16 +280,17 @@ abstract class Item implements ItemInterface
             if (!is_array($value)) {
                 $value = array($value);
             }
+            $i= 0;
             foreach ($value as $val) {
                 if ($object) {
                     $propertyObject = array_shift($object);
                     $propertyObject->value = $val;
-                    $storedProperties[] = $propertyObject;
+                    array_push($storedProperties, $propertyObject);
                     continue;
                 }
                 $prop = $this->prepareMidgard2PropertyObject($name, $multiple);        
                 $prop->value = $val;
-                $storedProperties[] = $prop;
+                array_push($storedProperties, $prop);
             }
             foreach ($object as $propertyObject) {
                 if ($propertyObject->guid) {

@@ -20,6 +20,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     protected $orderings = null;
     protected $columns = null;
     protected $nodeTypeName = null;
+    protected $limit = 0;
     
     public function __construct (\Midgard\PHPCR\Session $session, $statement = null, \PHPCR\Query\QOM\SourceInterface $source = null,
             \PHPCR\Query\QOM\ConstraintInterface $constraint = null, array $orderings = null, array $columns = null)
@@ -114,50 +115,6 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         return $this->holder;
     }
 
-    /* Add implicit join.
-     * We join midgard_node_property.parent on midgard_node.id */
-    private function addJoinIDToParent()
-    {
-        static $joined = false;
-        if ($joined == true)
-            return;
-
-        $this->getQuerySelect()->add_join(
-            'INNER',
-            new \midgard_query_property('id'),
-            new \midgard_query_property('parent', $this->getPropertyStorage())
-        );
-        $joined = true;
-    }
-
-    private function addOrders()
-    {
-        return;
-        $orderings = $this->getOrderings();
-        if (empty($orderings))
-            return;
-
-        //$this->addJoinIDToParent();
-
-        foreach ($orderings as $order) {
-            $constraint = new \midgard_query_constraint (
-                new \midgard_query_property ("value"),
-                "=",
-                new \midgard_query_value ($order->getOperand()->getPropertyName()),
-                $this->getQuerySelectHolder()->getPropertyStorage()
-            );
-            $propertyStorage = new \midgard_query_storage ("midgard_node_property");
-            $this->getQuerySelectHolder()->getQuerySelect()->add_join(
-                'INNER',
-                new \midgard_query_property('id'),
-                new \midgard_query_property('parent', $propertyStorage)
-            );
-            $this->getQuerySelectHolder()->getQuerySelect()->add_order (
-                new \midgard_query_property('value', $propertyStorage), 
-                $order->getOrder() == \PHPCR\Query\QOM\QueryObjectModelConstantsInterface::JCR_ORDER_ASCENDING ? \SORT_ASC : \SORT_DESC);
-        }
-    }
-
     public function bindValue($varName, $value)
     {
         throw new \PHPCR\RepositoryException("Not supported");
@@ -188,7 +145,6 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
             $manager->addConstraint();
 
         $qs = $holder->getQuerySelect();
-        $this->addOrders();
         $qs->set_constraint($holder->getDefaultConstraintGroup());
 
         //\midgard_connection::get_instance()->set_loglevel("debug");
@@ -205,9 +161,14 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     public function setLimit($limit)
     {
-        $this->getQuerySelectHolder()->getQuerySelect()->set_limit($limit);
+        $this->limit = $limit;
     }
-   
+
+    public function getLimit()
+    {
+        return $this->limit;
+    }
+
     public function setOffset($offset)
     {
         $this->getQuerySelectHolder()->getQuerySelect()->set_offfset($offset);
