@@ -16,7 +16,7 @@ If your distribution doesn't come with Midgard2, then you can either compile it 
 Then set your project to depend on `midgard/phpcr` by having your `composer.json` to include:
 
     "require": {
-        "midgard/phpcr": ">=0.1"
+        "midgard/phpcr": ">=1.0"
     }
 
 Then just install the provider via [Composer](http://packagist.org/):
@@ -111,6 +111,17 @@ There have been [some studies](http://bergie.iki.fi/blog/what_is_a_content_repos
 The Midgard PHPCR tree is built out of `midgard_node` objects. These objects are only used for building the tree, and are connected to the real content objects in the tree by their `objectguid` property.
 
 Properties that are not managed by MgdSchemas (so, properties not registered to Node Types) are handled by `midgard_node_property` objects.
+
+### How does PHPCR map to your database?
+
+Midgard2 uses standard relational databases for content storage. The PHPCR model is mapped to database tables in the following way:
+
+* Tree structure is defined in `midgard_node` table, which contains `name`, `parent` reference, and a reference to a content object
+* Properties of a node type are stored in the table defined for that node type in its MgdSchema ([see examples](https://github.com/midgardproject/phpcr-midgard2/blob/master/data/share/schema/phpcr_schemas.xml))
+* Multivalued properties, and properties not defined in the node type (for example with `nt:unstructured`) are stored in the `midgard_node_property` table, which contains `name`, reference to `midgard_node` entry, `type` and `value`
+* Binary property contents are stored as files into the `blobdir` defined in repository configuration
+
+New Node Types can be registered by writing MgdSchemas for them and copying them to Midgard's schema directory (by default `/usr/share/midgard2/schema`).
 
 ### Workspaces
 
