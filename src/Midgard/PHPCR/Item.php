@@ -193,48 +193,6 @@ abstract class Item implements ItemInterface
         return $this->propertyObjects[$name][$multiple];
     }
 
-    protected function getMidgard2PropertyBinary($name, $multiple)
-    {
-        $object = $this->getMidgard2PropertyStorage($name, $multiple);
-        if (!is_array($object)) {
-            $object = array($object);
-        }
-
-        $ret = array();
-        foreach ($object as $propertyObject) {
-            if (isset($propertyObject->stream) && is_resource($propertyObject->stream)) {
-                rewind($propertyObject->stream);
-                $oldStream = $propertyObject->stream;
-                $propertyObject->stream = fopen('php://memory', 'rwb');
-                stream_copy_to_stream($oldStream, $propertyObject->stream);
-                rewind($propertyObject->stream);
-                $ret[] = $propertyObject->stream;
-                continue;
-            }
-
-            $propertyObject->stream = fopen('php://memory', 'rwb');
-            $ret[] = $propertyObject->stream;
-            if (!$propertyObject->guid) {
-                continue;
-            }
-
-            $attachments = $propertyObject->find_attachments(array('name' => $name));
-            if ($attachments) {
-                // Existing attachment, copy to a new in-memory stream
-                $blob = new midgard_blob($attachments[0]);
-                $source = $blob->get_handler('r');
-                rewind($source);
-                stream_copy_to_stream($source, $propertyObject->stream);
-                rewind($propertyObject->stream);
-            }
-        }
-
-        if ($multiple) {
-            return $ret;
-        }
-        return $ret[0];
-    }
-
     protected function removeMidgard2PropertyStorage($name, $multiple)
     {
         $storage = $this->getMidgard2PropertyStorage($name, $multiple, true);
@@ -289,7 +247,6 @@ abstract class Item implements ItemInterface
             if (!is_array($value)) {
                 $value = array($value);
             }
-            $i= 0;
             foreach ($value as $val) {
                 if ($object) {
                     $propertyObject = array_shift($object);
@@ -303,7 +260,7 @@ abstract class Item implements ItemInterface
             }
             foreach ($object as $propertyObject) {
                 if ($propertyObject->guid) {
-                    $propertyObject->delete();
+                    $propertyObject->purge();
                 }
             }
             $this->propertyObjects[$name][$multiple] = $storedProperties;
