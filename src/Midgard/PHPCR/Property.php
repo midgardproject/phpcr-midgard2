@@ -24,6 +24,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     protected $multiple = null;
     private $value = null;
     private $resources = array();
+    private $propertyResources = array();
 
     public function __construct(Node $node, $propertyName, PropertyDefinitionInterface $definition = null, $type = null)
     {
@@ -307,6 +308,50 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     {
         return PropertyType::convertType($this->getNativeValue(), PropertyType::STRING, $this->getType());
     }
+
+
+    protected function getMidgard2PropertyBinary($name, $multiple)
+    {
+        $object = $this->getMidgard2PropertyStorage($name, $multiple);
+        if (!is_array($object)) {
+            $object = array($object);
+        }
+
+        $ret = array();
+        foreach ($object as $index => $propertyObject) {
+            if (isset($this->propertyResources[$index]) && is_resource($this->propertyResources[$index])) {
+                rewind($this->propertyResources[$index]);
+                $oldStream = $this->propertyResources[$index];
+                $this->propertyResources[$index] = fopen('php://memory', 'rwb');
+                stream_copy_to_stream($oldStream, $this->propertyResources[$index]);
+                rewind($this->propertyResources[$index]);
+                $ret[] = $this->propertyResources[$index];
+                continue;
+            }
+
+            $this->propertyResources[$index] = fopen('php://memory', 'rwb');
+            $ret[] = $this->propertyResources[$index];
+            if (!$propertyObject->guid) {
+                continue;
+            }
+
+            $attachments = $propertyObject->find_attachments(array('name' => $name));
+            if ($attachments) {
+                // Existing attachment, copy to a new in-memory stream
+                $blob = new midgard_blob($attachments[0]);
+                $source = $blob->get_handler('r');
+                rewind($source);
+                stream_copy_to_stream($source, $this->propertyResources[$index]);
+                rewind($this->propertyResources[$index]);
+                fclose($source);
+            }
+        }
+
+        if ($multiple) {
+            return $ret;
+        }
+        return $ret[0];
+    }
     
     public function getBinary()
     {
@@ -517,7 +562,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         return false;
     }
 
-    private function savePropertyObject($propertyObject)
+    private function savePropertyObject($propertyObject, $index = 0)
     {
         $midgardName = NodeMapper::getMidgardPropertyName($this->getName());
         $propertyObject->name = $midgardName;
@@ -539,16 +584,16 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         } else {
             $propertyObject->create();
         }
-        $this->saveBinaryObject($propertyObject);
+        $this->saveBinaryObject($propertyObject, $index);
     }
 
-    private function saveBinaryObject($propertyObject)
+    private function saveBinaryObject($propertyObject, $index = 0)
     {
         if ($this->getType() != PropertyType::BINARY) {
             return;
         }
 
-        if (!isset($propertyObject->stream)) {
+        if (!isset($this->propertyResources[$index])) {
             return;
         }
         $attachments = $propertyObject->find_attachments(array('name' => $this->getName()));
@@ -560,9 +605,9 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         }
 
         $blob = new midgard_blob($attachments[0]);
-        rewind($propertyObject->stream);
-        $blob->write_content(stream_get_contents($propertyObject->stream));
-        rewind($propertyObject->stream);
+        rewind($this->propertyResources[$index]);
+        $blob->write_content(stream_get_contents($this->propertyResources[$index]));
+        rewind($this->propertyResources[$index]);
 
         if ($attachments[0]->guid) {
             $attachments[0]->update();
@@ -590,8 +635,8 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
         $object = $this->getMidgard2PropertyStorage($this->getName(), $this->isMultiple());
         if (is_array($object)) {
-            foreach ($object as $propertyObject) {
-                $this->savePropertyObject($propertyObject);
+            foreach ($object as $index => $propertyObject) {
+                $this->savePropertyObject($propertyObject, $index);
             }
             $this->setUnmodified();
         } elseif (is_a($object, 'midgard_node_property')) {
