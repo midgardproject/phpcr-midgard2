@@ -9,7 +9,7 @@ MIDGARD_LIBS_VERSION=10.05.5.1-1
 MIDGARD_EXT_VERSION=ratatoskr
 
 # Install Midgard2 library dependencies from OBS
-sudo apt-get install -y dbus libglib2.0-dev libgda-4.0-4 libgda-4.0-dev libxml2-dev valgrind 
+sudo apt-get install -y dbus libglib2.0-dev libgda-4.0-4 libgda-4.0-dev libxml2-dev libdbus-1-dev libdbus-glib-1-dev valgrind 
 
 # Build Midgard2 core from recent tarball
 wget -q https://github.com/midgardproject/midgard-core/tarball/ratatoskr
