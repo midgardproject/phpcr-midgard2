@@ -1189,6 +1189,25 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $this->populateChildren(true);
             return;
         }
+        
+        if ($keepChanges === false) {
+            $changedChildren = array();
+            if ($this->children) {
+                foreach ($this->children as $name => $node) {
+                    if ($node->isNew()) {
+                        continue;
+                    }
+                    $node->is_modified = false;
+                    $changedChildren[$name] = $node;
+                    $node->refresh($keepChanges);
+                }
+            }
+            $this->children = $changedChildren;
+            $this->populateChildren(true);
+            //$this->populateProperties();
+            $this->populatePropertiesUndefined();
+            return;
+        }
 
         if ($this->oldParent) {
             // Move back
