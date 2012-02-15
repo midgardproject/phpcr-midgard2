@@ -227,16 +227,12 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function getNode($relPath)
     {
-        /* Convert to relative path when absolute one has been given */
-        /* FIXME, Remove this part once absolute path is considered invalid
-         * https://github.com/phpcr/phpcr-api-tests/issues/9 */
-        $pos = strpos($relPath, '/');
-        if ($pos === 0) {
-            $relPath = substr($relPath, 1);
-            $pos = strpos($relPath, '/');
-        }
+        if ($relPath[0] == '/') {
+            throw new PathNotFoundException("Node at path '{$relPath}' not found. Expected relative path.");
+        } 
 
         $remainingPath = '';
+        $pos = strpos($relPath, '/');
         if ($pos !== false) {
             $parts = explode('/', $relPath);
             $relPath = array_shift($parts);
