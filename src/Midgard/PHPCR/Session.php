@@ -330,7 +330,9 @@ class Session implements SessionInterface
 
     public function refresh($keepChanges)
     {
-        $this->removeNodes = array();
+        if ($keepChanges === false) {
+            $this->removeNodes = array();
+        }
         $this->getRootNode()->refresh($keepChanges);
     }
     
@@ -361,6 +363,12 @@ class Session implements SessionInterface
 
     public function hasPendingChanges()
     {
+        /* Check if any node should be removed */
+        if (!empty($this->removeNodes)) {
+            return true;
+        }
+
+        /* Check new or modified nodes */
         $root_node = $this->getRootNode();
         $children = $root_node->getNodes();
         foreach ($children as $name => $child) 
