@@ -171,7 +171,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     public function setOffset($offset)
     {
-        $this->getQuerySelectHolder()->getQuerySelect()->set_offfset($offset);
+        $this->getQuerySelectHolder()->getQuerySelect()->set_offset($offset);
     }
   
     public function getStatement()
