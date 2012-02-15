@@ -162,6 +162,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     public function setLimit($limit)
     {
         $this->limit = $limit;
+        $this->getQuerySelectHolder()->getQuerySelect()->set_limit($limit);
     }
 
     public function getLimit()
