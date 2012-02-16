@@ -1055,16 +1055,14 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     }
 
     public function move(Node $dstNode, $dstName)
-    {
-        if (!$this->oldParent) {
-            // Store old parent so we can revert this
-            $this->oldParent = $this->getParent();
-            $this->oldName = $this->getName();
-        }
-
+    {  
+        // Store old parent so we can revert this
+        $this->oldParent = $this->getParent();
+        $this->oldName = $this->getName();
+     
         $this->getSession()->getNodeRegistry()->unregisterPath($this);
 
-        // Unset parent's child
+        // Unset parent's child 
         unset($this->getParent()->children[$this->getName()]);
 
         /* Set new parent */
@@ -1087,6 +1085,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $this->is_modified = true;
             $this->is_new = false;
         }
+        if (empty($this->oldParent->children))
+            $this->oldParent->children = null;
     }
 
     public function save()
@@ -1187,6 +1187,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
         
         if ($keepChanges === false) {
+                           
             /* refresh nodes */
             $changedChildren = array();
             if ($this->children) {
@@ -1229,14 +1230,15 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             }
             $this->populateProperties(); 
 
-            return;
-        }
+            if ($this->oldParent) {
+                /* Move back if node has been moved */
+                $this->move($this->oldParent, $this->oldName);
+                $this->oldParent = null;
+                $this->oldName = null;
+                $this->is_modified = false;
+            }
 
-        if ($this->oldParent) {
-            // Move back
-            $this->move($this->oldParent, $this->oldName);
-            $this->oldParent = null;
-            $this->oldName = null;
+            return;
         }
 
         if ($this->midgardNode->guid) {
