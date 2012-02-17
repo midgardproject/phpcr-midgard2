@@ -1185,7 +1185,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $this->populateChildren(true);
             return;
         }
-        
+
         if ($keepChanges === false) {
                            
             /* refresh nodes */
@@ -1195,16 +1195,21 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                     if ($node->isNew()) {
                         continue;
                     }
+                    $node->refresh($keepChanges);
                     $node->is_removed = false;
                     $node->is_modified = false;
+                    /* child node might be moved back
+                     * and we iterate during child refresh, so check if parent matches */
+                    if ($node->parent != $this) {
+                        continue;
+                    }
                     $changedChildren[$name] = $node;
-                    $node->refresh($keepChanges);
                 }
             }
             $this->children = $changedChildren;
+            $this->populateChildren(true);
 
             /* refresh properties */
-            $this->populateChildren(true);
             if (!empty($this->properties)) {
                 foreach ($this->properties as $name => $p) {
                     if (!isset($this->properties[$name])) {
