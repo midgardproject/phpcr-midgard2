@@ -524,7 +524,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $this->properties[$propertyName] = new Property($this, $propertyName, $definition);
     }
 
-    private function populatePropertiesUndefined()
+    private function populatePropertiesUndefined($keepChanges = true)
     {
         if (!$this->getMidgard2Node()->id) {
             return;
@@ -539,13 +539,24 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                 new midgard_query_value($this->getMidgard2Node()->id)
             )
         );
-        $cg->add_constraint(
-            new midgard_query_constraint(
-                new midgard_query_property('name'),
-                'NOT IN',
-                new midgard_query_value(array_keys($this->properties))
-            )
-        );
+        
+        if ($keepChanges === true) {
+            $cg->add_constraint(
+                new midgard_query_constraint(
+                    new midgard_query_property('name'),
+                    'NOT IN',
+                    new midgard_query_value(array_keys($this->properties))
+                )
+            );
+        } else {
+            $cg->add_constraint(
+                new midgard_query_constraint(
+                    new midgard_query_property('name'),
+                    '<>',
+                    new midgard_query_value("")
+                )
+            );
+        }
 
         /* Add implicit join and order.
          * Remove join, once core issue is fixed: https://github.com/midgardproject/midgard-core/issues/131 */
@@ -568,6 +579,13 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             $crName = NodeMapper::getPHPCRProperty($property->name);
             if (isset($this->properties[$crName])) {
                 $this->properties[$crName]->is_new = false;
+
+                if ($keepChanges === false) { 
+                    $this->properties[$crName]->setValue($property->value);
+                    $this->properties[$crName]->is_modified = false;
+                    continue;
+                }
+
                 continue;
             }
             $this->properties[$crName] = new Property($this, $crName);
@@ -581,7 +599,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
     }
 
-    private function populateProperties()
+    private function populateProperties($keepChanges = true)
     {
         if ($this->contentObject == null) {
             $this->populateContentObject();
@@ -600,7 +618,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         // FIXME: Now MgdSchemas can't define * properties
         // so we special-case nt:unstructured
         if ($this->getPrimaryNodeType()->isNodeType('nt:unstructured')) {
-            $this->populatePropertiesUndefined();
+            $this->populatePropertiesUndefined($keepChanges);
         }
     }
 
@@ -1215,9 +1233,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                     if (!isset($this->properties[$name])) {
                         continue;
                     }
+                    
                     if ($p->is_removed === true)
                         continue;
-                    if ($p->is_new === true || $p->is_modified === true) {
+                    if ($p->is_new === true) { 
                         unset($this->properties[$name]);
                     }
                 }
@@ -1233,7 +1252,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                 }
 
             }
-            $this->populateProperties(); 
+            $this->populateProperties(false); 
 
             if ($this->oldParent) {
                 /* Move back if node has been moved */
