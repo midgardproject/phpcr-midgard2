@@ -1,6 +1,7 @@
 <?php
 
 namespace Midgard\PHPCR\Query\QOM;
+use Midgard\PHPCR\Utils\NodeMapper;
 
 /**
  * {@inheritDoc}
@@ -14,6 +15,17 @@ class DescendantNodeJoinCondition extends ConditionHelper implements \PHPCR\Quer
     {
         $this->descendantSelector = $descendantSelectorName;
         $this->ancestorSelector = $ancestorSelectorName;
+    }
+
+    public function computeQuerySelectConstraints($holder)
+    {
+        parent::computeQuerySelectConstraints($holder);
+        foreach ($this->holder->getSQLQuery()->getSelectors() as $selector) {
+            if ($selector->getSelectorName() == $this->getDescendantSelectorName()) {
+                $nodeTypeName = $selector->getNodeTypeName();
+                $this->holder->setMidgardStorageName(NodeMapper::getMidgardName($nodeTypeName));
+            }
+        }
     }
 
     /**
@@ -61,6 +73,6 @@ class DescendantNodeJoinCondition extends ConditionHelper implements \PHPCR\Quer
      */
     public function getJoinCondition()
     {
-        throw new PHPCR\RepositoryException("Not supported");
+        throw new \PHPCR\RepositoryException("Not supported");
     }
 }

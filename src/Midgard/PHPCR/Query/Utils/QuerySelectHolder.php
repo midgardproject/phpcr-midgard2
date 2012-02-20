@@ -16,6 +16,11 @@ class QuerySelectholder
         $this->query = $query;
     }
 
+    public function getSQLQuery()
+    {
+        return $this->query;
+    }
+
     public function setMidgardStorageName($name)
     {
         $this->midgardStorageName = $name;
