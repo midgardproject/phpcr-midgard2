@@ -272,6 +272,7 @@ class Session implements SessionInterface
                 $node->removeMidgard2Node();
             } catch (\Exception $e) {
                 $removeAfter[] = $node;
+                $t->rollback();
             }
         }
 
