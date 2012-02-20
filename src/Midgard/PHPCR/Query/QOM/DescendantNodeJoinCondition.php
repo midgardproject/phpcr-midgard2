@@ -26,6 +26,12 @@ class DescendantNodeJoinCondition extends ConditionHelper implements \PHPCR\Quer
                 $this->holder->setMidgardStorageName(NodeMapper::getMidgardName($nodeTypeName));
             }
         }
+
+        /* TODO
+         * Compute correct node type name.
+         *
+         * Before QuerySelectData is available in release, we do set descendant node type asdefault one.
+         * This one should be compared with defined constraints and columns */
     }
 
     /**
