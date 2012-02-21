@@ -29,8 +29,7 @@ class Join extends QuerySelectHelper implements \PHPCR\Query\QOM\JoinInterface
     public function computeQuerySelectConstraints($holder)
     {
         parent::computeQuerySelectConstraints($holder);
-        /* FIXME */
-        //echo get_class($this->getJoinCondition());
+        $this->getJoinCondition()->computeQuerySelectConstraints($holder);
         if ($this->getJoinCondition() instanceOf SameNodeJoinCondition)
             return;
 

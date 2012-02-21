@@ -59,7 +59,7 @@ class NodeRegistry
 
     public function unregisterPath(Node $node)
     {
-        $path = $node->getPath();
+        $path = $node->getPathUnchecked();
         if (isset($this->byPath[$path])) {
             unset($this->byPath[$path]);
         }
