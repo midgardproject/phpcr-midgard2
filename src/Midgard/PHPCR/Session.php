@@ -24,6 +24,8 @@ class Session implements SessionInterface
     private $credentials = null;
     private $isAnonymous = true;
     private $nodeRegistry = null;
+    private $name = null;
+    private $sessionTracker = null;
 
     public function __construct(midgard_connection $connection, Repository $repository, midgard_user $user = null, midgard_object $rootObject, CredentialsInterface $credentials = null)
     {
@@ -34,8 +36,19 @@ class Session implements SessionInterface
         if ($credentials && !($credentials instanceof GuestCredentials)) {
             $this->isAnonymous = false;
         }
-
+        $this->name = uniqid();
+        $this->sessionTracker = new SessionTracker($this);
         $this->nodeRegistry = new NodeRegistry($rootObject, $this);
+    }
+
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    public function getSessionTracker()
+    {
+        return $this->sessionTracker;
     }
 
     public function getNodeRegistry()
@@ -264,6 +277,9 @@ class Session implements SessionInterface
         if ($t->inTransaction() == false) {
             $t->begin();
         }
+
+        $tracker = $this->getSessionTracker();
+        $tracker->removeNodes();
 
         // Delete all removed nodes that don't have hard refs
         $removeAfter = array();

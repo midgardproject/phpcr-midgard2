@@ -24,6 +24,7 @@ abstract class Item implements ItemInterface
     protected $is_new = false;
     protected $is_modified = false;
     protected $is_removed = false;
+    protected $is_purged = false;
     protected $isRoot = false;
     protected $contentObject = null;
     protected $midgardNode = null;
@@ -90,6 +91,7 @@ abstract class Item implements ItemInterface
             $this->is_new = true;
         }
         $this->midgardNode = $node;
+        $this->session->getSessionTracker()->trackNode($node);
     }
 
     protected function refreshMidgard2Node()
@@ -279,6 +281,15 @@ abstract class Item implements ItemInterface
 
     public function getPath()
     {
+        if ($this->is_removed) {
+            throw new \PHPCR\RepositoryException("Can not get path of removed item");
+        }
+        
+        return $this->getPathUnchecked();
+    }
+
+    public function getPathUnchecked()
+    {
         if (!$this->parent) {
             $this->populateParent();
             if (!$this->parent) {
@@ -292,7 +303,7 @@ abstract class Item implements ItemInterface
         }
         return "{$parentPath}/{$this->getName()}";
     }
-    
+
     public function getName()
     {
         if (!$this->parent) {
@@ -408,6 +419,7 @@ abstract class Item implements ItemInterface
 
     public function refresh($keepChanges)
     {
+        $this->session->getSessionTracker()->removeNodes();
         if ($keepChanges) {
             return;
         }

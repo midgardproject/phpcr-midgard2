@@ -33,7 +33,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     protected $removeProperties = array();
     protected $oldParent = null;
     protected $oldName = null;
-    private $is_purged = false;
 
     public function __construct(midgard_node $midgardNode = null, Node $parent = null, Session $session)
     {
@@ -1175,7 +1174,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function refresh($keepChanges)
     {
-        if ($this->is_purged) {
+        //$this->session->getSessionTracker()->removeNodes();
+        if ($this->is_purged || $this->is_removed) {
             return;
         }
 
@@ -1328,6 +1328,13 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $this->is_removed = true;
+
+        foreach ($this->properties as $n => $p) {
+            if (!empty($p)) {
+                $p->is_removed = true;
+            }
+        }
+
         $this->session->removeNode($this);
     }
 
