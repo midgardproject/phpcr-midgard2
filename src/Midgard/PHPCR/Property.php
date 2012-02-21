@@ -203,6 +203,10 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     public function getValue()
     {
+        if ($this->is_purged === true || $this->is_removed === true) {
+            throw new \PHPCR\RepositoryException("Can not get value of purged property.");
+        }
+
         $type = $this->getType();
         switch ($type) 
         {
@@ -651,16 +655,14 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     public function refresh($keepChanges)
     {
-        if ($keepChanges) {
-            return;
-        }
-
         if ($this->is_removed) {
-            throw new InvalidItemStateException("Cannot refresh removed property " . $this->getPath());
+            throw new InvalidItemStateException("Cannot refresh removed property " . $this->getPathUnchecked());
         }
 
-        $this->is_removed = false;
-        $this->value = null;
+        if ($keepChanges === false) {
+            $this->is_removed = false;
+            $this->value = null;
+        }
 
         parent::refresh($keepChanges);
     }
@@ -680,6 +682,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
                 $propertyObject->purge_attachments(true);
                 $propertyObject->purge();
             }
+            $this->is_purged = true;
             return;
         }
         if (!$object->guid) {
@@ -687,6 +690,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         }
         $object->purge_attachments(true);
         $object->purge();
+        $this->is_purged = true;
     }
 
     public function remove()

@@ -74,6 +74,7 @@ class Repository implements RepositoryInterface
 
     protected $connection = null;
     protected $autoinit = false;
+    protected $sessionPool = array();
 
     public function __construct(array $parameters = null)
     {
@@ -95,8 +96,20 @@ class Repository implements RepositoryInterface
         }
 
         $rootObject = $this->getRootObject();
+        
+        $session = new Session($this->connection, $this, $user, $rootObject, $credentials);
+        $this->sessionPool[] = $session;
 
-        return new Session($this->connection, $this, $user, $rootObject, $credentials);
+        return $session;
+    }
+
+    public function getSessions()
+    {
+        $sessions = array();
+        foreach ($this->sessionPool as $s) {
+            $sessions[$s->getName()] = $s;
+        }
+        return $sessions;
     }
 
     private function prepareConfigSQLite(midgard_config $config, array $parameters)

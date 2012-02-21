@@ -21,6 +21,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     protected $columns = null;
     protected $nodeTypeName = null;
     protected $limit = 0;
+    protected $offset = -1;
     
     public function __construct (\Midgard\PHPCR\Session $session, $statement = null, \PHPCR\Query\QOM\SourceInterface $source = null,
             \PHPCR\Query\QOM\ConstraintInterface $constraint = null, array $orderings = null, array $columns = null)
@@ -147,6 +148,13 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         $qs = $holder->getQuerySelect();
         $qs->set_constraint($holder->getDefaultConstraintGroup());
 
+        /* Ugly hack to satisfy JCR Query.
+         * We use SQL so offset without limit is RDBM provider specific.
+         * In SQLite you can set negative limit which is invalid in MySQL for example. */
+        if ($this->offset > 0 && $this->limit == 0) {
+            $this->setLimit(9999);
+        }
+
         //\midgard_connection::get_instance()->set_loglevel("debug");
         //\midgard_error::debug("EXECUTE QUERY : " . $this->statement . "");
         $qs->execute();
@@ -162,6 +170,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     public function setLimit($limit)
     {
         $this->limit = $limit;
+        $this->getQuerySelectHolder()->getQuerySelect()->set_limit($limit);
     }
 
     public function getLimit()
@@ -171,7 +180,8 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     public function setOffset($offset)
     {
-        $this->getQuerySelectHolder()->getQuerySelect()->set_offfset($offset);
+        $this->offset = $offset;
+        $this->getQuerySelectHolder()->getQuerySelect()->set_offset($offset);
     }
   
     public function getStatement()

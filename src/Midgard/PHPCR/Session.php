@@ -24,6 +24,8 @@ class Session implements SessionInterface
     private $credentials = null;
     private $isAnonymous = true;
     private $nodeRegistry = null;
+    private $name = null;
+    private $sessionTracker = null;
 
     public function __construct(midgard_connection $connection, Repository $repository, midgard_user $user = null, midgard_object $rootObject, CredentialsInterface $credentials = null)
     {
@@ -34,8 +36,19 @@ class Session implements SessionInterface
         if ($credentials && !($credentials instanceof GuestCredentials)) {
             $this->isAnonymous = false;
         }
-
+        $this->name = uniqid();
+        $this->sessionTracker = new SessionTracker($this);
         $this->nodeRegistry = new NodeRegistry($rootObject, $this);
+    }
+
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    public function getSessionTracker()
+    {
+        return $this->sessionTracker;
     }
 
     public function getNodeRegistry()
@@ -265,6 +278,9 @@ class Session implements SessionInterface
             $t->begin();
         }
 
+        $tracker = $this->getSessionTracker();
+        $tracker->removeNodes();
+
         // Delete all removed nodes that don't have hard refs
         $removeAfter = array();
         foreach ($this->removeNodes as $node) {
@@ -272,6 +288,7 @@ class Session implements SessionInterface
                 $node->removeMidgard2Node();
             } catch (\Exception $e) {
                 $removeAfter[] = $node;
+                $t->rollback();
             }
         }
 
@@ -330,7 +347,9 @@ class Session implements SessionInterface
 
     public function refresh($keepChanges)
     {
-        $this->removeNodes = array();
+        if ($keepChanges === false) {
+            $this->removeNodes = array();
+        }
         $this->getRootNode()->refresh($keepChanges);
     }
     
@@ -361,6 +380,12 @@ class Session implements SessionInterface
 
     public function hasPendingChanges()
     {
+        /* Check if any node should be removed */
+        if (!empty($this->removeNodes)) {
+            return true;
+        }
+
+        /* Check new or modified nodes */
         $root_node = $this->getRootNode();
         $children = $root_node->getNodes();
         foreach ($children as $name => $child) 
