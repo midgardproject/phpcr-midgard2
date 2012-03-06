@@ -24,6 +24,9 @@
         "phpcr/phpcr": ">=2.1.0-beta3",
         "phpcr/phpcr-utils": "*"
     },
+    "provide": {
+        "phpcr/phpcr-implementation": "1.0"
+    },
     "autoload": {
         "psr-0": {
             "Midgard\\PHPCR": "src"
