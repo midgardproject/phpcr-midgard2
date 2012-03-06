@@ -25,7 +25,7 @@
         "phpcr/phpcr-utils": "*"
     },
     "provide": {
-        "phpcr/phpcr-implementation": "1.0"
+        "phpcr/phpcr-implementation": "2.1.0-beta3"
     },
     "autoload": {
         "psr-0": {
