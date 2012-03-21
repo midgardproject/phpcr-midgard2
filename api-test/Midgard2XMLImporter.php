@@ -282,12 +282,11 @@ class Midgard2XMLImporter extends \DomDocument
         $mgd = \midgard_connection::get_instance();
         $ws = new \midgard_workspace();
         $wmanager = new \midgard_workspace_manager($mgd);
-        $workspacePath = "/MidgardRootWorkspace/" . $workspaceName;
-        if (!$wmanager->path_exists($workspacePath)) {
-            $wsCtx = new MidgardWorkspaceContext();
-            $wmanager->create_workspace($wsCtx, $workspacePath);
+        if (!$wmanager->path_exists($workspaceName)) {
+            $wmanager->create_workspace($ws, '');
+        } else {
+            $wmanager->get_workspace_by_path($ws, $workspaceName);
         }
-        $wmanager->get_workspace_by_path($ws, $workspacePath);
         $mgd->enable_workspace(true);
         $mgd->set_workspace($ws);
 

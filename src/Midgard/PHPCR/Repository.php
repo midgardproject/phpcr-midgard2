@@ -13,7 +13,6 @@ use midgard_user;
 use midgard_node;
 use midgard_workspace;
 use midgard_workspace_manager;
-use \MidgardWorkspaceContext;
 use midgard_error_exception;
 use ReflectionExtension;
 use ReflectionClass;
@@ -228,21 +227,20 @@ class Repository implements RepositoryInterface
             return;
         }
 
-        $midgardWsPath = "/MidgardRootWorkspace/" . $workspaceName;
         $ws = new midgard_workspace();
         $wmanager = new midgard_workspace_manager($this->connection);
-        if (!$wmanager->path_exists($midgardWsPath)) {
+        if (!$wmanager->path_exists($workspaceName)) {
             if ($workspaceName != 'default' || !$this->autoinit) {
                 throw new NoSuchWorkspaceException("Workspace {$workspaceName} not defined");
             }
-            //$ws->name = $workspaceName;
-            $wsCtx = new MidgardWorkspaceContext();
-            $wmanager->create_workspace($wsCtx, $midgardWsPath);
+            $ws->name = $workspaceName;
+            $wmanager->create_workspace($ws, '');
+        } else {
+            $wmanager->get_workspace_by_path($ws, $workspaceName);   
         }
-        $wmanager->get_workspace_by_path($ws, $midgardWsPath);   
-      
+
         $this->connection->enable_workspace(true);
-        $this->connection->set_workspace($ws); 
+        $this->connection->set_workspace($ws);
     }
 
     private function midgard2InitDb($connection)
