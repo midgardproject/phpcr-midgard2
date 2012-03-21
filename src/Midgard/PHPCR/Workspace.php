@@ -1,6 +1,17 @@
 <?php
 namespace Midgard\PHPCR;
 
+use \MidgardWorkspace;
+use \MidgardWorkspaceContext;
+use \MidgardWorkspaceManager;
+use \MidgardConnection;
+use \MidgardQueryStorage;
+use \MidgardQuerySelect;
+use \MidgardQueryConstraint;
+use \MidgardQueryValue;
+use \MidgardQueryProperty;
+use \MidgardTransaction;
+
 class Workspace implements \PHPCR\WorkspaceInterface
 {
     protected $session = null;
@@ -101,7 +112,32 @@ class Workspace implements \PHPCR\WorkspaceInterface
 
     public function getAccessibleWorkspaceNames()
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        $storage = new MidgardQueryStorage("MidgardWorkspace");
+        $qs = new MidgardQuerySelect($storage);
+        $qs->toggle_readonly(false);
+        $qs->set_constraint(
+            new \MidgardQueryConstraint(
+                new \MidgardQueryProperty('up'),
+                '=',
+                new \MidgardQueryValue(0)
+            )
+        );
+        try {
+            $qs->execute();
+        } catch (\Exception $e) {
+            throw new \PHPCR\RepositoryException($e->getMessage());
+        }
+        $objects = $qs->list_objects();
+
+        $ret = array();
+
+        foreach ($objects as $o) {
+            if (strpos($o->name, '__PURGED') == false) {
+                $ret[] = $o->name;
+            }
+        }
+
+        return $ret;
     }
 
     public function getImportContentHandler($parentAbsPath, $uuidBehavior)
@@ -114,13 +150,120 @@ class Workspace implements \PHPCR\WorkspaceInterface
         throw new \PHPCR\RepositoryException("Not supported");        
     }
 
-    public function createWorkspace($name, $srcWorkspace = NULL)
+    private function cloneWorkspace($type, $oldParent, $newParent, $srcWs, $dstWs)
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException("Not supported");        
+        /* Get connection and set source workspace */
+        $mgd = MidgardConnection::get_instance();
+        $mgd->set_workspace($srcWs);
+
+        /* Query objects in given workspace */
+        $storage = new MidgardQueryStorage($type);
+        $qs = new MidgardQuerySelect($storage);
+        $qs->toggle_readonly(false);
+        $qs->set_constraint(
+            new \MidgardQueryConstraint(
+                new \MidgardQueryProperty('parent'),
+                '=',
+                new \MidgardQueryValue($oldParent)
+            )
+        );
+        $qs->execute();
+        $objects = $qs->list_objects();
+
+        foreach ($objects as $o) {
+            /* Set new parent, new workspace and update object */
+            $mgd->set_workspace($dstWs);
+            
+            $oldID = $o->id;
+            $o->parent = $newParent;
+            $o->update();
+            
+            /* Throw base exception on failure */
+            if ($mgd->get_error_string() != "MGD_ERR_OK") {
+                throw new \Exception($mgd->get_error_string());
+            }
+
+            /* if this is a node, update child objects  */
+            if ($type == 'midgard_node') {
+                $this->cloneWorkspace('midgard_node', $oldID, $o->id, $srcWs, $dstWs);
+                $this->cloneWorkspace('midgard_node_property', $oldID, $o->id, $srcWs, $dstWs);
+            }
+        }
+    }
+
+    public function createWorkspace($name, $srcWorkspace = null)
+    {
+        $mgd = MidgardConnection::get_instance();
+        $srcWs = null;
+        $wmanager = new MidgardWorkspaceManager($mgd);
+       
+        if ($srcWorkspace != null) {
+            $srcWs = new MidgardWorkspace();
+            try {
+                $wmanager->get_workspace_by_path($srcWs, $srcWorkspace);
+            } catch (\Exception $e) {
+                throw new \PHPCR\NoSuchWorkspaceException($e->getMessage() . " Workspace {$srcWorkspace} doesn't exist");
+            }
+        }
+
+        if ($wmanager->path_exists($name)) {
+            throw new \PHPCR\RepositoryException("Can not create workspace. {$name} already exists.");
+        }
+
+        $dstWs = new MidgardWorkspace();
+        $dstWs->name = $name;
+        $wmanager->create_workspace($dstWs, '');
+
+        if ($srcWs != null) {
+            $tr = new MidgardTransaction();
+            $tr->begin(); 
+            $this->cloneWorkspace('midgard_node', 0, 0, $srcWs, $dstWs);
+            $tr->commit();
+
+            /* Fallback to previous workspace */
+            $mgd->set_workspace($srcWs);
+        }
+    }
+
+    private function purgeObjects($type)
+    {
+        $storage = new MidgardQueryStorage($type);
+        $qs = new MidgardQuerySelect($storage);
+        $qs->toggle_readonly(false);
+        $qs->execute();
+        $objects = $qs->list_objects();
+
+        foreach ($objects as $o) {
+            $o->purge(false);
+        }
+
     }
 
     public function deleteWorkspace($name)
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException("Not supported");        
+        $mgd = MidgardConnection::get_instance();
+        $currentWs = $mgd->get_workspace();
+        $wmanager = new MidgardWorkspaceManager($mgd);
+
+        $delWs = new MidgardWorkspace();
+        try {
+            $wmanager->get_workspace_by_path($delWs, $name);
+        } catch (\Exception $e) {
+            throw new \PHPCR\NoSuchWorkspaceException($e->getMessage() . " Workspace {$name} doesn't exist");
+        }
+
+        /* Set the global workspace scope */
+        $mgd->set_workspace($delWs);
+
+        /* Purge all objects we use in phpcr */
+        $this->purgeObjects("midgard_attachment");
+        $this->purgeObjects("midgard_node_property");
+        $this->purgeObjects("midgard_node");
+
+        /* midgard core doesn't support workspace purge, so try workaround */
+        $delWs->name .= "__PURGED";
+        $wmanager->update_workspace($delWs);
+
+        $mgd->set_workspace($currentWs);
     }
 }
