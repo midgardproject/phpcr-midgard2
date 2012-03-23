@@ -14,16 +14,6 @@ class XMLSystemViewImporter extends XMLImporter
         $this->node = $node;
     }
 
-    private function getContentNode()
-    {
-
-    }
-
-    private function setProperties()
-    {
-
-    }
-
     private function getPropertyValue(\DOMElement $property)
     {
         $typeElement = $property->getElementsByTagNameNS($this->svNS, 'value');
@@ -102,6 +92,9 @@ class XMLSystemViewImporter extends XMLImporter
 
         /* Add properties */
         $this->addProperties($element, $newNode);
+
+        /* Register node explicitly, as we add properties after node is added to session */
+        $this->session->getNodeRegistry()->registerNode($newNode);
 
         $childElements = $element->getElementsByTagNameNS($this->svNS, 'node');
         foreach ($childElements as $child)
