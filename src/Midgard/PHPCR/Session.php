@@ -463,12 +463,9 @@ class Session implements SessionInterface
             /* DocumentView xml */
             $importer = new XMLDocumentViewImporter($node, $doc, $uuidBehavior);
         }
-        try {
-            $importer->import();
-        } catch (Exception $e) {
-            /* Do some validation, and throw proper exception */
-            throw new \Exception ($e->getMessage());    
-        }
+
+        $importer->import();
+        /* Do some validation, and throw proper exception */
     }
     
     public function exportSystemView($absPath, $out, $skipBinary, $noRecurse)
