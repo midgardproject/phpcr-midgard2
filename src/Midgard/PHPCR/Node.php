@@ -903,6 +903,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         if ($this->hasProperty('jcr:mixinTypes')) {
             $prop = $this->getProperty('jcr:mixinTypes');
+            /* Do not add mixin if it's already added */
+            if (in_array($mixinName, $prop->getValue())) {
+                return;
+            }
             $prop->addValue($mixinName);
         } else {
             $this->setProperty('jcr:mixinTypes', array($mixinName));
