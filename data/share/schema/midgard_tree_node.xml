@@ -60,4 +60,28 @@
 		</property>
 	</type>
 
+	<type name="mix_title_abstract" metadata="false" extends="mix_title">
+	</type>
+
+	<type name="mix_created_abstract" metadata="false" extends="mix_created">
+	</type>
+
+	<type name="mix_lastModified_abstract" metadata="false" extends="mix_lastModified">
+	</type>
+
+	<type name="mix_language_abstract" metadata="false" extends="mix_language">
+	</type>
+
+	<type name="mix_mimeType_abstract" metadata="false" extends="mix_mimeType">
+	</type>
+
+	<type name="mix_etag_abstract" metadata="false" extends="mix_etag">
+	</type>
+
+	<type name="mix_referencable_abstract" metadata="false" extends="mix_referenceable">
+	</type>
+
+	<type name="mix_shareable_abstract" metadata="false" extends="mix_shareable">
+	</type>
+
 </Schema>

@@ -5,9 +5,9 @@ use Midgard\PHPCR\Utils\NodeMapper;
 use PHPCR\NodeType\NodeTypeDefinitionInterface;
 use PHPCR\Version\OnParentVersionAction;
 use ReflectionClass;
-use midgard_reflector_object;
-use midgard_reflection_property;
-use midgard_reflection_class;
+use \midgard_reflector_object;
+use \midgard_reflection_property;
+use \midgard_reflection_class;
 
 class NodeTypeDefinition implements NodeTypeDefinitionInterface
 {
@@ -145,7 +145,13 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
 
         $midgardName = NodeMapper::getMidgardName($this->name);
         $properties = midgard_reflector_object::list_defined_properties($midgardName);
-        $reflector = $this->getPropertyReflector();
+        $reflector = $this->getPropertyReflector($midgardName);
+        if ($reflector == null) {
+            /* Try mixin derived abstract */
+            if (class_exists($midgardName . "_abstract")) {
+                $reflector = new midgard_reflection_property($midgardName . "_abstract");
+            }
+        }
         foreach ($properties as $property => $value) {
             if (in_array($property, $this->midgardInternalProps)) {
                 continue;
@@ -159,13 +165,12 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
         return $this->propertyDefinitions;
     }
 
-    private function getPropertyReflector()
+    private function getPropertyReflector($midgardName)
     {
-       $midgardName = NodeMapper::getMidgardName($this->name);
         if (is_subclass_of($midgardName, 'MidgardDBObject')) {
             return new midgard_reflection_property($midgardName);
         }
-        
+
         // Currently mixin types are not reflectable. Get reflector
         // from a type using mixin
         $nodeTypes = $this->nodeTypeManager->getAllNodeTypes();

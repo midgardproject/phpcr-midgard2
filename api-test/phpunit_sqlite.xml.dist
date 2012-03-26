@@ -14,7 +14,7 @@
         <var name="midgard2.configuration.db.dir" value="/tmp" />
         <var name="midgard2.configuration.db.init" value="true" />
         <var name="midgard2.configuration.blobdir" value="/tmp/phpcr-blobs" />
-        <!--<var name="midgard2.configuration.loglevel" value="debug" />-->
+        <var name="midgard2.configuration.loglevel" value="warn" />
         <var name="phpcr.user" value="admin" />
         <var name="phpcr.pass" value="password" />
     </php>

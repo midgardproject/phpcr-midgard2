@@ -11,6 +11,7 @@ use midgard_connection;
 use midgard_object;
 use midgard_user;
 use Exception;
+use DomDocument;
 
 class Session implements SessionInterface
 {
@@ -447,7 +448,24 @@ class Session implements SessionInterface
     
     public function importXML($parentAbsPath, $in, $uuidBehavior)
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        $doc = new DomDocument('1.0', 'UTF-8');
+        if ($doc->load($in) === false) {
+            throw new \PHPCR\InvalidSerializedDataException("Can not parse given '{$in}' xml file");
+        }
+
+        /* PathNotFoundException may be thrown */
+        $node = $this->getNode($parentAbsPath);
+
+        if ($doc->documentElement->localName == 'node') {
+            /* SystemView xml */
+            $importer = new XMLSystemViewImporter($node, $doc, $uuidBehavior);
+        } else {
+            /* DocumentView xml */
+            $importer = new XMLDocumentViewImporter($node, $doc, $uuidBehavior);
+        }
+
+        $importer->import();
+        /* Do some validation, and throw proper exception */
     }
     
     public function exportSystemView($absPath, $out, $skipBinary, $noRecurse)
