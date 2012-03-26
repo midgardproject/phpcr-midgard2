@@ -138,7 +138,7 @@ class Midgard2ImportExport implements PHPCR\Test\FixtureLoaderInterface
         }
         catch (Exception $e) {
             $transaction->rollback();
-            return false;
+            throw $e;
         }
         $transaction->commit();
     
