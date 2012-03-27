@@ -25,6 +25,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     private $value = null;
     private $resources = array();
     private $propertyResources = array();
+    protected $PID = null;
 
     public function __construct(Node $node, $propertyName, PropertyDefinitionInterface $definition = null, $type = null)
     {
@@ -39,6 +40,8 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         } elseif ($type) {
             $this->type = $type;
         }
+
+        $this->PID = microtime();
     }
 
     protected function populateParent()
@@ -123,6 +126,11 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         }
 
         if ($type) {
+            if ($this->definition != null) {
+                if ($type != $this->definition->getRequiredType()) {
+                    throw new \PHPCR\ValueFormatException("Property " . $this->getName() . " registered with different type");
+                }
+            }
             $this->type = $type;
         } elseif (is_null($this->type)) {
             $this->type = PropertyType::determineType(is_array($value) ? reset($value) : $value);
@@ -151,7 +159,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             }
         }
 
-        $normalizedValue = $this->normalizePropertyValue($value, $type);
+        $normalizedValue = $this->normalizePropertyValue($value, $this->type);
         if ($this->isMultiple() && !is_array($normalizedValue)) {
             $normalizedValue = array($normalizedValue);
         }
@@ -159,11 +167,10 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         if ($this->getType() == PropertyType::BINARY) {
             $this->setBinaryValue($value);
         } else {
-            if ($this->getType() != PropertyType::DATE) {
-                $this->value = $normalizedValue;
-            }
+            $this->value = $normalizedValue;
             $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
         }
+
         $this->is_modified = true;
         $this->parent->is_modified = true;
     }
