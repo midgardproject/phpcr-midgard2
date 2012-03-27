@@ -11,6 +11,8 @@ use \MidgardQueryConstraint;
 use \MidgardQueryValue;
 use \MidgardQueryProperty;
 use \MidgardTransaction;
+use \midgard_node;
+use \PHPCR\PropertyType;
 
 class Workspace implements \PHPCR\WorkspaceInterface
 {
@@ -46,9 +48,77 @@ class Workspace implements \PHPCR\WorkspaceInterface
         return $this->midgard_workspace->name;
     }
 
+    private function recursiveCopy($srcNode, $dstNode)
+    {
+        $newNode = $dstNode->addNode($srcNode->getName(), $srcNode->getPrimaryNodeType()->getName());
+        /* Copy properties */
+        foreach ($srcNode->getProperties() as $name => $value) {
+            $type = $srcNode->getProperty($name)->getType();
+            if ($type == PropertyType::NAME) {
+                $value = $srcNode->getProperty($name)->getString();
+            } else {
+                $value = $srcNode->getPropertyValue($name, $type);
+            }
+            if (is_array($value)) {
+                foreach ($value as $v) {
+                    $newNode->setProperty($name, $v, $type);
+                }
+            } else {
+                $newNode->setProperty($name, $value, $type);
+            }
+        }
+
+        /* Register node as properties has been added after registration */
+        $this->session->getNodeRegistry()->registerNode($newNode);
+
+        /* Copy all children nodes */
+        $children = $srcNode->getNodes();
+        foreach ($children as $node) {
+            $this->recursiveCopy($node, $newNode);
+        }
+    }
+
     public function copy($srcAbsPath, $destAbsPath, $srcWorkspace = NULL)
     {
-        throw new \PHPCR\RepositoryException("Not supported");        
+        $mgd = MidgardConnection::get_instance();
+        $srcWs = null;
+        $wmanager = new MidgardWorkspaceManager($mgd);
+        /*Get current workspace */
+        $currentWs = $mgd->get_workspace();
+       
+        if ($srcWorkspace != null) {
+            $srcWs = new MidgardWorkspace();
+            try {
+                $wmanager->get_workspace_by_path($srcWs, $srcWorkspace);
+            } catch (\Exception $e) {
+                throw new \PHPCR\NoSuchWorkspaceException($e->getMessage() . " Workspace {$srcWorkspace} doesn't exist");
+            }
+            $mgd->set_workspace($srcWs);
+        }
+    
+        /* Get source node */     
+        $srcNode = $this->session->getNode($srcAbsPath);
+
+        /* Get destination node, if it doesn't exist, create */
+        try {
+            $dstNode = $this->session->getNode($destAbsPath);
+        } catch (\PHPCR\PathNotFoundException $e) {
+            $pos = strrpos($destAbsPath, "/");
+            $node = $this->session->getNode(substr($destAbsPath, 0, $pos));
+            $dstNode = $node->addNode(substr($destAbsPath, $pos+1));
+        }
+
+        $srcMgdObj = $srcNode->getMidgard2ContentObject();
+        $dstMgdObj = $dstNode->getMidgard2ContentObject();
+
+        if ($srcWorkspace == null) {
+            $this->recursiveCopy($srcNode, $dstNode);
+        } else {
+            $this->cloneWorkspace('midgard_node', $srcMgdObj->id, $dstMgdObj->id, $srcWs, $currentWs);
+        }
+
+        /* Fallback to previous workspace */
+        $mgd->set_workspace($currentWs);
     }
 
     public function cloneFrom($srcWorkspace, $srcAbsPath, $destAbsPath, $removeExisting)
@@ -78,7 +148,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
 
     public function getTransactionManager()
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException("Transactions not supported");
+        return $this->session->getTransactionManager();
     }
 
     public function getNamespaceRegistry()
@@ -215,11 +285,7 @@ class Workspace implements \PHPCR\WorkspaceInterface
         $wmanager->create_workspace($dstWs, '');
 
         if ($srcWs != null) {
-            $tr = new MidgardTransaction();
-            $tr->begin(); 
             $this->cloneWorkspace('midgard_node', 0, 0, $srcWs, $dstWs);
-            $tr->commit();
-
             /* Fallback to previous workspace */
             $mgd->set_workspace($srcWs);
         }
