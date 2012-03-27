@@ -6,6 +6,7 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     protected $unsupportedChapters = array(
         // Features we don't support in the Midgard provider
         'Versioning',
+        'Transactions',
         'PermissionsAndCapabilities',
         'Locking'
     );
