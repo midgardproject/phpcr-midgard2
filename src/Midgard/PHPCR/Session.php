@@ -27,6 +27,7 @@ class Session implements SessionInterface
     private $nodeRegistry = null;
     private $name = null;
     private $sessionTracker = null;
+    private $outsideTransaction = false;
 
     public function __construct(midgard_connection $connection, Repository $repository, midgard_user $user = null, midgard_object $rootObject, CredentialsInterface $credentials = null)
     {
@@ -64,10 +65,7 @@ class Session implements SessionInterface
    
     public function getTransactionManager()
     {
-        if ($this->transaction == null) {
-            $this->transaction = new \Midgard\PHPCR\Transaction\Transaction();
-        }
-        return $this->transaction;
+        return $this->repository->getTransactionManager();
     }
 
     public function getUserID()
@@ -275,8 +273,10 @@ class Session implements SessionInterface
         // TODO
         
         $t = $this->getTransactionManager();
-        if ($t->inTransaction() == false) {
+        if ($t->inTransaction() == false && $this->outsideTransaction == false) {
             $t->begin();
+        } else {
+            $this->outsideTransaction = true;
         }
 
         $tracker = $this->getSessionTracker();
@@ -340,7 +340,9 @@ class Session implements SessionInterface
             throw $e;
         }
 
-        $t->commit();
+        if ($this->outsideTransaction == false) {
+            $t->commit();
+        }
 
         //NoSuchNodeTypeException
         //ReferentialIntegrityException
