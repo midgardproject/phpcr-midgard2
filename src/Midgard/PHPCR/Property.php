@@ -159,6 +159,9 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             }
         }
 
+        if ($this->getName() == 'propDate') {
+            //echo "VALUE IS $value";
+        }
         $normalizedValue = $this->normalizePropertyValue($value, $this->type);
         if ($this->isMultiple() && !is_array($normalizedValue)) {
             $normalizedValue = array($normalizedValue);
@@ -166,6 +169,9 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
         if ($this->getType() == PropertyType::BINARY) {
             $this->setBinaryValue($value);
+        } else if ($this->getType() == PropertyType::DATE) {
+            $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
+            $this->value = $value;
         } else {
             $this->value = $normalizedValue;
             $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
