@@ -75,6 +75,7 @@ class Repository implements RepositoryInterface
     protected $connection = null;
     protected $autoinit = false;
     protected $sessionPool = array();
+    protected $transaction = null;
 
     public function __construct(array $parameters = null)
     {
@@ -85,6 +86,14 @@ class Repository implements RepositoryInterface
         }
 
         $this->connection = $this->midgard2Connect($parameters);
+    }
+
+    public function getTransactionManager() 
+    {
+        if ($this->transaction == null) {
+            $this->transaction = Transaction\Transaction::getInstance();
+        }
+        return $this->transaction;
     }
 
     public function login(CredentialsInterface $credentials = null, $workspaceName = null)

@@ -130,18 +130,16 @@ class Midgard2ImportExport implements PHPCR\Test\FixtureLoaderInterface
 
         $transaction = new midgard_transaction ();
         $transaction->begin();
-        self::cleanup(); 
-
-        $importer = new Midgard2XMLImporter($fixture);
         try {
+            self::cleanup(); 
+            $importer = new Midgard2XMLImporter($fixture);
             $importer->execute();
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             $transaction->rollback();
             throw $e;
         }
+
         $transaction->commit();
-    
         return true;
     }
 

@@ -65,10 +65,7 @@ class Session implements SessionInterface
    
     public function getTransactionManager()
     {
-        if ($this->transaction == null) {
-            $this->transaction = Transaction\Transaction::getInstance();
-        }
-        return $this->transaction;
+        return $this->repository->getTransactionManager();
     }
 
     public function getUserID()
