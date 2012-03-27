@@ -16,7 +16,7 @@ class Transaction implements UserTransactionInterface
         $this->midgardTransaction = new midgard_transaction();
     }
 
-    public function getInstance()
+    public static function getInstance()
     {
         if (self::$instance == null) {
             self::$instance = new Transaction();
