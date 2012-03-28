@@ -29,12 +29,17 @@ class Transaction implements UserTransactionInterface
         if ($this->inTransaction) {
             return;
         }
-        $this->midgardTransaction->begin();
+        if ($this->midgardTransaction->begin() == false) {
+            return;
+        }
         $this->inTransaction = true;
     }
 
     public function commit()
     { 
+        if ($this->inTransaction == false) {
+            return;
+        }
         $this->midgardTransaction->commit();
         $this->inTransaction = false;
     }
