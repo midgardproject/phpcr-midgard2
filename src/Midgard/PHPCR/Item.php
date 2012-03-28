@@ -297,7 +297,7 @@ abstract class Item implements ItemInterface
                 return '/';
             }
         }
-        $parentPath = $this->parent->getPath();
+        $parentPath = $this->parent->getPathUnchecked();
         if ($parentPath == '/') {
             return "/{$this->getName()}";
         }
