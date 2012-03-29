@@ -1142,7 +1142,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                 $error = \midgard_connection::get_instance()->get_error();
                 if ($error == \MGD_ERR_DUPLICATE) {
                     throw new \PHPCR\ItemExistsException('Node ' . $this->getPath() . ' already exists');
-
                 }
                 throw new \Exception(\midgard_connection::get_instance()->get_error_string());
             }
@@ -1340,10 +1339,13 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $this->session->removeNode($this);
+
+        $this->parent->children[$this->getName()] = null;
+        unset($this->parent->children[$this->getName()]);
     }
 
     public function removeMidgard2Node()
-    {
+    { 
         $mobject = $this->getMidgard2ContentObject();
         $midgardNode = $this->getMidgard2Node();
         
