@@ -797,7 +797,16 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $this->populateProperties();
-        return isset($this->properties[$relPath]);
+        if (!isset($this->properties[$relPath])) {
+            return false;
+        }
+
+        $prop = $this->properties[$relPath];
+        if ($prop->is_removed === true || $prop->is_purged === true) {
+            return false;
+        }
+
+        return true;
     }
     
     public function hasNodes()
@@ -1385,8 +1394,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         if (!$this->hasProperty('jcr:uuid')) {
             return false;
         }
-        
-        $uuid = $this->getPropertyValue('jcr:uuid');
+
+        $uuid = $this->getPropertyValue('jcr:uuid'); 
         if ($uuid === null || $uuid === "") {
             return false;
         }
