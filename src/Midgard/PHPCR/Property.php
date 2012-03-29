@@ -135,6 +135,9 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         } elseif (is_null($this->type)) {
             $this->type = PropertyType::determineType(is_array($value) ? reset($value) : $value);
         }
+        
+        /* \PHPCR\ValueFormatException */
+        $this->validateValue($value, $type);
 
         if ($this->isMultiple() && !is_array($value)) {
             $v = $this->getValue();
@@ -143,9 +146,6 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             $nv[] = $value;
             $value = $nv;
         }
-
-        /* \PHPCR\ValueFormatException */
-        $this->validateValue($value, $type);
 
         /* Check if property is registered.
          * If it is, we need to validate if conversion follows the spec: "3.6.4 Property Type Conversion" */
