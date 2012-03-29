@@ -364,9 +364,14 @@ class Session implements SessionInterface
 
     public function refresh($keepChanges)
     {
+        if ($this->hasPendingChanges() === false) {
+            return;
+        }
+
         if ($keepChanges === false) {
             $this->removeNodes = array();
         }
+
         $this->getRootNode()->refresh($keepChanges);
     }
     
