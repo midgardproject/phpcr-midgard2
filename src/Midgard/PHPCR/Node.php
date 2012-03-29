@@ -808,7 +808,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         return true;
     }
-    
+
     public function hasNodes()
     {
         $this->populateChildren();
@@ -1360,7 +1360,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         
         /* \PHPCR\ReferentialIntegrityException */
         if ($this->isReferenced()) {
-            throw new \PHPCR\ReferentialIntegrityException("Node " . $this->getPath() . " is referenced by other nodes");
+            throw new \PHPCR\ReferentialIntegrityException("Node " . $this->getPathUnchecked() . " is referenced by other nodes");
         }
 
         $this->getSession()->getNodeRegistry()->unregisterPath($this);
@@ -1391,14 +1391,16 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     private function isReferenced()
     {
         $this->populateProperties();
-        if (!$this->hasProperty('jcr:uuid')) {
+        if (!isset($this->properties['jcr:uuid'])) { 
             return false;
         }
 
-        $uuid = $this->getPropertyValue('jcr:uuid'); 
+        $prop = $this->properties['jcr:uuid'];
+        $uuid = PropertyType::convertType($prop->getNativeValue(), $prop->getType(), PropertyType::STRING);
         if ($uuid === null || $uuid === "") {
             return false;
         }
+
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node_property'));
         $group = new \midgard_query_constraint_group('AND');
         $group->add_constraint(
