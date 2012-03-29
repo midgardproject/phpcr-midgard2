@@ -248,6 +248,18 @@ class Session implements SessionInterface
         $this->removeNodes[] = $node;
     }
 
+    public function removeNodeUndo($path) 
+    {
+        if (empty($this->removeNodes)) {
+            return;
+        }
+
+        if (array_key_exists($path, $this->removeNodes)) {
+            $this->removeNodes[$path] = null;
+            unset($this->removeNodes[$path]);
+        } 
+    }
+
     private function _node_save (Node $node)
     {
         $node->save();
@@ -342,6 +354,9 @@ class Session implements SessionInterface
         if ($this->outsideTransaction == false) {
             $t->commit();
         }
+
+        unset($this->removeNodes);
+        $this->removeNodes = array();
 
         //NoSuchNodeTypeException
         //ReferentialIntegrityException
