@@ -371,7 +371,6 @@ class Session implements SessionInterface
         if ($keepChanges === false) {
             $this->removeNodes = array();
         }
-
         $this->getRootNode()->refresh($keepChanges);
     }
     

@@ -135,7 +135,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         } elseif (is_null($this->type)) {
             $this->type = PropertyType::determineType(is_array($value) ? reset($value) : $value);
         }
-        
+
         /* \PHPCR\ValueFormatException */
         $this->validateValue($value, $type);
 
