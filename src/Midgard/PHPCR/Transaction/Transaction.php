@@ -51,6 +51,9 @@ class Transaction implements UserTransactionInterface
 
     public function rollback()
     {
+        if ($this->inTransaction == false) {
+            return;
+        }  
         $this->midgardTransaction->rollback();
         $this->inTransaction = false;
     }

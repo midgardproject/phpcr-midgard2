@@ -139,6 +139,14 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         /* \PHPCR\ValueFormatException */
         $this->validateValue($value, $type);
 
+        if ($this->isMultiple() && !is_array($value)) {
+            $v = $this->getValue();
+            $nv = array();
+            is_array($v) ? $nv = array_merge($nv, $v) : $nv[] = $v;
+            $nv[] = $value;
+            $value = $nv;
+        }
+
         /* Check if property is registered.
          * If it is, we need to validate if conversion follows the spec: "3.6.4 Property Type Conversion" */
         $value = PropertyType::convertType($value, $this->getType());
@@ -159,9 +167,6 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             }
         }
 
-        if ($this->getName() == 'propDate') {
-            //echo "VALUE IS $value";
-        }
         $normalizedValue = $this->normalizePropertyValue($value, $this->type);
         if ($this->isMultiple() && !is_array($normalizedValue)) {
             $normalizedValue = array($normalizedValue);
@@ -325,7 +330,6 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     {
         return PropertyType::convertType($this->getNativeValue(), PropertyType::STRING, $this->getType());
     }
-
 
     protected function getMidgard2PropertyBinary($name, $multiple)
     {

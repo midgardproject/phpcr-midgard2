@@ -155,6 +155,10 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
             $this->setLimit(9999);
         }
 
+        if ($this->offset > 0 && $this->limit > 0) {
+            $this->getQuerySelectHolder()->getQuerySelect()->set_limit($this->limit);
+        }
+       
         //\midgard_connection::get_instance()->set_loglevel("debug");
         //\midgard_error::debug("EXECUTE QUERY : " . $this->statement . "");
         $qs->execute();
@@ -170,7 +174,7 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
     public function setLimit($limit)
     {
         $this->limit = $limit;
-        $this->getQuerySelectHolder()->getQuerySelect()->set_limit($limit);
+        //$this->getQuerySelectHolder()->getQuerySelect()->set_limit($limit);
     }
 
     public function getLimit()
