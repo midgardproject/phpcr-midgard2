@@ -3,6 +3,7 @@ namespace Midgard\PHPCR\NodeType;
 use PHPCR\NodeType\NodeTypeDefinitionInterface;
 use PHPCR\NodeType\NodeTypeTemplateInterface;
 use PHPCR\RepositoryException;
+use \ArrayObject;
 
 class NodeTypeTemplate extends NodeTypeDefinition implements NodeTypeTemplateInterface
 {
