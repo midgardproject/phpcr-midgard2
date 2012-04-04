@@ -25,12 +25,12 @@ class NodeTypeTemplate extends NodeTypeDefinition implements NodeTypeTemplateInt
 
     public function getNodeDefinitionTemplates()
     {
-       
+        return new ArrayObject();       
     }
 
     public function getPropertyDefinitionTemplates()
     {
-
+        return new ArrayObject();
     }
 
     public function setAbstract($toggle)
