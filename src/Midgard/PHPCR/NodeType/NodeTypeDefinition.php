@@ -101,7 +101,11 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
 
         $childNames = array();
         $midgardName = NodeMapper::getMidgardName($this->name);
-        $reflector = new midgard_reflection_class($midgardName);
+        try {
+            $reflector = new midgard_reflection_class($midgardName);
+        } catch ( \Exception $e) {
+            return $this->childNodeDefinitions;
+        }
 
         $childDefs = $this->getStringValue($reflector, 'ChildNodeDefinition');
         if (!$childDefs) {
