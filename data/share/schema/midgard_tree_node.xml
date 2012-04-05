@@ -105,5 +105,5 @@
 			<SameNameSiblings>false</SameNameSiblings> 
 		</user_values>
 	</type>
-	<type name="phpcr_managed_tmp" extends="phpcr_managed" />
+	<type name="phpcr_managed_abstract" extends="phpcr_managed" />
 </Schema>
