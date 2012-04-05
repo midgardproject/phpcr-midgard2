@@ -6,7 +6,7 @@ class ConstraintManagerComparison extends ConstraintManager
 {
     public function addConstraint()
     {
-        $propertyStorage = $this->holder->getPropertyStorage();
+        $propertyStorage = new \midgard_query_storage('midgard_node_property');
         $this->holder->getQuerySelect()->add_join(
             'INNER',
             new \midgard_query_property('id'),

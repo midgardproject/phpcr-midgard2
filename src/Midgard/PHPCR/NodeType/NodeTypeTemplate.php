@@ -15,7 +15,11 @@ class NodeTypeTemplate extends NodeTypeDefinition implements NodeTypeTemplateInt
 
         parent::__construct($ntt->getName(), $manager);
         $this->childNodeDefinitions = $ntt->getDeclaredChildNodeDefinitions();
-        $this->propertyDefinitions = $ntt->getDeclaredPropertyDefinitions();
+        $propdefs = $ntt->getDeclaredPropertyDefinitions();
+        if ($propdefs == null) {
+            $propdefs = array();
+        }
+        $this->propertyDefinitions = new ArrayObject($propdefs);
         $this->supertypeNames = $ntt->getDeclaredSuperTypeNames();
         $this->primaryItemName = $ntt->getPrimaryItemName();
         $this->hasOrderableChildNodes = $ntt->hasOrderableChildNodes();
@@ -31,7 +35,7 @@ class NodeTypeTemplate extends NodeTypeDefinition implements NodeTypeTemplateInt
 
     public function getPropertyDefinitionTemplates()
     {
-        return new ArrayObject();
+        return $this->propertyDefinitions;
     }
 
     public function setAbstract($toggle)
