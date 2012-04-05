@@ -64,7 +64,7 @@ class NodeTypeManager implements IteratorAggregate, NodeTypeManagerInterface
             }
 
             $mgdschemaType = $this->createNamedNodeTypeTemplate($mgdschemaName, $mixin, $abstract);
-            
+ 
             $this->registerNodeType($mgdschemaType, false);
         }
     }

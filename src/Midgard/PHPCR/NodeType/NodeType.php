@@ -26,6 +26,7 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
         $this->isAbstract = $ntt->isAbstract();
         $this->isMixin = $ntt->isMixin();
         $this->isQueryable = $ntt->isQueryable();
+        $this->propertyDefinitions = $ntt->getDeclaredPropertyDefinitions();
     }
 
     public function getSupertypes()

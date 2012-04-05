@@ -844,7 +844,14 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function getMixinNodeTypes()
     {
-        $mixins = $this->getMidgard2PropertyValue('jcr:mixinTypes', true);
+        $mixins = null;
+        if (isset($this->properties['jcr:mixinTypes'])) {
+            $mixinProp = $this->properties['jcr:mixinTypes'];
+            if ($mixinProp->is_purged === false && $mixinProp->is_removed === False) {
+                $mixins = $this->properties['jcr:mixinTypes']->getValue();
+            }
+        }
+
         $ret = array();
         if (!$mixins) {
             return $ret;
