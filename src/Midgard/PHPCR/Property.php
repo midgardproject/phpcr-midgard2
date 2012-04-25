@@ -42,9 +42,6 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         } elseif ($type) {
             $this->type = $type;
         }
-
-        $this->is_new = true;
-        $this->is_modified = false;
     }
 
     protected function populateParent()
