@@ -25,7 +25,6 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     private $value = null;
     private $resources = array();
     private $propertyResources = array();
-    protected $PID = null;
 
     public function __construct(Node $node, $propertyName, PropertyDefinitionInterface $definition = null, $type = null)
     {
@@ -37,11 +36,15 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         if ($definition) {
             $this->type = $definition->getRequiredType();
             $this->multiple = $definition->isMultiple();
+            if ($definition->isAutoCreated() === true) {
+                $this->getDefaultValue('');
+            }
         } elseif ($type) {
             $this->type = $type;
         }
 
-        $this->PID = microtime();
+        $this->is_new = true;
+        $this->is_modified = false;
     }
 
     protected function populateParent()
