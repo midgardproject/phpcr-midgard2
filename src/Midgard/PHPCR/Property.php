@@ -36,9 +36,6 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         if ($definition) {
             $this->type = $definition->getRequiredType();
             $this->multiple = $definition->isMultiple();
-            if ($definition->isAutoCreated() === true) {
-                $this->getDefaultValue('');
-            }
         } elseif ($type) {
             $this->type = $type;
         }
@@ -609,6 +606,11 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         if ($propertyObject->guid) {
             $propertyObject->update();
         } else {
+            if ($this->definition != null && $this->definition->isAutoCreated() === true) {
+                if ($propertyObject->value == '') {
+                    $propertyObject->value = $this->getDefaultValue('');
+                }
+            }
             $propertyObject->create();
         }
         $this->saveBinaryObject($propertyObject, $index);

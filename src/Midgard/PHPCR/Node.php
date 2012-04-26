@@ -525,6 +525,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $this->properties[$propertyName] = new Property($this, $propertyName, $definition);
+        $this->properties[$propertyName]->is_new = true;
     }
 
     private function populatePropertiesUndefined($keepChanges = true)
