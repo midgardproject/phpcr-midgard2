@@ -235,7 +235,13 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getBinary();
 
         case PropertyType::REFERENCE:
+            return $this->getNode();
+
         case PropertyType::WEAKREFERENCE:
+            $v = $this->getNativeValue();
+            if (empty($v) || $v === '' || $v === null) {
+                return null;
+            }
             return $this->getNode();
 
         default:
