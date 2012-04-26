@@ -610,8 +610,8 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             $propertyObject->update();
         } else {
             if ($this->definition != null && $this->definition->isAutoCreated() === true) {
-                if ($propertyObject->value == '') {
-                    $propertyObject->value = $this->getDefaultValue('');
+                if ($propertyObject->value == '' && $type != PropertyType::DATE) {
+                    $propertyObject->value = $this->getDefaultValue($propertyObject->value);
                 }
             }
             $propertyObject->create();
