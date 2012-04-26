@@ -205,12 +205,16 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $origValue = null;
         try {
             $property = $this->getProperty($name);
-            $origValue = $property->getValue();
+            //$origValue = $property->getValue();
         } 
         catch (PathNotFoundException $e) { 
             $this->properties[$name] = new Property($this, $name, $propertyDef, $type);
             $property = $this->properties[$name];
             $property->is_new = true;
+        }
+
+        if ($this->is_new === false && $this->is_modified === true) {
+            $origValue = $property->getValue();
         }
         $property->setValue($value, $type);
        
