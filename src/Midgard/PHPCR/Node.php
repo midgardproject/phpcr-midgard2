@@ -525,7 +525,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $this->properties[$propertyName] = new Property($this, $propertyName, $definition);
-        $this->properties[$propertyName]->is_new = true;
+        $midgardName = NodeMapper::getMidgardPropertyName($propertyName);
+        if ($this->contentObject && !isset($this->contentObject->$midgardName)) {
+            $this->properties[$propertyName]->is_new = true;
+        }
     }
 
     private function populatePropertiesUndefined($keepChanges = true)
