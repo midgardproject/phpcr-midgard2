@@ -25,7 +25,6 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     private $value = null;
     private $resources = array();
     private $propertyResources = array();
-    protected $PID = null;
 
     public function __construct(Node $node, $propertyName, PropertyDefinitionInterface $definition = null, $type = null)
     {
@@ -40,8 +39,6 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         } elseif ($type) {
             $this->type = $type;
         }
-
-        $this->PID = microtime();
     }
 
     protected function populateParent()
@@ -235,7 +232,16 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getBinary();
 
         case PropertyType::REFERENCE:
+            if ($this->value == null || $this->value == '') {
+                return null;
+            }
+            return $this->getNode();
+
         case PropertyType::WEAKREFERENCE:
+            $v = $this->getNativeValue();
+            if (empty($v) || $v === '' || $v === null) {
+                return null;
+            }
             return $this->getNode();
 
         default:
@@ -603,6 +609,11 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         if ($propertyObject->guid) {
             $propertyObject->update();
         } else {
+            if ($this->definition != null && $this->definition->isAutoCreated() === true) {
+                if ($propertyObject->value == '' && $type != PropertyType::DATE) {
+                    $propertyObject->value = $this->getDefaultValue($propertyObject->value);
+                }
+            }
             $propertyObject->create();
         }
         $this->saveBinaryObject($propertyObject, $index);

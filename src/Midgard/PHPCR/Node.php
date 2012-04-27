@@ -204,13 +204,17 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         $origValue = null;
         try {
-            $property = $this->getProperty($name);
-            $origValue = $property->getValue();
+            $property = $this->getProperty($name); 
         } 
         catch (PathNotFoundException $e) { 
             $this->properties[$name] = new Property($this, $name, $propertyDef, $type);
             $property = $this->properties[$name];
             $property->is_new = true;
+            $property->is_modified = false;
+        }
+
+        if ($property->is_new === false && $property->is_modified === true) {
+            $origValue = $property->getValue();
         }
         $property->setValue($value, $type);
        
@@ -521,6 +525,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $this->properties[$propertyName] = new Property($this, $propertyName, $definition);
+        $midgardName = NodeMapper::getMidgardPropertyName($propertyName);
+        if ($this->contentObject && !isset($this->contentObject->$midgardName)) {
+            $this->properties[$propertyName]->is_new = true;
+        }
     }
 
     private function populatePropertiesUndefined($keepChanges = true)

@@ -124,7 +124,7 @@ class NodeRegistry
     public function getByUuid($uuid)
     {
         if (!isset($this->byUuid[$uuid])) {
-            $this->fetchByUuid($uuid);
+            return $this->fetchByUuid($uuid);
         }
         return $this->byUuid[$uuid];
     }
