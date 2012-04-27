@@ -607,6 +607,9 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             $propertyObject->parentguid = $this->getMidgard2Node()->guid;
         }
         if ($propertyObject->guid) {
+            if ($this->value != $propertyObject->value) {
+                $propertyObject->value = $this->value;
+            }
             $propertyObject->update();
         } else {
             if ($this->definition != null && $this->definition->isAutoCreated() === true) {
