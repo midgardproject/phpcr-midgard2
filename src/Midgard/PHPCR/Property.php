@@ -123,6 +123,11 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         }
 
         if ($type) {
+            if ($this->definition != null) {
+                if ($type != $this->definition->getRequiredType()) {
+                    throw new \PHPCR\ValueFormatException("Property " . $this->getName() . " registered with different type");
+                }
+            }
             $this->type = $type;
         } elseif (is_null($this->type)) {
             $this->type = PropertyType::determineType(is_array($value) ? reset($value) : $value);
@@ -130,6 +135,14 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
         /* \PHPCR\ValueFormatException */
         $this->validateValue($value, $type);
+
+        if ($this->isMultiple() && !is_array($value)) {
+            $v = $this->getValue();
+            $nv = array();
+            is_array($v) ? $nv = array_merge($nv, $v) : $nv[] = $v;
+            $nv[] = $value;
+            $value = $nv;
+        }
 
         /* Check if property is registered.
          * If it is, we need to validate if conversion follows the spec: "3.6.4 Property Type Conversion" */
@@ -151,19 +164,21 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             }
         }
 
-        $normalizedValue = $this->normalizePropertyValue($value, $type);
+        $normalizedValue = $this->normalizePropertyValue($value, $this->type);
         if ($this->isMultiple() && !is_array($normalizedValue)) {
             $normalizedValue = array($normalizedValue);
         }
 
         if ($this->getType() == PropertyType::BINARY) {
             $this->setBinaryValue($value);
+        } else if ($this->getType() == PropertyType::DATE) {
+            $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
+            $this->value = $value;
         } else {
-            if ($this->getType() != PropertyType::DATE) {
-                $this->value = $normalizedValue;
-            }
+            $this->value = $normalizedValue;
             $this->setMidgard2PropertyValue($this->getName(), $this->isMultiple(), $normalizedValue);
         }
+
         $this->is_modified = true;
         $this->parent->is_modified = true;
     }
@@ -217,7 +232,16 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getBinary();
 
         case PropertyType::REFERENCE:
+            if ($this->value == null || $this->value == '') {
+                return null;
+            }
+            return $this->getNode();
+
         case PropertyType::WEAKREFERENCE:
+            $v = $this->getNativeValue();
+            if (empty($v) || $v === '' || $v === null) {
+                return null;
+            }
             return $this->getNode();
 
         default:
@@ -312,7 +336,6 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     {
         return PropertyType::convertType($this->getNativeValue(), PropertyType::STRING, $this->getType());
     }
-
 
     protected function getMidgard2PropertyBinary($name, $multiple)
     {
@@ -586,6 +609,11 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         if ($propertyObject->guid) {
             $propertyObject->update();
         } else {
+            if ($this->definition != null && $this->definition->isAutoCreated() === true) {
+                if ($propertyObject->value == '' && $type != PropertyType::DATE) {
+                    $propertyObject->value = $this->getDefaultValue($propertyObject->value);
+                }
+            }
             $propertyObject->create();
         }
         $this->saveBinaryObject($propertyObject, $index);

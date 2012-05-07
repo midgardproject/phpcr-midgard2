@@ -160,6 +160,7 @@ abstract class Item implements ItemInterface
         // Hack needed for https://github.com/midgardproject/midgard-core/issues/131
         $storage2 = new midgard_query_storage('midgard_node_property');
         $q = new midgard_query_select($storage);
+        $q->toggle_readonly(false);
         $q->add_join(
             'INNER',                                             
             new midgard_query_property('id'),
@@ -297,7 +298,7 @@ abstract class Item implements ItemInterface
                 return '/';
             }
         }
-        $parentPath = $this->parent->getPath();
+        $parentPath = $this->parent->getPathUnchecked();
         if ($parentPath == '/') {
             return "/{$this->getName()}";
         }

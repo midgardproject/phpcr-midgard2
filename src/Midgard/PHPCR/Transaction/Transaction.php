@@ -9,10 +9,19 @@ class Transaction implements UserTransactionInterface
     private $midgardTransaction = null;
     private $timeout = 0;
     private $inTransaction = false;
+    private static $instance = null;
 
-    public function __construct()
+    private function __construct()
     {
         $this->midgardTransaction = new midgard_transaction();
+    }
+
+    public static function getInstance()
+    {
+        if (self::$instance == null) {
+            self::$instance = new Transaction();
+        }
+        return self::$instance;
     }
 
     public function begin()
@@ -20,12 +29,17 @@ class Transaction implements UserTransactionInterface
         if ($this->inTransaction) {
             return;
         }
-        $this->midgardTransaction->begin();
+        if ($this->midgardTransaction->begin() == false) {
+            return;
+        }
         $this->inTransaction = true;
     }
 
     public function commit()
-    {
+    { 
+        if ($this->inTransaction == false) {
+            return;
+        }
         $this->midgardTransaction->commit();
         $this->inTransaction = false;
     }
@@ -37,6 +51,9 @@ class Transaction implements UserTransactionInterface
 
     public function rollback()
     {
+        if ($this->inTransaction == false) {
+            return;
+        }  
         $this->midgardTransaction->rollback();
         $this->inTransaction = false;
     }

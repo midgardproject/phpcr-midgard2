@@ -204,13 +204,17 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         $origValue = null;
         try {
-            $property = $this->getProperty($name);
-            $origValue = $property->getValue();
+            $property = $this->getProperty($name); 
         } 
         catch (PathNotFoundException $e) { 
             $this->properties[$name] = new Property($this, $name, $propertyDef, $type);
             $property = $this->properties[$name];
             $property->is_new = true;
+            $property->is_modified = false;
+        }
+
+        if ($property->is_new === false && $property->is_modified === true) {
+            $origValue = $property->getValue();
         }
         $property->setValue($value, $type);
        
@@ -521,6 +525,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $this->properties[$propertyName] = new Property($this, $propertyName, $definition);
+        $midgardName = NodeMapper::getMidgardPropertyName($propertyName);
+        if ($this->contentObject && !isset($this->contentObject->$midgardName)) {
+            $this->properties[$propertyName]->is_new = true;
+        }
     }
 
     private function populatePropertiesUndefined($keepChanges = true)
@@ -797,9 +805,18 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $this->populateProperties();
-        return isset($this->properties[$relPath]);
+        if (!isset($this->properties[$relPath])) {
+            return false;
+        }
+
+        $prop = $this->properties[$relPath];
+        if ($prop->is_removed === true || $prop->is_purged === true) {
+            return false;
+        }
+
+        return true;
     }
-    
+
     public function hasNodes()
     {
         $this->populateChildren();
@@ -835,7 +852,14 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function getMixinNodeTypes()
     {
-        $mixins = $this->getMidgard2PropertyValue('jcr:mixinTypes', true);
+        $mixins = null;
+        if (isset($this->properties['jcr:mixinTypes'])) {
+            $mixinProp = $this->properties['jcr:mixinTypes'];
+            if ($mixinProp->is_purged === false && $mixinProp->is_removed === False) {
+                $mixins = $this->properties['jcr:mixinTypes']->getValue();
+            }
+        }
+
         $ret = array();
         if (!$mixins) {
             return $ret;
@@ -903,6 +927,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         if ($this->hasProperty('jcr:mixinTypes')) {
             $prop = $this->getProperty('jcr:mixinTypes');
+            /* Do not add mixin if it's already added */
+            if (in_array($mixinName, $prop->getValue())) {
+                return;
+            }
             $prop->addValue($mixinName);
         } else {
             $this->setProperty('jcr:mixinTypes', array($mixinName));
@@ -1138,7 +1166,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                 $error = \midgard_connection::get_instance()->get_error();
                 if ($error == \MGD_ERR_DUPLICATE) {
                     throw new \PHPCR\ItemExistsException('Node ' . $this->getPath() . ' already exists');
-
                 }
                 throw new \Exception(\midgard_connection::get_instance()->get_error_string());
             }
@@ -1336,16 +1363,19 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $this->session->removeNode($this);
+
+        $this->parent->children[$this->getName()] = null;
+        unset($this->parent->children[$this->getName()]);
     }
 
     public function removeMidgard2Node()
-    {
+    { 
         $mobject = $this->getMidgard2ContentObject();
         $midgardNode = $this->getMidgard2Node();
         
         /* \PHPCR\ReferentialIntegrityException */
         if ($this->isReferenced()) {
-            throw new \PHPCR\ReferentialIntegrityException("Node " . $this->getPath() . " is referenced by other nodes");
+            throw new \PHPCR\ReferentialIntegrityException("Node " . $this->getPathUnchecked() . " is referenced by other nodes");
         }
 
         $this->getSession()->getNodeRegistry()->unregisterPath($this);
@@ -1376,14 +1406,16 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     private function isReferenced()
     {
         $this->populateProperties();
-        if (!$this->hasProperty('jcr:uuid')) {
+        if (!isset($this->properties['jcr:uuid'])) { 
             return false;
         }
-        
-        $uuid = $this->getPropertyValue('jcr:uuid');
+
+        $prop = $this->properties['jcr:uuid'];
+        $uuid = PropertyType::convertType($prop->getNativeValue(), $prop->getType(), PropertyType::STRING);
         if ($uuid === null || $uuid === "") {
             return false;
         }
+
         $q = new \midgard_query_select(new \midgard_query_storage('midgard_node_property'));
         $group = new \midgard_query_constraint_group('AND');
         $group->add_constraint(

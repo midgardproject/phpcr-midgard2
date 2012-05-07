@@ -121,6 +121,7 @@ class QueryResult implements \IteratorAggregate, \PHPCR\Query\QueryResultInterfa
         $this->nodes = new \ArrayIterator($ret);
         $this->orderResult();
 
+        $tmp = array();
         $limit = $this->query->getLimit();
         if ($limit > 0) {
             $count = 0;

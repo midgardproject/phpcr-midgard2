@@ -60,4 +60,50 @@
 		</property>
 	</type>
 
+	<type name="mix_title_abstract" metadata="false" extends="mix_title">
+	</type>
+
+	<type name="mix_created_abstract" metadata="false" extends="mix_created">
+	</type>
+
+	<type name="mix_lastModified_abstract" metadata="false" extends="mix_lastModified">
+	</type>
+
+	<type name="mix_language_abstract" metadata="false" extends="mix_language">
+	</type>
+
+	<type name="mix_mimeType_abstract" metadata="false" extends="mix_mimeType">
+	</type>
+
+	<type name="mix_etag_abstract" metadata="false" extends="mix_etag">
+	</type>
+
+	<type name="mix_referencable_abstract" metadata="false" extends="mix_referenceable">
+	</type>
+
+	<type name="mix_shareable_abstract" metadata="false" extends="mix_shareable">
+	</type>
+
+	<!-- phpcr-odm schemas -->
+	<type name="phpcr_managed" metadata="false" abstract="mixin">
+		<property name="phpcr-class" type="string">
+			<RequiredType>STRING</RequiredType>
+			<isAutoCreated>true</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<isProtected>false</isProtected>
+			<isMultiple>false</isMultiple>
+		</property>
+		<user_values>
+			<Supertypes></Supertypes>
+			<isMixin>true</isMixin>
+			<PrimaryItemName></PrimaryItemName>
+			<RequiredPrimaryTypes></RequiredPrimaryTypes>
+			<DefaultPrimaryType></DefaultPrimaryType>
+			<isAutoCreated>false</isAutoCreated>
+			<isMandatory>false</isMandatory>
+			<isProtected>false</isProtected>
+			<SameNameSiblings>false</SameNameSiblings> 
+		</user_values>
+	</type>
+	<type name="phpcr_managed_abstract" extends="phpcr_managed" />
 </Schema>

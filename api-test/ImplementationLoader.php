@@ -86,6 +86,7 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     public function getFixtureLoader()
     {
         require_once __DIR__ . "/Midgard2ImportExport.php";
+        $rep = self::getInstance()->getRepository();
         return new Midgard2ImportExport(__DIR__."/suite/fixtures/");
     }
 }

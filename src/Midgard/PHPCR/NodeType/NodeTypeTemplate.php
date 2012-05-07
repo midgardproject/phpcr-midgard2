@@ -3,9 +3,12 @@ namespace Midgard\PHPCR\NodeType;
 use PHPCR\NodeType\NodeTypeDefinitionInterface;
 use PHPCR\NodeType\NodeTypeTemplateInterface;
 use PHPCR\RepositoryException;
+use \ArrayObject;
 
 class NodeTypeTemplate extends NodeTypeDefinition implements NodeTypeTemplateInterface
 {
+    protected $propertyDefinitionTemplates = null;
+
     public function __construct(NodeTypeDefinitionInterface $ntt = null, NodeTypeManager $manager)
     {
         if (!$ntt) {
@@ -14,7 +17,6 @@ class NodeTypeTemplate extends NodeTypeDefinition implements NodeTypeTemplateInt
 
         parent::__construct($ntt->getName(), $manager);
         $this->childNodeDefinitions = $ntt->getDeclaredChildNodeDefinitions();
-        $this->propertyDefinitions = $ntt->getDeclaredPropertyDefinitions();
         $this->supertypeNames = $ntt->getDeclaredSuperTypeNames();
         $this->primaryItemName = $ntt->getPrimaryItemName();
         $this->hasOrderableChildNodes = $ntt->hasOrderableChildNodes();
@@ -25,12 +27,15 @@ class NodeTypeTemplate extends NodeTypeDefinition implements NodeTypeTemplateInt
 
     public function getNodeDefinitionTemplates()
     {
-       
+        return new ArrayObject();       
     }
 
     public function getPropertyDefinitionTemplates()
     {
-
+        if ($this->propertyDefinitionTemplates == null) {
+            $this->propertyDefinitionTemplates = new ArrayObject();
+        }
+        return $this->propertyDefinitionTemplates;
     }
 
     public function setAbstract($toggle)

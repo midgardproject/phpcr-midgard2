@@ -11,6 +11,7 @@ use midgard_connection;
 use midgard_object;
 use midgard_user;
 use Exception;
+use DomDocument;
 
 class Session implements SessionInterface
 {
@@ -26,6 +27,7 @@ class Session implements SessionInterface
     private $nodeRegistry = null;
     private $name = null;
     private $sessionTracker = null;
+    private $outsideTransaction = false;
 
     public function __construct(midgard_connection $connection, Repository $repository, midgard_user $user = null, midgard_object $rootObject, CredentialsInterface $credentials = null)
     {
@@ -63,10 +65,7 @@ class Session implements SessionInterface
    
     public function getTransactionManager()
     {
-        if ($this->transaction == null) {
-            $this->transaction = new \Midgard\PHPCR\Transaction\Transaction();
-        }
-        return $this->transaction;
+        return $this->repository->getTransactionManager();
     }
 
     public function getUserID()
@@ -249,6 +248,18 @@ class Session implements SessionInterface
         $this->removeNodes[] = $node;
     }
 
+    public function removeNodeUndo($path) 
+    {
+        if (empty($this->removeNodes)) {
+            return;
+        }
+
+        if (array_key_exists($path, $this->removeNodes)) {
+            $this->removeNodes[$path] = null;
+            unset($this->removeNodes[$path]);
+        } 
+    }
+
     private function _node_save (Node $node)
     {
         $node->save();
@@ -274,8 +285,10 @@ class Session implements SessionInterface
         // TODO
         
         $t = $this->getTransactionManager();
-        if ($t->inTransaction() == false) {
+        if ($t->inTransaction() == false && $this->outsideTransaction == false) {
             $t->begin();
+        } else {
+            $this->outsideTransaction = true;
         }
 
         $tracker = $this->getSessionTracker();
@@ -287,8 +300,7 @@ class Session implements SessionInterface
             try {
                 $node->removeMidgard2Node();
             } catch (\Exception $e) {
-                $removeAfter[] = $node;
-                $t->rollback();
+                $removeAfter[] = $node; 
             }
         }
 
@@ -339,7 +351,12 @@ class Session implements SessionInterface
             throw $e;
         }
 
-        $t->commit();
+        if ($this->outsideTransaction == false) {
+            $t->commit();
+        }
+
+        unset($this->removeNodes);
+        $this->removeNodes = array();
 
         //NoSuchNodeTypeException
         //ReferentialIntegrityException
@@ -347,6 +364,10 @@ class Session implements SessionInterface
 
     public function refresh($keepChanges)
     {
+        if ($this->hasPendingChanges() === false) {
+            return;
+        }
+
         if ($keepChanges === false) {
             $this->removeNodes = array();
         }
@@ -447,7 +468,24 @@ class Session implements SessionInterface
     
     public function importXML($parentAbsPath, $in, $uuidBehavior)
     {
-        throw new \PHPCR\UnsupportedRepositoryOperationException();
+        $doc = new DomDocument('1.0', 'UTF-8');
+        if ($doc->load($in) === false) {
+            throw new \PHPCR\InvalidSerializedDataException("Can not parse given '{$in}' xml file");
+        }
+
+        /* PathNotFoundException may be thrown */
+        $node = $this->getNode($parentAbsPath);
+
+        if ($doc->documentElement->localName == 'node') {
+            /* SystemView xml */
+            $importer = new XMLSystemViewImporter($node, $doc, $uuidBehavior);
+        } else {
+            /* DocumentView xml */
+            $importer = new XMLDocumentViewImporter($node, $doc, $uuidBehavior);
+        }
+
+        $importer->import();
+        /* Do some validation, and throw proper exception */
     }
     
     public function exportSystemView($absPath, $out, $skipBinary, $noRecurse)

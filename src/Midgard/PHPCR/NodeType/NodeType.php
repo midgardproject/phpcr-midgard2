@@ -25,7 +25,7 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
         $this->hasOrderableChildNodes = $ntt->hasOrderableChildNodes();
         $this->isAbstract = $ntt->isAbstract();
         $this->isMixin = $ntt->isMixin();
-        $this->isQueryable = $ntt->isQueryable();
+        $this->isQueryable = $ntt->isQueryable(); 
     }
 
     public function getSupertypes()
