@@ -8,7 +8,8 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'Versioning',
         'Transactions',
         'PermissionsAndCapabilities',
-        'Locking'
+        'Locking',
+        'ImportRepositoryContentTest'
     );
 
     protected $unsupportedCases = array(
@@ -87,6 +88,6 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     {
         require_once __DIR__ . "/Midgard2ImportExport.php";
         $rep = self::getInstance()->getRepository();
-        return new Midgard2ImportExport(__DIR__."/suite/fixtures/");
+        return new Midgard2ImportExport(__DIR__."/../vendor/phpcr/phpcr-api-tests/fixtures/");
     }
 }

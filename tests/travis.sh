@@ -1,7 +1,4 @@
 #!/bin/bash
-git submodule init
-git submodule update
-
 # Build and install Midgard2 extension
 ./tests/travis_midgard.sh
 
@@ -11,4 +8,4 @@ sudo cp -r ./data/share/views/* /usr/share/midgard2/views/
 
 # Install dependencies with Composer
 wget -q http://getcomposer.org/composer.phar
-php composer.phar install
+php composer.phar install --dev
