@@ -33,7 +33,7 @@ You also need to copy the Midgard2 PHPCR schemas from `vendor/midgard/phpcr/data
 
 You can use the Composer-generated autoloader to load all needed classes:
 
-    require 'vendor/.composer/autoload.php';
+    require 'vendor/autoload.php';
 
 After you've included the autoloader you should be able to open a Midgard2 repository session:
 

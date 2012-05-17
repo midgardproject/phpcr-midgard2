@@ -7,7 +7,7 @@ if (gc_enabled()) {
 }
 
 // Set up autoloader
-require __DIR__ . '/../vendor/.composer/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 define('SPEC_VERSION_DESC', 'jcr.specification.version');
 define('SPEC_NAME_DESC', 'jcr.specification.name');
