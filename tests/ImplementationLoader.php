@@ -9,10 +9,14 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'Transactions',
         'PermissionsAndCapabilities',
         'Locking',
-        'ImportRepositoryContentTest'
+        'Import',
+        'Observation',
     );
 
     protected $unsupportedCases = array(
+        // XPath and SQL1 are deprecated JCR features, skip tests
+        'Query\\Sql1',
+        'Query\\XPath'
     );
 
     protected $unsupportedTests = array(
