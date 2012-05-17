@@ -1,4 +1,4 @@
-Midgard2 PHP Content Repository provider
+Midgard2 PHP Content Repository provider [![Build Status](https://secure.travis-ci.org/midgardproject/phpcr-midgard2.png?branch=master)](http://travis-ci.org/midgardproject/phpcr-midgard2) 
 ========================================
 
 This project implements a [Midgard2](http://midgard2.org/) -backed provider of the [PHP Content Repository](http://phpcr.github.com/) (PHPCR) interfaces. `phpcr-midgard2` is a fully [Jackalope](http://jackalope.github.com/) compatible PHPCR provider that can be used in PHP Content Management Systems without requiring Java.
