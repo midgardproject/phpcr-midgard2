@@ -3,7 +3,7 @@
     "type": "library",
     "description": "PHP Content Repository implementation using Midgard2",
     "keywords": ["phpcr", "contentrepository", "midgard", "midgard2"],
-    "homepage": "http://www.midgard2.org",
+    "homepage": "http://midgard-project.org/phpcr/",
     "license": "GNU LGPL",
     "authors": [
         {
