@@ -24,7 +24,7 @@
 
     <testsuites>
         <testsuite name="phpCR">
-            <directory>suite/tests/</directory>
+            <directory>../vendor/phpcr/phpcr-api-tests/tests/</directory>
         </testsuite>
     </testsuites>
 

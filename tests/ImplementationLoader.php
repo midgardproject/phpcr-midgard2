@@ -8,10 +8,15 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'Versioning',
         'Transactions',
         'PermissionsAndCapabilities',
-        'Locking'
+        'Locking',
+        'Import',
+        'Observation',
     );
 
     protected $unsupportedCases = array(
+        // XPath and SQL1 are deprecated JCR features, skip tests
+        'Query\\Sql1',
+        'Query\\XPath'
     );
 
     protected $unsupportedTests = array(
@@ -87,6 +92,6 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     {
         require_once __DIR__ . "/Midgard2ImportExport.php";
         $rep = self::getInstance()->getRepository();
-        return new Midgard2ImportExport(__DIR__."/suite/fixtures/");
+        return new Midgard2ImportExport(__DIR__."/../vendor/phpcr/phpcr-api-tests/fixtures/");
     }
 }
