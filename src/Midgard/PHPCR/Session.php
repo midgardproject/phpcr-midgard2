@@ -163,7 +163,7 @@ class Session implements SessionInterface
         $nodes = array();
         foreach ($absPaths as $absPath) {
             try {
-                $nodes[] = $this->getNode($absPath);
+                $nodes[$absPath] = $this->getNode($absPath);
             } catch (Exception $e) {
                 continue;
             }
