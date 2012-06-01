@@ -43,6 +43,9 @@ class QueryObjectModel extends SQLQuery implements \PHPCR\Query\QOM\QueryObjectM
 
     public function getLanguage()
     {
-        return \PHPCR\Query\QueryInterface::JCR_JQOM;
+        /* 6.9.3
+         * If the Query is actually a QueryObjectModel created with QueryObjectModelFactory.createQuery 
+         * then Query.getLanguage will return the string constant Query.JCR_SQL2. */
+        return \PHPCR\Query\QueryInterface::JCR_SQL2;
     }
 }

@@ -157,6 +157,21 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
         }
         return $this->manager;
     }
+
+    /**
+     * Check if the given string has known prefix.
+     * String which doesn't follow the 'a:b' pattern is considered invalid,
+     * thus exception is thrown as in the case of unknown prefix.
+     */
+    public function checkRegisteredPrefix($string)
+    {
+        $tmp = explode(':', $string);
+        try {
+            $this->getUri($tmp[0]);
+        } catch (\PHPCR\NamespaceException $e) {
+            throw new \PHPCR\RepositoryException($e->getMessage());
+        }
+    }
 }
 
 ?>

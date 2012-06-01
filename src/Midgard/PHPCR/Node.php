@@ -81,6 +81,11 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             throw new ItemExistsException("Node '{$relPath}' exists under " . $this->getPath());
         } 
 
+        if (strpos($relPath, ':') !== false) {
+            $nsRegistry = $this->session->getWorkspace()->getNamespaceRegistry();
+            $nsRegistry->checkRegisteredPrefix($relPath);
+        }
+
         // LockException
         // TODO
 
@@ -174,6 +179,11 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     {
         if (strpos($name, '/') !== false) {
             throw new InvalidArgumentException("Can not set property name with '/' delimeter");
+        }
+
+        if (strpos($name, ':') !== false) { 
+            $nsRegistry = $this->session->getWorkspace()->getNamespaceRegistry();
+            $nsRegistry->checkRegisteredPrefix($name);
         }
 
         $nodeDef = $this->getNodeDefinitionThatHasProperty($name);
