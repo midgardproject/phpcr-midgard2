@@ -516,7 +516,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                 continue;
             }
             $child = $this->getSession()->getNodeRegistry()->getByMidgardNode($child);
-            if ($child->parent != $this) {
+            if ($this->isSame($child->parent) === false) {
                 // Child node has been moved from this node
                 continue;
             }
