@@ -13,7 +13,7 @@ class QueryObjectModelFactory implements \PHPCR\Query\QOM\QueryObjectModelFactor
     }
 
     public function createQuery(\PHPCR\Query\QOM\SourceInterface $source, 
-        \PHPCR\Query\QOM\ConstraintInterface $constraint = null, array $orderings, array $columns)
+        \PHPCR\Query\QOM\ConstraintInterface $constraint = null, array $orderings = array(), array $columns = array())
     {
         return new QueryObjectModel ($this->session, null, $source, $constraint, $orderings, $columns); 
     }
