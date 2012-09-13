@@ -21,7 +21,7 @@
         "php": ">=5.3.0",
         "phpcr/phpcr": ">=2.1.0-beta3",
         "phpcr/phpcr-utils": "@dev",
-        "ext-midgard2": ">=10.05.5"
+        "ext-midgard2": ">=10.05.6"
     },
     "provide": {
         "phpcr/phpcr-implementation": "2.1.0-beta3"
