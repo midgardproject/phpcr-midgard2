@@ -1160,7 +1160,6 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             foreach ($this->removeProperties as $property) {
                 $property->removeMidgard2PropertyStorage($property->getName(), $property->isMultiple());
                 unset($this->properties[$property->getName()]);
-                unset($property);
             }
             $this->removeProperties = array();
         }
