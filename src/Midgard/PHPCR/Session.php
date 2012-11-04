@@ -224,7 +224,7 @@ class Session implements SessionInterface
             throw new \PHPCR\ItemExistsException("Node at destination path {$destAbsPath} exists");
         }
 
-        $dest = mb_substr($destAbsPath,0,-mb_strlen(strrchr($destAbsPath,'/')));
+        $dest = $destAbsPath == '/' ? $destAbsPath : mb_substr($destAbsPath,0,-mb_strlen(strrchr($destAbsPath,'/')));
         $destName = substr(strrchr($destAbsPath, '/'), 1); 
         $destNode = $this->getNode($dest);
         $node->move($destNode, $destName);
