@@ -5,9 +5,12 @@ php:
   - 5.4
 
 env:
-  - DATABASE=sqlite
-  - DATABASE=mysql
-  - DATABASE=postgresql
+  - DATABASE=sqlite MIDGARD_EXT_VERSION=ratatoskr
+  - DATABASE=mysql MIDGARD_EXT_VERSION=ratatoskr
+  - DATABASE=postgresql MIDGARD_EXT_VERSION=ratatoskr
+  - DATABASE=sqlite MIDGARD_EXT_VERSION=gjallarhorn
+  - DATABASE=mysql MIDGARD_EXT_VERSION=gjallarhorn
+  - DATABASE=postgresql MIDGARD_EXT_VERSION=gjallarhorn
 
 before_script:
   - ./tests/travis_${DATABASE}.sh

@@ -27,7 +27,8 @@
         "phpcr/phpcr-implementation": "2.1.0-beta3"
     },
     "require-dev": {
-        "phpcr/phpcr-api-tests": "dev-master"
+        "phpcr/phpcr-api-tests": "dev-master",
+        "ext-midgard2": ">=10.05.5"
     },
     "autoload": {
         "psr-0": {
