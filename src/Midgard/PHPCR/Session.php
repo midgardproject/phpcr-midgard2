@@ -225,8 +225,9 @@ class Session implements SessionInterface
         }
 
         $dest = mb_substr($destAbsPath,0,-mb_strlen(strrchr($destAbsPath,'/')));
-        $destName = substr(strrchr($destAbsPath, '/'), 1); 
-        $destNode = $this->getNode($dest);
+        $destName = substr(strrchr($destAbsPath, '/'), 1);
+        /* Fallback to root node in case of empty name */ 
+        $destNode = $this->getNode($dest == '' ? '/' : $dest);
         $node->move($destNode, $destName);
     }
     
