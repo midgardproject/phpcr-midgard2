@@ -9,7 +9,7 @@ sudo apt-get install -y dbus libglib2.0-dev libgda-4.0-4 libgda-4.0-dev libxml2-
 
 # Build Midgard2 core from recent tarball
 wget -q https://github.com/midgardproject/midgard-core/tarball/${MIDGARD_EXT_VERSION}
-tar -xzf ratatoskr
+tar -xzf ${MIDGARD_EXT_VERSION}
 sh -c "cd midgardproject-midgard-core-*&&./autogen.sh --prefix=/usr; make; sudo make install"
 rm -f ${MIDGARD_EXT_VERSION}
 
