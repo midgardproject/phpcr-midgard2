@@ -8,6 +8,8 @@ env:
   - DATABASE=sqlite
   - DATABASE=mysql
   - DATABASE=postgresql
+  - MIDGARD_EXT_VERSION=ratatoskr
+  - MIDGARD_EXT_VERSION=gjallarhorn
 
 before_script:
   - ./tests/travis_${DATABASE}.sh
