@@ -11,7 +11,7 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'Locking',
         'Import',
         'Observation',
-        'OrderableChildNodes'
+        'OrderableChildNodes',
     );
 
     protected $unsupportedCases = array(
