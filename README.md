@@ -5,6 +5,8 @@ This project implements a [Midgard2](http://midgard2.org/) -backed provider of t
 
 Using Midgard2 instead of [Apache Jackrabbit](http://jackrabbit.apache.org/) also has the benefit of making interoperability with regular relational databases used by many CMSs easy. Midgard2 supports [multiple databases](http://www.gnome-db.org/Providers_status), including MySQL and SQLite.
 
+[Read more](http://midgard-project.org/phpcr/)
+
 ## Installing
 
 You need to have a [midgard2 PHP extension](https://github.com/midgardproject/midgard-php5) installed. On many distributions setting this up is as simple as:
