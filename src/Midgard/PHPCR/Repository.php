@@ -279,9 +279,6 @@ class Repository implements RepositoryInterface
             midgard_storage::create_class_storage($type);
         }
 
-        /* Prepare properties view */
-        midgard_storage::create_class_storage("midgard_property_view");
-
         /* Prepare namespace registry */
         midgard_storage::create_class_storage("midgard_namespace_registry");
 
