@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ -n "$MIDGARD_EXT_VERSION:" ] ; then
+	MIDGARD_EXT_VERSION="ratatoskr"
+fi
+
 # Install Pake
 pyrus channel-discover pear.indeyets.ru
 pyrus install -f http://pear.indeyets.ru/get/pake-1.6.3.tgz
