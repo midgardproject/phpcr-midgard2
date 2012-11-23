@@ -1356,7 +1356,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function remove()
     {
-        if ($this->getParent()) {
+        if ($this->getParent() && $this->getParent()->is_removed === false) {
             if (!$this->getParent()->getPrimaryNodeType()->canRemoveNode($this->getName())) {
                 throw new ConstraintViolationException('Cannot remove node ' . $this->getPath() . ' due to type constraints');
             }
@@ -1378,15 +1378,20 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         $this->parent->children[$this->getName()] = null;
         unset($this->parent->children[$this->getName()]);
+
+        $children = $this->getNodes();
+        foreach ($children as $child) {
+            $child->remove();
+        }
     }
 
     public function removeMidgard2Node()
     { 
         $mobject = $this->getMidgard2ContentObject();
         $midgardNode = $this->getMidgard2Node();
-        
+
         /* \PHPCR\ReferentialIntegrityException */
-        if ($this->isReferenced()) {
+        if ($this->isReferenced(true)) {
             throw new \PHPCR\ReferentialIntegrityException("Node " . $this->getPathUnchecked() . " is referenced by other nodes");
         }
 
@@ -1405,17 +1410,29 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         if ($mobject && $mobject->guid) {
-            $mobject->purge();
+            $mobject->purge(false);
         }
 
         if ($midgardNode->guid) {
-            $midgardNode->purge();
+            if ($midgardNode->purge(false) === false) {
+                throw new \Exception(\midgard_connection::get_instance()->get_error_string());
+            }
         }
 
         $this->is_purged = true;
     }
-    
-    private function isReferenced()
+
+    private static function getMidgardChildrenIDs($node, $IDs)
+    {
+        $children = $node->getNodes();
+        foreach ($children as $child) {
+            $MgdNode = $child->getMidgard2ContentObject();
+            $IDs[$mgdNode] = $mgdNode->id; 
+            self::getMidgardChildrenIDs($child, $IDs);
+        }
+    }
+
+    private function isReferenced($notChildren = false)
     {
         $this->populateProperties();
         if (!isset($this->properties['jcr:uuid'])) { 
@@ -1437,7 +1454,31 @@ class Node extends Item implements IteratorAggregate, NodeInterface
                 new \midgard_query_value($uuid)
             )
         );
-        
+
+        $IDs = array();
+
+        $removedNodes = $this->getSession()->getRemovedNodes();
+        foreach ($removedNodes as $rnode) {
+            $id = $rnode->getMidgard2ContentObject()->id;
+            $IDs[$id] = $id;
+        }
+
+        if ($notChildren == true) {
+            self::getMidgardChildrenIDs($this, $IDs);
+        }
+
+
+        /* Check if referenced node is outside removed subgraph */
+        if (!empty($IDs)) {
+            $group->add_constraint(
+                new \midgard_query_constraint(
+                    new \midgard_query_property('parent'),
+                    'NOT IN',
+                    new \midgard_query_value($IDs)
+                )
+            );
+        }
+
         $group->add_constraint(
             new \midgard_query_constraint(
                 new \midgard_query_property('type'),
@@ -1446,7 +1487,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             )
         );
         $q->set_constraint($group);
+        \midgard_connection::get_instance()->set_loglevel("debug");
         $q->execute();
+        \midgard_connection::get_instance()->set_loglevel("warn");
         if ($q->get_results_count() > 0) {
             return true;
         }
