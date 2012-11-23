@@ -244,6 +244,11 @@ class Session implements SessionInterface
         }
     }
 
+    public function getRemovedNodes()
+    {
+        return $this->removeNodes;
+    }
+
     public function removeNode($node)
     {
         $this->removeNodes[] = $node;
@@ -297,7 +302,9 @@ class Session implements SessionInterface
 
         // Delete all removed nodes that don't have hard refs
         $removeAfter = array();
-        foreach ($this->removeNodes as $node) {
+        /* Reverse removed nodes, so children are removed first */
+        $rNodes = array_reverse($this->removeNodes);
+        foreach ($rNodes as $node) {
             try {
                 $node->removeMidgard2Node();
             } catch (\Exception $e) {
