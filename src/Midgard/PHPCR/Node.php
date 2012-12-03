@@ -1415,7 +1415,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
         if ($midgardNode->guid) {
             if ($midgardNode->purge(false) === false) {
-                throw new \Exception(\midgard_connection::get_instance()->get_error_string());
+                if (\midgard_connection::get_instance()->get_error() != MGD_ERR_NOT_EXISTS) {
+                    throw new \Exception("Remove " . $this->getPathUnchecked() . ". " . \midgard_connection::get_instance()->get_error_string());
+                }
             }
         }
 
