@@ -725,4 +725,9 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     {
         $this->parent->setProperty($this->getName(), null);
     }
+
+    public function revert()
+    {
+
+    }
 }
