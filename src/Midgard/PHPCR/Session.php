@@ -604,7 +604,7 @@ class Session implements SessionInterface
             throws \PHPCR\RepositoryException("Expected argument should be array");
         }
 
-        $properties = new ArrayIterator();
+        $properties = new \ArrayIterator();
 
         foreach ($absPath as $absPaths) {
             $node = $this->getNode($absPath);
