@@ -1521,5 +1521,35 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             }
         }
         return false;
+    }
+
+    public function revert()
+    {
+
+    }
+
+    public function addNodeAutoNamed($nameHint = null, $primaryNodeTypeName = null)
+    {
+
+    }
+
+    public function rename($newName)
+    {
+
+    }
+
+    public function getNodeNames()
+    {
+
+    }
+
+    public function getPropertyValueWithDefault($relPath, $defaultValue)
+    {
+
+    }
+
+    public function setMixins($mixinNames)
+    {
+
     } 
 }
