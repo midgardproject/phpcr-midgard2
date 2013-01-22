@@ -172,6 +172,11 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
             throw new \PHPCR\RepositoryException($e->getMessage());
         }
     }
+
+    public function unregisterNamespaceByURI($uri)
+    {
+
+    }
 }
 
 ?>
