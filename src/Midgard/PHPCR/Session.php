@@ -604,13 +604,14 @@ class Session implements SessionInterface
             throws \PHPCR\RepositoryException("Expected argument should be array");
         }
 
-        $properties = new \ArrayIterator();
-
-        foreach ($absPath as $absPaths) {
-            $node = $this->getNode($absPath);
-            $properties = array_merge($properties, $node->getProperties());    
+        $properties = array();
+        foreach ($absPaths as $absPath) {
+            try {
+                $properties[$absPath] = $this->getItem($absPath);    
+            } catch (\PHPCR\PathNotFoundException $e) {
+                /* Seems like this should be ignored ? */
+            }
         }
-
-        return $properties;
+        return new \ArrayIterator($properties);
     }
 }
