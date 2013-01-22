@@ -332,4 +332,14 @@ class Workspace implements \PHPCR\WorkspaceInterface
 
         $mgd->set_workspace($currentWs);
     }
+
+    public function removeItem($absPath)
+    {
+
+    }
+
+    public function getRepositoryManager()
+    {
+
+    }
 }
