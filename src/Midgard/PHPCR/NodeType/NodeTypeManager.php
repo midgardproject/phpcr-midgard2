@@ -173,4 +173,9 @@ class NodeTypeManager implements IteratorAggregate, NodeTypeManagerInterface
     {
         return $this->getAllNodeTypes();
     }
+
+    public function registerNodeTypesCnd($cnd, $allowUpdate)
+    {
+
+    }
 }
