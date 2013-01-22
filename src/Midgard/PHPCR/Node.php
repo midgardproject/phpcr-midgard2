@@ -1540,7 +1540,13 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function getNodeNames()
     {
+        $this->populateChildren();
+        $names = array();
 
+        foreach ($this->children as $name => $child) {
+            $names[] = $name;
+        }
+        return new \ArrayIterator($names);
     }
 
     public function getPropertyValueWithDefault($relPath, $defaultValue)
