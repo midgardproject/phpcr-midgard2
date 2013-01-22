@@ -1551,7 +1551,11 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function getPropertyValueWithDefault($relPath, $defaultValue)
     {
-
+        try {
+            return $this->getPropertyValue($relPath);
+        } catch (\PHPCR\PathNotFoundException $e) {
+            return $defaultValue;
+        }
     }
 
     public function setMixins($mixinNames)
