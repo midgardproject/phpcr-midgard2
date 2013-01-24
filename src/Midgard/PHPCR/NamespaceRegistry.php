@@ -175,7 +175,8 @@ class NamespaceRegistry implements \IteratorAggregate, \PHPCR\NamespaceRegistryI
 
     public function unregisterNamespaceByURI($uri)
     {
-
+        $prefix = $this->getPrefix($uri);
+        $this->unregisterNamespace($prefix);
     }
 }
 
