@@ -953,6 +953,46 @@ class Node extends Item implements IteratorAggregate, NodeInterface
     
     public function removeMixin($mixinName)
     {
+        if (!$this->session->getWorkspace()->getNodeTypeManager()->hasNodeType($mixinName)) {
+            throw new NoSuchNodeTypeException("{$mixinName} is not registered mixin type"); 
+        }
+
+        // Check if we already have such a mixin
+        $mixins = $this->getMixinNodeTypes();
+        $canRemove = false;
+        foreach ($mixins as $mixin) {
+            if ($mixin->getName() == $mixinName) {
+                $canRemove = true;
+                break;
+            }
+        }
+
+        if ($canRemove == false) {
+            throw new NoSuchNodeTypeException("Can not remove {$mixinName}. Not added to given node."); 
+        }
+
+        /* Remove properties of removed mixin type */
+        $ntm = $this->session->getWorkspace()->getNodeTypeManager();
+        $nt = $ntm->getNodeType($mixinName);
+        foreach ($nt->getPropertyDefinitions() as $propDef) {
+            $this->setProperty($propDef->getName(), null);
+        }
+
+        $mixins = $this->properties['jcr:mixinTypes']->getValue();
+        if (count($mixins) == 1) {
+            $this->setProperty('jcr:mixinTypes', array());
+        } else {
+            $newValue = array();
+            foreach ($mixins as $mixin) {
+                if ($mixin == $mixinName) {
+                    continue;
+                }
+                $newValue[] = $mixin;
+            }
+            $this->setProperty('jcr:mixinTypes', $newValue);
+        }
+
+        $this->is_modified = true;
     }
     
     public function canAddMixin($mixinName)
@@ -1560,6 +1600,10 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function setMixins($mixinNames)
     {
+        $this->setProperty('jcr:mixinTypes', array());
 
+        foreach ($mixinNames as $name) {
+            $this->addMixin($name);
+        }
     } 
 }
