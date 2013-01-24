@@ -728,6 +728,11 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     public function revert()
     {
+        if ($this->is_removed) {
+            throw new \PHPCR\InvalidItemStateException("Can not revert removed property");
+        }
 
+        /* TODO, refresh is ugly  */
+        $parent::refresh(false);
     }
 }
