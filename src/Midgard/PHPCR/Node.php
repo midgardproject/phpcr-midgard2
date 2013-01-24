@@ -1570,7 +1570,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function addNodeAutoNamed($nameHint = null, $primaryNodeTypeName = null)
     {
-
+        return $this->addNode(uniqid($nameHint), $primaryNodeTypeName);
     }
 
     public function rename($newName)
