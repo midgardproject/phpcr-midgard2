@@ -335,7 +335,14 @@ class Workspace implements \PHPCR\WorkspaceInterface
 
     public function removeItem($absPath)
     {
-
+        $item = $this->session->getItem($absPath);
+        if ($item instanceof \PHPCR\PropertyInterface) {
+            $item->remove();
+            $item->removeMidgard2Property();
+        } else {
+            $item->removeMidgard2Node();
+            $item->remove();
+        }
     }
 
     public function getRepositoryManager()
