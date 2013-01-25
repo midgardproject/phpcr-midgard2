@@ -1565,7 +1565,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function revert()
     {
-
+        $this->refresh(false);
     }
 
     public function addNodeAutoNamed($nameHint = null, $primaryNodeTypeName = null)
