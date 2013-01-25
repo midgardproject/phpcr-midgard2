@@ -34,6 +34,8 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'Writing\CopyMethodsTest::testCopyNoUpdateOnCopy',
         'Writing\CopyMethodsTest::testCopyUpdateOnCopy',
         'Writing\MoveMethodsTest::testWorkspaceMove',
+        // https://github.com/phpcr/phpcr-api-tests/issues/76
+        'Writing\AddMethodsTest::testAddNodeAutoNamed',
 
         // Ordering is not implemented
         'Writing\MoveMethodsTest::testNodeOrderBeforeUp',
