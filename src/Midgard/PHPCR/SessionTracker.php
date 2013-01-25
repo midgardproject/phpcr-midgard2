@@ -35,6 +35,11 @@ class SessionTracker
                 continue;
             }
             $s->getSessionTracker()->removedNodes[] = $midgardNode->guid; 
+            try {
+                $s->getNodeRegistry()->getByMidgardNode($midgardNode)->remove();
+            } catch (\Exception $e) {
+                // ignore
+            }
         }
     }
 
