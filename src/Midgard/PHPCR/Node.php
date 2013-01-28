@@ -1575,7 +1575,18 @@ class Node extends Item implements IteratorAggregate, NodeInterface
 
     public function rename($newName)
     {
+        if (isset($this->parent->children[$newName])) {
+            throw new \PHPCR\RepositoryException("'{$newName}' node already exist");
+        }
 
+        $this->oldName = $this->getName();
+        $midgardNode = $this->getMidgard2Node();
+        $midgardNode->name = $newName;
+
+        $this->parent->children[$newName] = $this;
+        unset($this->parent->children[$this->oldName]);
+
+        $this->is_modified = true;
     }
 
     public function getNodeNames()
