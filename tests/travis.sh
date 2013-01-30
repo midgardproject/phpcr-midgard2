@@ -8,4 +8,4 @@ sudo cp -r ./data/share/views/* /usr/share/midgard2/views/
 
 # Install dependencies with Composer
 wget -q http://getcomposer.org/composer.phar
-php composer.phar install --dev
+php composer.phar install --dev --prefer-source
