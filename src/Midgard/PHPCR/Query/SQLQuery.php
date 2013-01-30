@@ -106,7 +106,20 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
 
     public function getMidgardStorageName()
     {
+        /* TODO, this either should return one, strictly defined storage name
+         * or best match should be implemented */
         return $this->storageType;
+    }
+
+    public function getMidgard2StorageNames()
+    {
+        $selectors = $this->getSelectors();
+        $names = array();
+        foreach ($selectors as $sel) {
+            $names[] = NodeMapper::getMidgardName($sel->getNodeTypeName());
+        }
+
+        return $names;
     }
 
     private function getQuerySelectHolder()

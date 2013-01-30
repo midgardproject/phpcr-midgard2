@@ -38,17 +38,43 @@ class QuerySelectholder
         return $this->defaultNodeStorage;
     }
 
+    private function addStorageNamesConstraints($storageNames)
+    {
+        $cg = new \midgard_query_constraint_group("OR");
+
+        foreach ($storageNames as $name) {
+            $constraint = new \midgard_query_constraint(
+                new \midgard_query_property("typename"),
+                "=",
+                new \midgard_query_value($name)
+            );
+            $cg->add_constraint($constraint);
+        }
+        $this->getDefaultConstraintGroup()->add_constraint($cg);
+
+        return $this->querySelect;
+    }
+
     public function getQuerySelect()
     {
         if ($this->querySelect == null) {
             $this->querySelect = new \midgard_query_select($this->getDefaultNodeStorage());
-        
+
+            /* This is workaround.
+             * Initialy this routines has been written for MidgardQuerySelect.
+             * MidgardQuerySelectData should be involved, in case of multiple selectors, columns, etc
+             * SqlQuery should provide "best match" storage name. */
+            $storageNames = $this->query->getMidgard2StorageNames();
+            if (count($storageNames) > 1) {
+                return $this->addStorageNamesConstraints($storageNames);
+            }
+
             /* Implictly add nodetype constraint */
             $this->getDefaultConstraintGroup()->add_constraint(
                 new \midgard_query_constraint(
                     new \midgard_query_property("typename"),
                     "=",
-                    new \midgard_query_value($this->getMidgardStorageName())
+                    new \midgard_query_value($storageNames[0])
                 )
             );
 

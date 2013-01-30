@@ -192,6 +192,10 @@ class NodeTypeDefinition implements NodeTypeDefinitionInterface
             }
 
             $midgardName = NodeMapper::getMidgardName($nodeType->getName());
+            if (midgard_reflector_object::is_interface($midgardName)) {
+                continue;
+            }
+
             return new midgard_reflection_property($midgardName);
         }
         return null;
