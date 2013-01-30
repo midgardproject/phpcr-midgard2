@@ -15,6 +15,12 @@ class Selector extends QuerySelectHelper implements \PHPCR\Query\QOM\SelectorInt
         $this->nodeTypeName = $nodeTypeName;
         $this->name = $name;
     }
+
+    public function getMidgard2NodeTypeNames()
+    {
+        return array($this->getNodeTypeName());    
+    }
+
     /**
      * {@inheritDoc}
      */

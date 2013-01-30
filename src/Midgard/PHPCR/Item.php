@@ -283,7 +283,7 @@ abstract class Item implements ItemInterface
     public function getPath()
     {
         if ($this->is_removed) {
-            throw new \PHPCR\RepositoryException("Can not get path of removed item");
+            throw new \PHPCR\InvalidItemStateException("Can not get path of removed item");
         }
         
         return $this->getPathUnchecked();

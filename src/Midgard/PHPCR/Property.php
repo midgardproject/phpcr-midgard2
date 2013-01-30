@@ -219,7 +219,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     public function getValue()
     {
         if ($this->is_purged === true || $this->is_removed === true) {
-            throw new \PHPCR\RepositoryException("Can not get value of purged property.");
+            throw new \PHPCR\InvalidItemStateException("Can not get value of purged property.");
         }
 
         $type = $this->getType();
@@ -724,5 +724,15 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     public function remove()
     {
         $this->parent->setProperty($this->getName(), null);
+    }
+
+    public function revert()
+    {
+        if ($this->is_removed) {
+            throw new \PHPCR\InvalidItemStateException("Can not revert removed property");
+        }
+
+        /* TODO, refresh is ugly  */
+        $parent::refresh(false);
     }
 }

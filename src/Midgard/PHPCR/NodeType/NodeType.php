@@ -221,4 +221,9 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
 
         return true;
     }
+
+    public function getSupertypeNames()
+    {
+
+    }
 }

@@ -26,6 +26,14 @@ class Join extends QuerySelectHelper implements \PHPCR\Query\QOM\JoinInterface
         return $this->getLeft()->getNodeTypeName();
     }
 
+    public function getMidgard2NodeTypeNames() 
+    {
+        return array(
+            $this->getLeft()->getNodeTypeName(),
+            $this->getRight()->getNodeTypeName()
+        );
+    }
+
     public function computeQuerySelectConstraints($holder)
     {
         parent::computeQuerySelectConstraints($holder);

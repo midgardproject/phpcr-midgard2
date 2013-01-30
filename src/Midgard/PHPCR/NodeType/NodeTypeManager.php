@@ -173,4 +173,10 @@ class NodeTypeManager implements IteratorAggregate, NodeTypeManagerInterface
     {
         return $this->getAllNodeTypes();
     }
+
+    public function registerNodeTypesCnd($cnd, $allowUpdate)
+    {
+        /* Wait till CNS parser is available in phpcr-utils package */
+        throw new UnsupportedRepositoryOperationException("Can not register from CND");
+    }
 }

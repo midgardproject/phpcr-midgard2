@@ -53,6 +53,11 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'Writing\DeleteMethodsTest::testDeleteReferencedNodeException',
         'Writing\DeleteMethodsTest::testDeletePreviouslyReferencedNode',
         'Writing\DeleteMethodsTest::testDeleteWeakReferencedNode',
+
+        // CND tests
+        'NodeTypeManagement\ManipulationTest::testRegisterNodeTypesCndNoUpdate',
+        'NodeTypeManagement\ManipulationTest::testPrimaryItem',
+        'NodeTypeManagement\ManipulationTest::testRegisterNodeTypesCnd',
     );
 
     public static function getInstance()   

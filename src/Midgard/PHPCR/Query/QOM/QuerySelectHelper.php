@@ -39,6 +39,11 @@ class QuerySelectHelper
         return null;
     }
 
+    public function getMidgard2NodeTypeNames()
+    {
+        return  array();
+    }
+
     public function computeQuerySelectConstraints($holder)
     {
         $this->setQuerySelectHolder($holder);

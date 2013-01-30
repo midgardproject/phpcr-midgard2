@@ -146,7 +146,7 @@ class Session implements SessionInterface
         }
     }
     
-    public function getNode($absPath)
+    public function getNode($absPath, $depthHint = -1)
     {
         // Special case when node is expected to exists at '/' path.
         // Which means we can treat root node with special meaning here.
@@ -595,5 +595,23 @@ class Session implements SessionInterface
     public function getRetentionManager()
     {
         throw new \PHPCR\UnsupportedRepositoryOperationException();
+    }
+
+    public function getProperties($absPaths)
+    {
+        /* https://github.com/phpcr/phpcr/issues/53 */
+        if (is_array($absPaths) === false) {
+            throws \PHPCR\RepositoryException("Expected argument should be array");
+        }
+
+        $properties = array();
+        foreach ($absPaths as $absPath) {
+            try {
+                $properties[$absPath] = $this->getItem($absPath);    
+            } catch (\PHPCR\PathNotFoundException $e) {
+                /* Seems like this should be ignored ? */
+            }
+        }
+        return new \ArrayIterator($properties);
     }
 }
