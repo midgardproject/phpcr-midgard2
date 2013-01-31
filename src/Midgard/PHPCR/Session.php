@@ -115,7 +115,11 @@ class Session implements SessionInterface
     {
         $ret = array();
         foreach ($ids as $id) {
-            $ret[] = $this->getNodeByIdentifier($id);
+            try {
+                $ret[] = $this->getNodeByIdentifier($id);
+            } catch (\PHPCR\ItemNotFoundException $e) {
+                // just ignore not found node
+            }
         }
         return $ret;
     }
