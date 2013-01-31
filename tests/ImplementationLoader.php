@@ -24,6 +24,12 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         // This test has missing fixtures in api-tests
         'Query\QueryObjectSql2Test::testGetStoredQueryPath',
 
+        // These two tests below fail due to phpcr-utils issue
+        'Query\QOM\ConvertQueriesBackAndForthTest::testBackAndForth',
+        'Query\QOM\Sql2ToQomConverterTest::testQueries',
+        'Query\QOM::testBackAndForth',
+        'Query\QOM::testQueries',
+
         // Workspace functionality isn't fully implemented
         'Connecting\WorkspaceReadMethodsTest::testGetAccessibleWorkspaceNames',
         'Connecting\WorkspaceReadMethodsTest::testGetAccessibleWorkspaceNames',
