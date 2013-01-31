@@ -25,9 +25,8 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'Query\QueryObjectSql2Test::testGetStoredQueryPath',
 
         // These two tests below fail due to phpcr-utils issue
-        // phpunit's testcase getName() method returns wrong name
-        //'Query\QOM\ConvertQueriesBackAndForthTest::testBackAndForth',
-        //'Query\QOM\Sql2ToQomConverterTest::testQueries',
+        'Query\QOM\ConvertQueriesBackAndForthTest::testBackAndForth',
+        'Query\QOM\Sql2ToQomConverterTest::testQueries',
         'Query\QOM::testBackAndForth',
         'Query\QOM::testQueries',
 
