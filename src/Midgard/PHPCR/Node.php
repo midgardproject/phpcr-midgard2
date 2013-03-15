@@ -1609,7 +1609,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
     }
 
-    public function setMixins($mixinNames)
+    public function setMixins(array $mixinNames)
     {
         $this->setProperty('jcr:mixinTypes', array());
 
