@@ -112,11 +112,6 @@ class Repository implements RepositoryInterface
         return $session;
     }
 
-    public function prepareAnonymousLogin()
-    {
-        return true;
-    }
-
     public function getSessions()
     {
         $sessions = array();
