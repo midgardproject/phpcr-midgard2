@@ -1589,7 +1589,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $this->is_modified = true;
     }
 
-    public function getNodeNames()
+    public function getNodeNames($filter = null)
     {
         $this->populateChildren();
         $names = array();
