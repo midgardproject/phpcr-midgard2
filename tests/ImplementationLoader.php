@@ -6,7 +6,7 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     protected $unsupportedChapters = array(
         // Features we don't support in the Midgard provider
         'Versioning',
-        'Transactions',
+        //'Transactions',
         'PermissionsAndCapabilities',
         'Locking',
         'Import',
@@ -64,6 +64,9 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'NodeTypeManagement\ManipulationTest::testRegisterNodeTypesCndNoUpdate',
         'NodeTypeManagement\ManipulationTest::testPrimaryItem',
         'NodeTypeManagement\ManipulationTest::testRegisterNodeTypesCnd',
+
+        // Transactions
+        //'Transactions\TransactionMethodsTest::testTransactionCommit',
     );
 
     public static function getInstance()   
@@ -98,6 +101,11 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     public function getUserId()
     {
         return $GLOBALS['phpcr.user'];
+    }
+
+    public function prepareAnonymousLogin()
+    {
+        return true;
     }
 
     public function getFixtureLoader()
