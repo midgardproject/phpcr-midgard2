@@ -605,7 +605,7 @@ class Session implements SessionInterface
     {
         /* https://github.com/phpcr/phpcr/issues/53 */
         if (is_array($absPaths) === false) {
-            throws \PHPCR\RepositoryException("Expected argument should be array");
+            throw \PHPCR\RepositoryException("Expected argument should be array");
         }
 
         $properties = array();
