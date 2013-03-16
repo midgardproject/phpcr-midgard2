@@ -15,7 +15,7 @@ env:
 before_script:
   - ./tests/travis_${DATABASE}.sh
 
-script: phpunit -c tests/phpunit_${DATABASE}.xml.dist 
+script: valgrind -v php /usr/bin/phpunit -c tests/phpunit_${DATABASE}.xml.dist 
 
 notifications:
     irc: "irc.freenode.org#midgard"
