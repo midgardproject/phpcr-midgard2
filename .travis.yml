@@ -8,9 +8,9 @@ env:
   - DATABASE=sqlite MIDGARD_EXT_VERSION=ratatoskr
   - DATABASE=mysql MIDGARD_EXT_VERSION=ratatoskr
   - DATABASE=postgresql MIDGARD_EXT_VERSION=ratatoskr
-  - DATABASE=sqlite MIDGARD_EXT_VERSION=gjallarhorn
-  - DATABASE=mysql MIDGARD_EXT_VERSION=gjallarhorn
-  - DATABASE=postgresql MIDGARD_EXT_VERSION=gjallarhorn
+  - DATABASE=sqlite MIDGARD_EXT_VERSION=master
+  - DATABASE=mysql MIDGARD_EXT_VERSION=master
+  - DATABASE=postgresql MIDGARD_EXT_VERSION=master
 
 before_script:
   - ./tests/travis_${DATABASE}.sh
