@@ -7,6 +7,7 @@ use PHPCR\GuestCredentials;
 use PHPCR\ItemNotFoundException;
 use PHPCR\PathNotFoundException;
 use PHPCR\RepositoryException;
+use Traversable;
 use midgard_connection;
 use midgard_object;
 use midgard_user;
@@ -605,7 +606,9 @@ class Session implements SessionInterface
     {
         /* https://github.com/phpcr/phpcr/issues/53 */
         if (is_array($absPaths) === false) {
-            throw new \PHPCR\RepositoryException("Expected argument should be array");
+            if (!($absPath instanceof Traversable)) {
+                throw new \PHPCR\RepositoryException("Expected argument should be an array or Traversable");
+            }
         }
 
         $properties = array();
