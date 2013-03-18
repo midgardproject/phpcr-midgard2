@@ -606,7 +606,7 @@ class Session implements SessionInterface
     {
         /* https://github.com/phpcr/phpcr/issues/53 */
         if (is_array($absPaths) === false) {
-            if (!($absPath instanceof Traversable)) {
+            if (!($absPaths instanceof Traversable)) {
                 throw new \PHPCR\RepositoryException("Expected argument should be an array or Traversable");
             }
         }
