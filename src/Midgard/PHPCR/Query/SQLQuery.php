@@ -233,4 +233,8 @@ class SQLQuery implements \PHPCR\Query\QueryInterface
         throw new \PHPCR\RepositoryException("Not supported");
     }
 
+    public function cancel()
+    {
+        throw new \PHPCR\RepositoryException("Not supported");
+    }
 }

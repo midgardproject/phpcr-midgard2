@@ -9,6 +9,7 @@ use PHPCR\ValueFormatException;
 use PHPCR\RepositoryException;
 use PHPCR\InvalidItemStateException;
 use PHPCR\Util\UUIDHelper;
+use PHPCR\Util\ValueConverter;
 use IteratorAggregate;
 use DateTime;
 use Midgard\PHPCR\Utils\NodeMapper;
@@ -25,6 +26,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     private $value = null;
     private $resources = array();
     private $propertyResources = array();
+    private $valueConverter = null;
 
     public function __construct(Node $node, $propertyName, PropertyDefinitionInterface $definition = null, $type = null)
     {
@@ -32,6 +34,8 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         $this->parent = $node;
         $this->session = $node->getSession();
         $this->definition = $definition;
+
+        $this->valueConverter = new ValueConverter();
 
         if ($definition) {
             $this->type = $definition->getRequiredType();
@@ -113,7 +117,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
         elseif (is_a($value, '\Midgard\PHPCR\Property')) {
             return $value->getString(); 
         }
-        return PropertyType::convertType($value, PropertyType::STRING, $this->getType());
+        return $this->valueConverter->convertType($value, PropertyType::STRING, $this->getType());
     }
 
     public function setValue($value, $type = null, $weak = FALSE)
@@ -146,7 +150,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
         /* Check if property is registered.
          * If it is, we need to validate if conversion follows the spec: "3.6.4 Property Type Conversion" */
-        $value = PropertyType::convertType($value, $this->getType());
+        $value = $this->valueConverter->convertType($value, $this->getType());
 
         /* TODO, handle:
          * \PHPCR\Version\VersionException 
@@ -245,7 +249,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
             return $this->getNode();
 
         default:
-            return PropertyType::convertType($this->getNativeValue(), $type, PropertyType::STRING);
+            return $this->valueConverter->convertType($this->getNativeValue(), $type, PropertyType::STRING);
         } 
     }
 
@@ -334,7 +338,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
 
     public function getString()
     {
-        return PropertyType::convertType($this->getNativeValue(), PropertyType::STRING, $this->getType());
+        return $this->valueConverter->convertType($this->getNativeValue(), PropertyType::STRING, $this->getType());
     }
 
     protected function getMidgard2PropertyBinary($name, $multiple)
@@ -383,7 +387,7 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     public function getBinary()
     {
         if ($this->getType() != PropertyType::BINARY) {
-            $stream = PropertyType::convertType($this->getNativeValue(), PropertyType::BINARY, $this->getType());
+            $stream = $this->valueConverter->convertType($this->getNativeValue(), PropertyType::BINARY, $this->getType());
             $this->resources[] = $stream;
             return $stream;
         }
@@ -394,27 +398,27 @@ class Property extends Item implements IteratorAggregate, PropertyInterface
     
     public function getLong()
     {
-        return PropertyType::convertType($this->getNativeValue(), PropertyType::LONG, $this->getType());
+        return $this->valueConverter->convertType($this->getNativeValue(), PropertyType::LONG, $this->getType());
     }
     
     public function getDouble()
     {
-        return PropertyType::convertType($this->getNativeValue(), PropertyType::DOUBLE, $this->getType());  
+        return $this->valueConverter->convertType($this->getNativeValue(), PropertyType::DOUBLE, $this->getType());  
     }
     
     public function getDecimal()
     {
-        return PropertyType::convertType($this->getNativeValue(), PropertyType::DECIMAL, $this->getType()); 
+        return $this->valueConverter->convertType($this->getNativeValue(), PropertyType::DECIMAL, $this->getType()); 
     }
     
     public function getDate()
     {
-        return PropertyType::convertType($this->getNativeValue(), PropertyType::DATE, $this->getType()); 
+        return $this->valueConverter->convertType($this->getNativeValue(), PropertyType::DATE, $this->getType()); 
     }
     
     public function getBoolean()
     {
-        return PropertyType::convertType($this->getNativeValue(), PropertyType::BOOLEAN, $this->getType()); 
+        return $this->valueConverter->convertType($this->getNativeValue(), PropertyType::BOOLEAN, $this->getType()); 
     }
 
     public function getName()

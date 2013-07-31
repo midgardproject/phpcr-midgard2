@@ -6,6 +6,7 @@ use PHPCR\NodeType\NodeTypeInterface;
 use PHPCR\NodeType\NodeTypeDefinitionInterface;
 use PHPCR\PropertyType;
 use PHPCR\ValueFormatException;
+use PHPCR\Util\ValueConverter;
 use midgard_reflector_object;
 use ArrayIterator;
 
@@ -130,7 +131,8 @@ class NodeType extends NodeTypeDefinition implements NodeTypeInterface
                 return false;
             }
             try {
-                PropertyType::convertType($value, $requiredType);
+                $vc = new ValueConverter();
+                $vc->convertType($value, $requiredType);
             } catch (ValueFormatException $e) {
                 return false;
             }

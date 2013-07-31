@@ -20,7 +20,7 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
         'midgard2.configuration.db.init' => 'boolean: whether Midgard2 database should be initialized automatically',
     );
 
-    public static function getRepository(array $parameters = NULL)
+    public function getRepository(array $parameters = NULL)
     {
         static $repository = null;
 
@@ -46,7 +46,7 @@ class RepositoryFactory implements \PHPCR\RepositoryFactoryInterface
         return $repository;
     }
 
-    public static function getConfigurationKeys()
+    public function getConfigurationKeys()
     {
         return self::$configurationKeys;
     }

@@ -81,7 +81,9 @@ class SQLQuerySelector
                 }
             }
 
-            $constraints = $this->SQLQuery->getConstraint()->getMidgardConstraints($selectorName, $qs, $nodeStorage);
+            if (is_object($this->SQLQuery->getConstraint())) {
+                $constraints = $this->SQLQuery->getConstraint()->getMidgardConstraints($selectorName, $qs, $nodeStorage);
+            }
             if (!empty($constraints)) {
                 foreach ($constraints as $c) 
                 {

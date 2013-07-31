@@ -4,7 +4,7 @@ namespace Midgard\PHPCR\NodeType;
 use PHPCR\NodeType\NodeTypeManagerInterface;
 use Midgard\PHPCR\Utils\NodeMapper;
 use PHPCR\NodeType\NodeTypeDefinitionInterface;
-use PHPCR\NodeTypeExistsException;
+use PHPCR\NodeType\NodeTypeExistsException;
 use PHPCR\UnsupportedRepositoryOperationException;
 use PHPCR\NodeType\NoSuchNodeTypeException;
 use ArrayIterator;
