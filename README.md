@@ -64,12 +64,12 @@ With MySQL, the connection parameters could for example be:
 
     $parameters = array(
         // MySQL connection settings. The database has to exist
-        'midgard2.connection.db.type' => 'MySQL',
-        'midgard2.connection.db.name' => 'midgard2',
-        'midgard2.connection.db.username' => 'midgard',
-        'midgard2.connection.db.password' => 'midgard',
-        'midgard2.connection.db.host' => '127.0.0.1',
-        'midgard2.connection.db.port' => '3306'
+        'midgard2.configuration.db.type' => 'MySQL',
+        'midgard2.configuration.db.name' => 'midgard2',
+        'midgard2.configuration.db.username' => 'midgard',
+        'midgard2.configuration.db.password' => 'midgard',
+        'midgard2.configuration.db.host' => '127.0.0.1',
+        'midgard2.configuration.db.port' => '3306'
         // Let Midgard2 initialize the DB as needed
         'midgard2.configuration.db.init' => true,
     );
