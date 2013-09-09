@@ -55,7 +55,7 @@ class Repository implements RepositoryInterface
         'option.retention.supported' => false,
         'option.shareable.nodes.supported' => false,
         'option.simple.versioning.supported' => false,
-        'option.transactions.supported' => false,
+        'option.transactions.supported' => true,
         'option.unfiled.content.supported' => false,
         'option.update.mixin.node.types.supported' => true,
         'option.update.primary.node.type.supported' => true,

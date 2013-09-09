@@ -9,7 +9,7 @@ pyrus channel-discover pear.indeyets.ru
 pyrus install -f http://pear.indeyets.ru/get/pake-1.6.3.tgz
 
 # Install Midgard2 library dependencies from OBS
-sudo apt-get install -y dbus libglib2.0-dev libgda-4.0-4 libgda-4.0-dev libxml2-dev libdbus-1-dev libdbus-glib-1-dev 
+sudo apt-get install -y dbus libglib2.0-dev libgda-4.0-4 libgda-4.0-dev libxml2-dev libdbus-1-dev libdbus-glib-1-dev valgrind
 
 # Build Midgard2 core from recent tarball
 wget -q https://github.com/midgardproject/midgard-core/tarball/${MIDGARD_EXT_VERSION} -O ${MIDGARD_EXT_VERSION}

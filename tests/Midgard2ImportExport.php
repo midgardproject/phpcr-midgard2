@@ -120,7 +120,7 @@ class Midgard2ImportExport implements PHPCR\Test\FixtureLoaderInterface
      * @param string $fixture path to the fixture file, relative to fixturePath
      * @throws Exception if anything fails
      */
-    public function import($fixture)
+    public function import($fixture, $workspaceKey = 'workspace')
     {
         $fixture = $this->fixturePath . $fixture . ".xml";
      
