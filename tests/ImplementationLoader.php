@@ -64,6 +64,9 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
         'NodeTypeManagement\ManipulationTest::testRegisterNodeTypesCndNoUpdate',
         'NodeTypeManagement\ManipulationTest::testPrimaryItem',
         'NodeTypeManagement\ManipulationTest::testRegisterNodeTypesCnd',
+
+        // Transactions
+        //'Transactions\TransactionMethodsTest::testTransactionCommit',
     );
 
     public static function getInstance()   
@@ -77,7 +80,8 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     public function getRepositoryFactoryParameters()
     {
         $factoryclass = $this->factoryclass;
-        return array_intersect_key($GLOBALS, $factoryclass::getConfigurationKeys());
+        $factoryInst = new $factoryclass();
+        return array_intersect_key($GLOBALS, $factoryInst->getConfigurationKeys());
     }
 
     public function getCredentials()
@@ -98,6 +102,11 @@ class ImplementationLoader extends \PHPCR\Test\AbstractLoader
     public function getUserId()
     {
         return $GLOBALS['phpcr.user'];
+    }
+
+    public function prepareAnonymousLogin()
+    {
+        return true;
     }
 
     public function getFixtureLoader()

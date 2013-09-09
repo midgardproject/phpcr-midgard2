@@ -15,6 +15,7 @@ use PHPCR\ItemExistsException;
 use PHPCR\RepositoryException;
 use PHPCR\NodeType\NoSuchNodeTypeException;
 use PHPCR\ItemNotFoundException;
+use PHPCR\Util\ValueConverter;
 use midgard_node;
 use midgard_query_select;
 use midgard_query_constraint;
@@ -442,7 +443,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         return new ArrayIterator($filteredItems);   
     }
 
-    public function getNodes($filter = null)
+    public function getNodes($filter = null, $typeFilter = NULL)
     {
         $this->populateChildren();
         $nodes = array();
@@ -1482,7 +1483,8 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
 
         $prop = $this->properties['jcr:uuid'];
-        $uuid = PropertyType::convertType($prop->getNativeValue(), $prop->getType(), PropertyType::STRING);
+        $vc = new ValueConverter();
+        $uuid = $vc->convertType($prop->getNativeValue(), $prop->getType(), PropertyType::STRING);
         if ($uuid === null || $uuid === "") {
             return false;
         }
@@ -1529,9 +1531,9 @@ class Node extends Item implements IteratorAggregate, NodeInterface
             )
         );
         $q->set_constraint($group);
-        \midgard_connection::get_instance()->set_loglevel("debug");
+        //\midgard_connection::get_instance()->set_loglevel("debug");
         $q->execute();
-        \midgard_connection::get_instance()->set_loglevel("warn");
+        //\midgard_connection::get_instance()->set_loglevel("warn");
         if ($q->get_results_count() > 0) {
             return true;
         }
@@ -1589,7 +1591,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         $this->is_modified = true;
     }
 
-    public function getNodeNames()
+    public function getNodeNames($filter = null, $typeFilter = NULL)
     {
         $this->populateChildren();
         $names = array();
@@ -1609,7 +1611,7 @@ class Node extends Item implements IteratorAggregate, NodeInterface
         }
     }
 
-    public function setMixins($mixinNames)
+    public function setMixins(array $mixinNames)
     {
         $this->setProperty('jcr:mixinTypes', array());
 
